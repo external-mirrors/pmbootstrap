@@ -630,7 +630,10 @@ def install_recovery_zip(args, steps):
     logging.info(f"*** ({steps}/{steps}) CREATING RECOVERY-FLASHABLE ZIP ***")
     suffix = "buildroot_" + args.deviceinfo["arch"]
     mount_device_rootfs(args, f"rootfs_{args.device}", suffix)
-    pmb.install.recovery.create_zip(args, suffix)
+    if args.ab_installer:
+        pmb.install.recovery.create_zip_ab(args, suffix)
+    else:
+        pmb.install.recovery.create_zip(args, suffix)
 
     # Flash information
     logging.info("*** FLASHING INFORMATION ***")

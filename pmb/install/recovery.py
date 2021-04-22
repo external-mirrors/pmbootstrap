@@ -62,3 +62,37 @@ def create_zip(args, suffix):
         ["build-recovery-zip", args.device]]
     for command in commands:
         pmb.chroot.root(args, command, suffix, zip_root)
+
+def create_zip_ab(args, suffix):
+    """
+    Use the new recovery installer for A/B devices
+    NOTE:
+        The new installer is WIP and is mostly meant to support
+        MSM8998 and newer devices. It does not yet support FDE.
+    """
+
+    zip_root = "/var/lib/ab-recovery-installer/"
+    rootfs = "/mnt/rootfs_" + args.device
+    flavor = pmb.helpers.frontend._parse_flavor(args)
+    vars = pmb.flasher.variables(args, flavor, method)
+
+    if args.full_disk_encryption:
+        logging.error("""The AB installer doesn't currently support FDE.\n
+                      Please run 'pmbootstrap install' without '--fde'""")
+
+    # Install recovery installer package in buildroot
+    pmb.chroot.apk.install(args,
+                           ["postmarketos-ab-recovery-installer"],
+                           suffix)
+
+    commands = [
+        # Create tar archive of the rootfs
+        ["tar", "-pcf", "rootfs.tar", "--exclude", "./home", "-C", rootfs,
+         "."],
+        # Append packages keys
+        ["tar", "-prf", "rootfs.tar", "-C", "/", "./etc/apk/keys"],
+        # Compress with -1 for speed improvement
+        ["gzip", "-f1", "rootfs.tar"],
+        ["build-recovery-zip", args.device]]
+    for command in commands:
+        pmb.chroot.root(args, command, suffix, zip_root)

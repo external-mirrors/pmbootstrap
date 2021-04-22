@@ -95,6 +95,9 @@ def arguments_install(subparser):
     group.add_argument("--recovery-no-kernel",
                        help="do not overwrite the existing kernel",
                        action="store_false", dest="recovery_flash_kernel")
+    group.add_argument("--ab-installer",
+                        help="Use the 'new' installer, supporting A/B devices",
+                        dest="ab_installer", action="store_true")
 
     # Full disk encryption (disabled by default, --no-fde has no effect)
     group = ret.add_argument_group("optional full disk encryption arguments")
