@@ -478,6 +478,7 @@ def frontend(args):
     # Device keymap
     if device_exists:
         cfg["pmbootstrap"]["keymap"] = ask_for_keymaps(args, device)
+        cfg["pmbootstrap"]["device_aports_path"] = pmb.helpers.devices.find_path(args, device).strip("/")
 
     # Username
     cfg["pmbootstrap"]["user"] = pmb.helpers.cli.ask(args, "Username", None,

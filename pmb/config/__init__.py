@@ -51,6 +51,7 @@ required_programs = ["git", "openssl", "ps"]
 config_keys = ["aports",
                "ccache_size",
                "device",
+               "device_aports_path",
                "extra_packages",
                "hostname",
                "build_pkgs_on_install",
@@ -81,6 +82,8 @@ defaults = {
     "cipher": "aes-xts-plain64",
     "config": (os.environ.get('XDG_CONFIG_HOME') or os.path.expanduser("~/.config")) + "/pmbootstrap.cfg",
     "device": "qemu-amd64",
+    # Path to device package in pmaports
+    "device_aports_path": "",
     "extra_packages": "none",
     "fork_alpine": False,
     "hostname": "",
