@@ -66,10 +66,22 @@ def check_option(component, details, config, config_path_pretty, option,
 
 def check_config(config_path, config_path_pretty, config_arch, pkgver,
                  anbox=False, nftables=False, containers=False, zram=False,
-                 details=False):
+                 details=False, flavor=None):
     logging.debug(f"Check kconfig: {config_path}")
     with open(config_path) as handle:
         config = handle.read()
+
+    if flavor:
+        correct_localversion = is_in_array(config,
+                                           "LOCALVERSION", f"-{flavor}")
+    else:
+        # Skip if package flavor isn't set
+        correct_localversion = True
+    if not correct_localversion:
+        logging.warning(f"WARNING: CONFIG_LOCALVERSION does not match the"
+                        f" package flavor string. Please set"
+                        f" 'CONFIG_LOCALVERSION=\"-{flavor}\"' in your"
+                        f" kconfig!")
 
     components = {"postmarketOS": pmb.config.necessary_kconfig_options}
     if anbox:
@@ -86,6 +98,7 @@ def check_config(config_path, config_path_pretty, config_arch, pkgver,
                                         config_arch, options, component,
                                         pkgver, details)
                for component, options in components.items()]
+    results.append(correct_localversion)
     return all(results)
 
 
@@ -162,7 +175,8 @@ def check(args, pkgname, force_anbox_check=False, force_nftables_check=False,
                             nftables=check_nftables,
                             containers=check_containers,
                             zram=check_zram,
-                            details=details)
+                            details=details,
+                            flavor=flavor)
     return ret
 
 
