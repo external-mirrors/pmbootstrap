@@ -1,5 +1,6 @@
 # Copyright 2021 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+import pmb.config.pmaports
 
 
 def variables(args, flavor, method):
@@ -38,7 +39,6 @@ def variables(args, flavor, method):
     vars = {
         "$BOOT": "/mnt/rootfs_" + args.device + "/boot",
         "$DTB": _dtb,
-        "$FLAVOR": flavor if flavor is not None else "",
         "$IMAGE_SPLIT_BOOT": "/home/pmos/rootfs/" + args.device + "-boot.img",
         "$IMAGE_SPLIT_ROOT": "/home/pmos/rootfs/" + args.device + "-root.img",
         "$IMAGE": "/home/pmos/rootfs/" + args.device + ".img",
@@ -55,5 +55,12 @@ def variables(args, flavor, method):
         "$UUU_SCRIPT": "/mnt/rootfs_" + args.deviceinfo["codename"] +
                        "/usr/share/uuu/flash_script.lst"
     }
+
+    # Backwards compatibility with old mkinitfs (pma#660)
+    pmaports_cfg = pmb.config.pmaports.read_config(args)
+    if pmaports_cfg.get("supported_mkinitfs_no_flavors", False):
+        vars["$FLAVOR"] = ""
+    else:
+        vars["$FLAVOR"] = f"-{flavor}" if flavor is not None else "-"
 
     return vars
