@@ -756,6 +756,7 @@ flash_methods = [
     "heimdall",
     "mtkclient",
     "none",
+    "pongoos",
     "rkdeveloptool",
     "uuu",
 ]
@@ -964,6 +965,32 @@ flashers: dict[str, dict[str, bool | list[str] | dict[str, list[list[str]]]]] = 
             ],
             "flash_dtbo": [["mtk", "w", "$PARTITION_DTBO", "$BOOT/dtbo.img"]],
             "flash_lk2nd": [["mtk", "w", "$PARTITION_KERNEL", "$BOOT/lk2nd.img"]],
+        },
+    },
+    "pongoos": {
+        "depends": ["pongoos-loader"],
+        "actions": {
+            "flasher_boot": [
+                ["echo", "*****"],
+                [
+                    "echo",
+                    "NOTE: Please refer to the device wiki page for instructions on how to enter into flashing method with checkra1n",
+                ],
+                [
+                    "echo",
+                    "This notice will be removed once checkra1n becomes open source and gets packaged",
+                ],
+                ["echo", "*****"],
+                [
+                    "pongoos-loader",
+                    "-k",
+                    "$BOOT/Image.lzma",
+                    "-d",
+                    "$BOOT/dtbpack",
+                    "-r",
+                    "$BOOT/initramfs",
+                ],
+            ],
         },
     },
 }
