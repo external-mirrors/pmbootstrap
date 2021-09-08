@@ -113,28 +113,47 @@ def run_abuild(args, pkgname, arch, apkbuild_path, kbuild_out):
     :param apkbuild_path: path to APKBUILD of the kernel aport
     :param kbuild_out: kernel build system output sub-directory
     """
+    build_from_host = len(args.out_dir) > 0
     chroot = args.work + "/chroot_native"
     build_path = "/home/pmos/build"
-    kbuild_out_source = "/mnt/linux/.output"
+    if build_from_host:
+        kbuild_out_source = os.path.abspath(args.out_dir)
+    else:
+        kbuild_out_source = "/mnt/linux/.output/"
 
-    if not os.path.exists(chroot + kbuild_out_source):
-        raise RuntimeError("No '.output' dir found in your kernel source dir."
+    print(kbuild_out)
+
+    if (build_from_host and not os.path.exists(kbuild_out_source)) or \
+            (not build_from_host and not os.path.exists(chroot + kbuild_out_source)):
+        raise RuntimeError("Output dir '" + kbuild_out_source + "' not "
+                           "found in your kernel source dir. "
                            "Compile the " + args.device + " kernel with "
                            "envkernel.sh first, then try again.")
 
     # Create working directory for abuild
     pmb.build.copy_to_buildpath(args, pkgname)
 
-    # Create symlink from abuild working directory to envkernel build directory
+    
     build_output = "" if kbuild_out == "" else "/" + kbuild_out
-    if build_output != "":
-        if os.path.islink(chroot + "/mnt/linux/" + build_output) and \
-                os.path.lexists(chroot + "/mnt/linux/" + build_output):
-            pmb.chroot.root(args, ["rm", "/mnt/linux/" + build_output])
-        pmb.chroot.root(args, ["ln", "-s", "/mnt/linux",
-                        build_path + "/src"])
-    pmb.chroot.root(args, ["ln", "-s", kbuild_out_source,
-                    build_path + "/src" + build_output])
+    # Bind mount the host build output into the chroot
+    if build_from_host:
+        pmb.helpers.mount.bind(args, os.path.dirname(kbuild_out_source), 
+            chroot + "/" + build_path + "/src")
+    else:
+        # Create symlink from abuild working directory to envkernel build directory
+        if build_output != "":
+            if os.path.islink(chroot + "/mnt/linux/" + build_output) and \
+                    os.path.lexists(chroot + "/mnt/linux/" + build_output):
+                pmb.chroot.root(args, ["rm", "/mnt/linux/" + build_output])
+            pmb.chroot.root(args, ["ln", "-s", "/mnt/linux",
+                            build_path + "/src"])
+
+    # Handles the case where the output directory used to build the kernel
+    # is different to the one abuild will try and use
+    if os.path.basename(kbuild_out_source) != os.path.basename(build_output):
+        pmb.chroot.root(args, ["ln", "-sf", build_path + "/src" + \
+                        os.path.basename(kbuild_out_source),
+                        build_path + "/src" + build_output])
 
     cmd = ["cp", apkbuild_path, chroot + build_path + "/APKBUILD"]
     pmb.helpers.run.root(args, cmd)
@@ -152,6 +171,10 @@ def run_abuild(args, pkgname, arch, apkbuild_path, kbuild_out):
         if os.path.islink(chroot + "/mnt/linux/" + build_output) and \
                 os.path.lexists(chroot + "/mnt/linux/" + build_output):
             pmb.chroot.root(args, ["rm", "/mnt/linux/" + build_output])
+
+    if build_from_host:
+        pmb.helpers.mount.umount_all(args, chroot + "/" + build_path + "/src")
+
     pmb.chroot.root(args, ["rm", build_path + "/src"])
 
 
@@ -178,6 +201,9 @@ def package_kernel(args):
         function_body = pmb.parse.function_body(aport + "/APKBUILD", "package")
         kbuild_out = find_kbuild_output_dir(args, function_body)
     suffix = pmb.build.autodetect.suffix(args, apkbuild, arch)
+
+    # Cleanup from previous run
+    pmb.helpers.mount.umount_all(args, args.work + "/chroot_native/home/pmos/build/src")
 
     # Install package dependencies
     depends, _ = pmb.build._package.build_depends(
