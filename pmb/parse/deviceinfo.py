@@ -127,7 +127,7 @@ def deviceinfo(args, device=None, kernel=None):
                       " -p flag")
         raise RuntimeError("Aports directory missing")
 
-    path = pmb.helpers.devices.find_path(args, device, 'deviceinfo')
+    path = pmb.helpers.devices.find_path(args, device, 'deviceinfo*')
     if not path:
         raise RuntimeError(
             "Device '" + device + "' not found. Run 'pmbootstrap init' to"

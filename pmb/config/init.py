@@ -337,7 +337,7 @@ def ask_for_device(args):
                                        codenames)
 
         device = f"{vendor}-{codename}"
-        device_path = pmb.helpers.devices.find_path(args, device, 'deviceinfo')
+        device_path = pmb.helpers.devices.find_path(args, device, 'deviceinfo*')
         device_exists = device_path is not None
         if not device_exists:
             if device == args.device:
