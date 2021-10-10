@@ -13,6 +13,7 @@ import pmb.chroot.initfs
 import pmb.config
 import pmb.config.pmaports
 import pmb.helpers.devices
+import pmb.helpers.logging
 import pmb.helpers.run
 import pmb.install.blockdevice
 import pmb.install.recovery
@@ -212,7 +213,13 @@ def setup_login(args, suffix):
     :param suffix: of the chroot, where passwd will be execute (either the
                    f"rootfs_{args.device}", or f"installer_{args.device}")
     """
-    if not args.on_device_installer:
+    if args.password:
+        pmb.helpers.logging.filterAddPattern(args.password)
+        logging.info(" *** SET LOGIN PASSWORD TO "
+                     f" '{args.password}' FOR '{args.user}' ***")
+        pmb.chroot.root(args, ["sh", "-c", f"echo '{shlex.quote(args.user)}:"
+                        f"{shlex.quote(args.password)}' | chpasswd"], suffix)
+    elif not args.on_device_installer:
         # User password
         logging.info(" *** SET LOGIN PASSWORD FOR: '" + args.user + "' ***")
         while True:
