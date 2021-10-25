@@ -7,6 +7,45 @@ import pmb.config
 
 logfd = None
 
+class RedactingFilter(logging.Filter):
+
+    def __init__(self, patterns: list[str]):
+        super(RedactingFilter, self).__init__()
+        self._patterns = patterns
+    
+    def addPattern(self, pattern: str):
+        self._patterns.append(pattern)
+
+    def removePattern(self, pattern: str):
+        self._patterns.remove(pattern)
+
+    def filter(self, record):
+        record.msg = self.redact(record.msg)
+        if isinstance(record.args, dict):
+            for k in record.args.keys():
+                record.args[k] = self.redact(record.args[k])
+        else:
+            record.args = tuple(self.redact(arg) for arg in record.args)
+        return True
+
+    def redact(self, msg):
+        msg = str(msg)
+        for pattern in self._patterns:
+               msg = msg.replace(pattern, "<<<REDACTED>>>")
+        return msg
+
+def filterAddPattern(pattern):
+    for h in logging.root.handlers:
+        for f in h.filters:
+            if isinstance(f, RedactingFilter):
+                f.addPattern(pattern)
+
+def filterRemovePattern(pattern):
+    for h in logging.root.handlers:
+        for f in h.filters:
+            if isinstance(f, RedactingFilter):
+                f.removePattern(pattern)
+
 
 class log_handler(logging.StreamHandler):
     """
@@ -122,6 +161,10 @@ def init(args):
     log_handler._args = args
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
+
+    # Add redacting filter
+    rf = RedactingFilter(patterns=[])
+    handler.addFilter(rf)
 
 
 def disable():
