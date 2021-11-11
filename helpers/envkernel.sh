@@ -172,6 +172,12 @@ initialize_chroot() {
 		yaml-dev \
 		xz || return 1
 
+	if [ "$deviceinfo_arch" = "armv7" ]; then
+		echo "Install postmarketOS crosstools to fix armv7 cross compilation"
+		"$pmbootstrap" -q chroot -- apk -q add \
+			gcc-armv7
+	fi
+
 	# Create /mnt/linux
 	sudo mkdir -p "$chroot/mnt/linux"
 
