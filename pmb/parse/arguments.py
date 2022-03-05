@@ -3,6 +3,7 @@
 import argparse
 import copy
 import os
+import sys
 
 try:
     import argcomplete
@@ -886,7 +887,25 @@ def arguments():
         argcomplete.autocomplete(parser, always_complete_options="long")
 
     # Parse and extend arguments (also backup unmodified result from argparse)
-    args = parser.parse_args()
+    argv = sys.argv[1:]
+    args = argparse.Namespace()
+    flash_actions = []
+    actions = []
+    while argv:
+        options, argv = parser.parse_known_args(argv, namespace=args)
+        action = getattr(options, "action", None)
+        flash_action = getattr(options, "action_flasher", None)
+        if flash_action:
+            flash_actions.append(flash_action)
+        if action == "init":
+            break;
+        if action:
+            actions.append(action)
+        # print("options: ", options)
+        # print("args: ", args)
+    setattr(args, "action_flasher", flash_actions)
+    setattr(args, "action", actions)
+    print(args)
     setattr(args, "from_argparse", copy.deepcopy(args))
     setattr(args.from_argparse, "from_argparse", args.from_argparse)
     pmb.helpers.args.init(args)

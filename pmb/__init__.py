@@ -45,10 +45,13 @@ def main():
             other.migrate_work_folder(args)
 
         # Run the function with the action's name (in pmb/helpers/frontend.py)
-        if args.action:
-            getattr(frontend, args.action)(args)
-        else:
+        if len(args.action) == 0:
             logging.info("Run pmbootstrap -h for usage information.")
+        for action in args.action:
+            logging.info("==================================================")
+            logging.info("Doing action: " + action)
+            logging.info("==================================================")
+            getattr(frontend, action)(args)
 
         # Still active notice
         if mount.ismount(args.work + "/chroot_native/dev"):
