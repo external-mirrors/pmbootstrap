@@ -116,11 +116,21 @@ def run_abuild(args, pkgname, arch, apkbuild_path, kbuild_out):
     chroot = args.work + "/chroot_native"
     build_path = "/home/pmos/build"
     kbuild_out_source = "/mnt/linux/.output"
+    umount_cleanup = False
+
+    if not os.path.ismount(chroot + "/mnt/linux"):
+        logging.info("envkernel.sh hasn't run, assuming the kernel was cross compiled"
+                     "on host and using current dir as source")
+        pmb.helpers.mount.bind(args, ".", f"{chroot}/mnt/linux")
+        # pmb.helpers.run.root(args, ["mkdir", "-p", chroot + "/mnt/linux"])
+        # pmb.helpers.run.root(args, ["mount", "--bind", ".", chroot + "/mnt/linux"])
+        umount_cleanup = True
 
     if not os.path.exists(chroot + kbuild_out_source):
-        raise RuntimeError("No '.output' dir found in your kernel source dir."
-                           "Compile the " + args.device + " kernel with "
-                           "envkernel.sh first, then try again.")
+        raise RuntimeError("No '.output' dir found in your kernel source dir. "
+                           "Compile the " + args.device + " kernel first and "
+                           "then try again. See https://postmarketos.org/envkernel"
+                           "for details.")
 
     # Create working directory for abuild
     pmb.build.copy_to_buildpath(args, pkgname)
@@ -146,6 +156,9 @@ def run_abuild(args, pkgname, arch, apkbuild_path, kbuild_out):
            "SUDO_APK": "abuild-apk --no-progress"}
     cmd = ["abuild", "rootpkg"]
     pmb.chroot.user(args, cmd, working_dir=build_path, env=env)
+
+    if umount_cleanup:
+        pmb.helpers.run.root(args, ["umount", chroot + "/mnt/linux"])
 
     # Clean up symlinks
     if build_output != "":
@@ -183,6 +196,8 @@ def package_kernel(args):
     depends, _ = pmb.build._package.build_depends(
         args, apkbuild, pmb.config.arch_native, strict=False)
     pmb.build.init(args, suffix)
+    if pmb.parse.arch.cpu_emulation_required(arch):
+        depends.append("binutils-" + arch)
     pmb.chroot.apk.install(args, depends, suffix)
 
     output = (arch + "/" + apkbuild["pkgname"] + "-" + apkbuild["pkgver"] +
