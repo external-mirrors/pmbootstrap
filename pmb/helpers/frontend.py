@@ -10,6 +10,7 @@ import pmb.aportgen
 import pmb.build
 import pmb.build.autodetect
 import pmb.chroot
+import pmb.chroot.apk
 import pmb.chroot.initfs
 import pmb.chroot.other
 import pmb.ci
@@ -20,6 +21,7 @@ import pmb.helpers.aportupgrade
 import pmb.helpers.devices
 import pmb.helpers.git
 import pmb.helpers.lint
+import pmb.helpers.mount
 import pmb.helpers.logging
 import pmb.helpers.pkgrel_bump
 import pmb.helpers.pmaports
@@ -31,6 +33,7 @@ import pmb.install
 import pmb.install.blockdevice
 import pmb.netboot
 import pmb.parse
+import pmb.parse.arch
 import pmb.qemu
 import pmb.sideload
 
@@ -150,12 +153,23 @@ def netboot(args):
 def chroot(args):
     # Suffix
     suffix = _parse_suffix(args)
+    working_dir = "/"
+    bindmount_targets = []
     if (args.user and suffix != "native" and
             not suffix.startswith("buildroot_")):
         raise RuntimeError("--user is only supported for native or"
                            " buildroot_* chroots.")
     if args.xauth and suffix != "native":
         raise RuntimeError("--xauth is only supported for native chroot.")
+
+    if args.bind_mount:
+        if suffix != "native" and not suffix.startswith("buildroot_"):
+            raise RuntimeError("--bind-mount is only supported for native"
+                               " or buildroot_* chroots.")
+        if not all(os.path.isdir(src) for src in args.bind_mount):
+            raise RuntimeError("bind-mount source must be a directory")
+
+        args.user = True
 
     # apk: check minimum version, install packages
     pmb.chroot.apk.check_min_version(args, suffix)
@@ -169,6 +183,33 @@ def chroot(args):
         env["DISPLAY"] = os.environ.get("DISPLAY")
         env["XAUTHORITY"] = "/home/pmos/.Xauthority"
 
+    if args.bind_mount:
+        depends = []
+        for src in args.bind_mount:
+            src = os.path.realpath(src)
+            name = os.path.basename(src)
+            bindmount_targets.append(f"{args.work}/chroot_{suffix}/home/pmos/{name}")
+            pmb.helpers.mount.bind(args, src, bindmount_targets[-1], bindfs=True)
+            if os.path.isfile(f"{src}/PMBBUILD"):
+                apk = pmb.parse.apkbuild(f"{src}/PMBBUILD", check_pkgname=False,
+                                check_pkgver=False)
+                logging.info("Adding makedepends to chroot: " + ",".join(apk["makedepends"]))
+                depends += apk["makedepends"]
+
+        arch = pmb.parse.arch.from_chroot_suffix(args, suffix)
+        pmb.build.init(args, suffix)
+        pmb.build.other.configure_ccache(args, suffix)
+        if suffix != "native":
+            pmb.build.init_compiler(args, depends, "crossdirect", arch)
+        pmb.chroot.mount_native_into_foreign(args, suffix)
+
+        pmb.chroot.apk.install(args, depends, suffix)
+
+        env["PATH"] = ":".join(["/native/usr/lib/crossdirect/" + arch,
+                                pmb.config.chroot_path])
+
+        working_dir = f"/home/pmos/{name}"
+
     # Install blockdevice
     if args.install_blockdev:
         size_boot = 128  # 128 MiB
@@ -181,12 +222,16 @@ def chroot(args):
     if args.user:
         logging.info("(" + suffix + ") % su pmos -c '" +
                      " ".join(args.command) + "'")
-        pmb.chroot.user(args, args.command, suffix, output=args.output,
-                        env=env)
+        try:
+            pmb.chroot.user(args, args.command, suffix, output=args.output,
+                            env=env, working_dir=working_dir)
+        finally:
+            for target in bindmount_targets:
+                pmb.helpers.mount.umount_all(args, target)
     else:
         logging.info("(" + suffix + ") % " + " ".join(args.command))
         pmb.chroot.root(args, args.command, suffix, output=args.output,
-                        env=env)
+                        env=env, working_dir=working_dir)
 
 
 def config(args):

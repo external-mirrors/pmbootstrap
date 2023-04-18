@@ -217,6 +217,7 @@ def install(args, packages, suffix="native", build=True):
                   or needs to be updated, and it is inside pmaports. For the
                   special case that all packages are expected to be in Alpine's
                   repositories, set this to False for performance optimization.
+    :param always: if False, only install packages that are not already
     """
     arch = pmb.parse.arch.from_chroot_suffix(args, suffix)
 
@@ -229,12 +230,22 @@ def install(args, packages, suffix="native", build=True):
     check_min_version(args, suffix)
     pmb.chroot.init(args, suffix)
 
+    installed_pkgs = installed(args, suffix)
+    already_installed = all([pkg in installed_pkgs for pkg in packages])
+    if not build and already_installed:
+        return
+
     packages_with_depends = pmb.parse.depends.recurse(args, packages, suffix)
     to_add, to_del = packages_split_to_add_del(packages_with_depends)
 
+    did_build = False
     if build:
         for package in to_add:
-            install_build(args, package, arch)
+            did_build |= bool(install_build(args, package, arch))
+    
+    if not did_build and already_installed:
+        logging.debug(f"({suffix}) all packages already installed, skipping")
+        return
 
     to_add_local = packages_get_locally_built_apks(args, to_add, arch)
     to_add_no_deps, _ = packages_split_to_add_del(packages)

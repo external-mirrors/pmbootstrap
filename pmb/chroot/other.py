@@ -73,3 +73,19 @@ def copy_xauthority(args):
         pmb.helpers.run.root(args, ["rm", copy])
     pmb.helpers.run.root(args, ["cp", original, copy])
     pmb.chroot.root(args, ["chown", "pmos:pmos", "/home/pmos/.Xauthority"])
+
+def sudo_nopasswd(args, suffix="native"):
+    """
+    Disable the password prompt for the wheel group in the chroot.
+    """
+
+    if "sudo" not in pmb.chroot.apk.installed(args, suffix):
+        return
+
+
+    if "rootfs" in suffix:
+        logging.warning(f"!!!! SECURITY HOLE: Disabling sudo password for {suffix}")
+    else:
+        logging.info(f"({suffix}) disable sudo password prompt for wheel group")
+
+    pmb.chroot.root(args, ["sed", "-i", "s/^# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) NOPASSWD: ALL/", "/etc/sudoers"], suffix)

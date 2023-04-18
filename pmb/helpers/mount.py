@@ -20,7 +20,7 @@ def ismount(folder):
     return False
 
 
-def bind(args, source, destination, create_folders=True, umount=False):
+def bind(args, source, destination, create_folders=True, umount=False, bindfs=False):
     """
     Mount --bind a folder and create necessary directory structure.
     :param umount: when destination is already a mount point, umount it first.
@@ -43,7 +43,10 @@ def bind(args, source, destination, create_folders=True, umount=False):
                                path)
 
     # Actually mount the folder
-    pmb.helpers.run.root(args, ["mount", "--bind", source, destination])
+    if not bindfs:
+        pmb.helpers.run.root(args, ["mount", "--bind", source, destination])
+    else:
+        pmb.helpers.run.root(args, ["bindfs", "--force-user=12345", "--force-group=12345", source, destination])
 
     # Verify that it has worked
     if not ismount(destination):

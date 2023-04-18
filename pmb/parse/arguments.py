@@ -788,6 +788,16 @@ def arguments():
                         help="Create a sparse image file and mount it as"
                               " /dev/install, just like during the"
                               " installation process.")
+    chroot.add_argument("-m", "--bind-mount", nargs="*",
+                        help="bind mount one or more"
+                        " directories into the chroot.\n"
+                        "If the directory contains a PMBBUILD file, it will"
+                        " be parsed to automatically add the required"
+                        " dependencies to the chroot.\n"
+                        "All paths are mounted under /home/pmos/. The last"
+                        " path specified is used as the working directory."
+                        "Example: -m ~/pmos/unl0kr"
+                        "Implies --user")
     for action in [build_init, chroot]:
         suffix = action.add_mutually_exclusive_group()
         if action == chroot:
