@@ -192,6 +192,7 @@ def install_run_apk(args, to_add, to_add_local, to_del, suffix):
         commands += [["del"] + to_del]
 
     for (i, command) in enumerate(commands):
+        command = ["--no-interactive"] + command
         if args.offline:
             command = ["--no-network"] + command
         if i == 0:
