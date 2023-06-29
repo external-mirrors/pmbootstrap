@@ -3,20 +3,25 @@
 import fcntl
 import logging
 import os
+from pathlib import Path
 import selectors
 import shlex
 import subprocess
 import sys
 import threading
 import time
+from typing import Sequence
+from pmb.core.chroot import Chroot
 import pmb.helpers.run
+
+from pmb.core.types import PathString, PmbArgs
 
 """ For a detailed description of all output modes, read the description of
     core() at the bottom. All other functions in this file get (indirectly)
     called by core(). """
 
 
-def flat_cmd(cmd, working_dir=None, env={}):
+def flat_cmd(cmd: Sequence[PathString], working_dir: Path=Path("/"), env={}):
     """
     Convert a shell command passed as list into a flat shell string with
     proper escaping.
@@ -35,11 +40,11 @@ def flat_cmd(cmd, working_dir=None, env={}):
     for key, value in env.items():
         escaped.append(key + "=" + shlex.quote(value))
     for i in range(len(cmd)):
-        escaped.append(shlex.quote(cmd[i]))
+        escaped.append(shlex.quote(os.fspath(cmd[i])))
 
     # Prepend working dir
     ret = " ".join(escaped)
-    if working_dir:
+    if working_dir != Path("/"):
         ret = "cd " + shlex.quote(working_dir) + ";" + ret
 
     return ret
@@ -114,7 +119,7 @@ def pipe_read(process, output_to_stdout=False, output_return=False,
         return
 
 
-def kill_process_tree(args, pid, ppids, sudo):
+def kill_process_tree(args: PmbArgs, pid, ppids, sudo):
     """
     Recursively kill a pid and its child processes
 
@@ -134,7 +139,7 @@ def kill_process_tree(args, pid, ppids, sudo):
             kill_process_tree(args, child_pid, ppids, sudo)
 
 
-def kill_command(args, pid, sudo):
+def kill_command(args: PmbArgs, pid, sudo):
     """
     Kill a command process and recursively kill its child processes
 
@@ -154,7 +159,7 @@ def kill_command(args, pid, sudo):
     kill_process_tree(args, pid, ppids, sudo)
 
 
-def foreground_pipe(args, cmd, working_dir=None, output_to_stdout=False,
+def foreground_pipe(args: PmbArgs, cmd, working_dir=None, output_to_stdout=False,
                     output_return=False, output_timeout=True,
                     sudo=False, stdin=None):
     """
@@ -233,7 +238,7 @@ def foreground_tui(cmd, working_dir=None):
     return process.wait()
 
 
-def check_return_code(args, code, log_message):
+def check_return_code(args: PmbArgs, code, log_message):
     """
     Check the return code of a command.
 
@@ -247,7 +252,7 @@ def check_return_code(args, code, log_message):
     if code:
         logging.debug("^" * 70)
         logging.info("NOTE: The failed command's output is above the ^^^ line"
-                     " in the log file: " + args.log)
+                     f" in the log file: {args.log}")
         raise RuntimeError(f"Command failed (exit code {str(code)}): " +
                            log_message)
 
@@ -302,7 +307,7 @@ def add_proxy_env_vars(env):
             env[var] = os.environ[var]
 
 
-def core(args, log_message, cmd, working_dir=None, output="log",
+def core(args: PmbArgs, log_message, cmd, working_dir=None, output="log",
          output_return=False, check=None, sudo=False, disable_timeout=False):
     """
     Run a command and create a log entry.
@@ -368,6 +373,11 @@ def core(args, log_message, cmd, working_dir=None, output="log",
     # Log simplified and full command (pmbootstrap -v)
     logging.debug(log_message)
     logging.verbose("run: " + str(cmd))
+
+    # try:
+    #     input("Press Enter to continue...")
+    # except KeyboardInterrupt as e:
+    #     raise e
 
     # Background
     if output == "background":

@@ -3,11 +3,12 @@
 import logging
 
 import pmb.build
+from pmb.core.types import PmbArgs
 import pmb.helpers.package
 import pmb.helpers.pmaports
 
 
-def filter_missing_packages(args, arch, pkgnames):
+def filter_missing_packages(args: PmbArgs, arch, pkgnames):
     """ Create a subset of pkgnames with missing or outdated binary packages.
 
         :param arch: architecture (e.g. "armhf")
@@ -23,7 +24,7 @@ def filter_missing_packages(args, arch, pkgnames):
     return ret
 
 
-def filter_aport_packages(args, arch, pkgnames):
+def filter_aport_packages(args: PmbArgs, arch, pkgnames):
     """ Create a subset of pkgnames where each one has an aport.
 
         :param arch: architecture (e.g. "armhf")
@@ -36,7 +37,7 @@ def filter_aport_packages(args, arch, pkgnames):
     return ret
 
 
-def filter_arch_packages(args, arch, pkgnames):
+def filter_arch_packages(args: PmbArgs, arch, pkgnames):
     """ Create a subset of pkgnames with packages removed that can not be
         built for a certain arch.
 
@@ -50,7 +51,7 @@ def filter_arch_packages(args, arch, pkgnames):
     return ret
 
 
-def get_relevant_packages(args, arch, pkgname=None, built=False):
+def get_relevant_packages(args: PmbArgs, arch, pkgname=None, built=False):
     """ Get all packages that can be built for the architecture in question.
 
         :param arch: architecture (e.g. "armhf")
@@ -83,7 +84,7 @@ def get_relevant_packages(args, arch, pkgname=None, built=False):
     return ret
 
 
-def generate_output_format(args, arch, pkgnames):
+def generate_output_format(args: PmbArgs, arch, pkgnames):
     """ Generate the detailed output format.
         :param arch: architecture
         :param pkgnames: list of package names that should be in the output,
@@ -107,7 +108,7 @@ def generate_output_format(args, arch, pkgnames):
     return ret
 
 
-def generate(args, arch, overview, pkgname=None, built=False):
+def generate(args: PmbArgs, arch, overview, pkgname=None, built=False):
     """ Get packages that need to be built, with all their dependencies.
 
         :param arch: architecture (e.g. "armhf")
