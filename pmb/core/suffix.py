@@ -21,10 +21,36 @@ class Suffix:
     def __init__(self, suffix_type: SuffixType, name: str | None = ""):
         self.__type = suffix_type
         self.__name = name or ""
-        if self.__type == SuffixType.NATIVE and len(self.__name) > 0:
-            raise ValueError("The native suffix can't have a name")
-        elif self.__type != SuffixType.NATIVE and len(self.__name) == 0:
-            raise ValueError(f"The suffix type {self.__type} must have a name")
+        
+        self.__validate()
+
+    def __validate(self) -> None:
+        """
+        Ensures that this suffix follows the correct format.
+        """
+        valid_arches = [
+            "x86",
+            "x86_64",
+            "aarch64",
+            "armhf", # XXX: remove this?
+            "armv7",
+            "riscv64",
+        ]
+
+        # A buildroot suffix must have a name matching one of alpines
+        # architectures.
+        if self.__type == SuffixType.BUILDROOT and self.__name not in valid_arches:
+            raise ValueError(f"Invalid buildroot suffix: '{self.__name}'")
+
+        # A rootfs or installer suffix must have a name matching a device.
+        if self.__type == SuffixType.INSTALLER or self.__type == SuffixType.ROOTFS:
+            # FIXME: pmb.helpers.devices.find_path() requires args parameter
+            pass
+
+        # A native suffix must not have a name.
+        if self.__type == SuffixType.NATIVE and self.__name != "":
+            raise ValueError(f"The native suffix can't have a name but got: "
+                             f"'{self.__name}'")
 
     # Prefer .chroot()
     def __str__(self) -> str:
