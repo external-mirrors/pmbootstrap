@@ -109,7 +109,7 @@ def package_from_index(args, pkgname_depend, pkgnames_install, package_aport,
     return provider
 
 
-def recurse(args, pkgnames, suffix: Suffix=Suffix.native()):
+def recurse(args, pkgnames, suffix: Suffix=Suffix.native()) -> list[str]:
     """
     Find all dependencies of the given pkgnames.
 
@@ -126,7 +126,7 @@ def recurse(args, pkgnames, suffix: Suffix=Suffix.native()):
     # Iterate over todo-list until is is empty
     todo = list(pkgnames)
     required_by = {}
-    ret = []
+    ret: list[str] = []
     while len(todo):
         # Skip already passed entries
         pkgname_depend = todo.pop(0)
