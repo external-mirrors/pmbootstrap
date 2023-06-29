@@ -362,7 +362,7 @@ def ask_for_device_nonfree(args, device):
     :returns: answers as dict, e.g. {"firmware": True, "userland": False}
     """
     # Parse existing APKBUILD or return defaults (when called from test case)
-    apkbuild_path = pmb.helpers.devices.find_path(args, device, 'APKBUILD')
+    apkbuild_path = pmb.helpers.devices.find_path(device, 'APKBUILD')
     ret = {"firmware": args.nonfree_firmware,
            "userland": args.nonfree_userland}
     if not apkbuild_path:
@@ -399,7 +399,7 @@ def ask_for_device_nonfree(args, device):
 
 
 def ask_for_device(args):
-    vendors = sorted(pmb.helpers.devices.list_vendors(args))
+    vendors = sorted(pmb.helpers.devices.list_vendors())
     logging.info("Choose your target device vendor (either an "
                  "existing one, or a new one for porting).")
     logging.info(f"Available vendors ({len(vendors)}): {', '.join(vendors)}")
@@ -425,7 +425,7 @@ def ask_for_device(args):
         else:
             # Unmaintained devices can be selected, but are not displayed
             devices = sorted(pmb.helpers.devices.list_codenames(
-                args, vendor, unmaintained=False))
+                vendor, unmaintained=False))
             # Remove "vendor-" prefixes from device list
             codenames = [x.split('-', 1)[1] for x in devices]
             logging.info(f"Available codenames ({len(codenames)}): " +
@@ -438,7 +438,7 @@ def ask_for_device(args):
                                        codenames)
 
         device = f"{vendor}-{codename}"
-        device_path = pmb.helpers.devices.find_path(args, device, 'deviceinfo')
+        device_path = pmb.helpers.devices.find_path(device, 'deviceinfo')
         device_exists = device_path is not None
         if not device_exists:
             if device == args.device:
@@ -700,7 +700,7 @@ def frontend(args):
     cfg["pmbootstrap"]["nonfree_userland"] = str(nonfree["userland"])
 
     info = pmb.parse.deviceinfo(args, device)
-    apkbuild_path = pmb.helpers.devices.find_path(args, device, 'APKBUILD')
+    apkbuild_path = pmb.helpers.devices.find_path(device, 'APKBUILD')
     if apkbuild_path:
         apkbuild = pmb.parse.apkbuild(apkbuild_path)
         ask_for_provider_select(args, apkbuild, cfg["providers"])

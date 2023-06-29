@@ -9,9 +9,7 @@ from typing import List
 #
 # Exported functions
 #
-from pmb.config.load import load
-from pmb.config.save import save
-from pmb.config.merge_with_args import merge_with_args
+from pmb.config.config import load, get, save, merge_with_args
 from pmb.config.sudo import which_sudo
 
 
@@ -219,6 +217,8 @@ chroot_mount_bind = {
     "$WORK/config_apk_keys": "/etc/apk/keys",
     "$WORK/images_netboot": "/mnt/pmbootstrap-netboot",
     "$WORK/packages/$CHANNEL": "/mnt/pmbootstrap-packages",
+    # Use apk.static for SPEEED. Borked perms??
+    # "$WORK/apk.static": "/sbin/apk",
 }
 
 # Building chroots (all chroots, except for the rootfs_ chroot) get symlinks in
@@ -1044,6 +1044,7 @@ flashers = {
 git_repos = {
     "aports_upstream": "https://gitlab.alpinelinux.org/alpine/aports.git",
     "pmaports": "https://gitlab.com/postmarketOS/pmaports.git",
+    "caports": "https://codeberg.org/somethingnew/caports.git",
 }
 
 # When a git repository is considered outdated (in seconds)

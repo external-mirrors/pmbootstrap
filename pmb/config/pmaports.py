@@ -9,6 +9,8 @@ import pmb.config
 import pmb.helpers.git
 import pmb.helpers.pmaports
 
+from pmb.core.pkgrepo import pkgrepo_paths, pkgrepo_default_path
+
 
 def check_legacy_folder():
     # Existing pmbootstrap/aports must be a symlink
@@ -30,19 +32,6 @@ def clone(args):
 
     # Set up the native chroot and clone pmaports
     pmb.helpers.git.clone(args, "pmaports")
-
-
-def symlink(args):
-    # Create the symlink
-    # This won't work when pmbootstrap was installed system wide, but that's
-    # okay since the symlink is only intended to make the migration to the
-    # pmaports repository easier.
-    link = pmb.config.pmb_src + "/aports"
-    try:
-        os.symlink(args.aports, link)
-        logging.info("NOTE: pmaports path: " + link)
-    except:
-        logging.info("NOTE: pmaports path: " + args.aports)
 
 
 def check_version_pmaports(real):
@@ -89,13 +78,13 @@ def read_config(args):
         return pmb.helpers.other.cache[cache_key]
 
     # Migration message
-    if not os.path.exists(args.aports):
-        logging.error(f"ERROR: pmaports dir not found: {args.aports}")
+    if not os.path.exists(pkgrepo_default_path()):
+        logging.error(f"ERROR: aports dir not found: {pkgrepo_default_path()}")
         logging.error("Did you run 'pmbootstrap init'?")
         sys.exit(1)
 
     # Require the config
-    path_cfg = args.aports + "/pmaports.cfg"
+    path_cfg = pkgrepo_default_path() + "/pmaports.cfg"
     if not os.path.exists(path_cfg):
         raise RuntimeError("Invalid pmaports repository, could not find the"
                            " config: " + path_cfg)
@@ -131,7 +120,7 @@ def read_config_channel(args):
         return channels_cfg["channels"][channel]
 
     # Channel not in channels.cfg, try to be helpful
-    branch = pmb.helpers.git.rev_parse(args, args.aports,
+    branch = pmb.helpers.git.rev_parse(args, pkgrepo_default_path(),
                                        extra_args=["--abbrev-ref"])
     branches_official = pmb.helpers.git.get_branches_official(args, "pmaports")
     branches_official = ", ".join(branches_official)
@@ -149,13 +138,11 @@ def read_config_channel(args):
 
 
 def init(args):
-    check_legacy_folder()
-    if not os.path.exists(args.aports):
+    if not os.path.exists(pkgrepo_default_path()):
         clone(args)
-    symlink(args)
     read_config(args)
 
-
+# XXX: Handle multiple aports
 def switch_to_channel_branch(args, channel_new):
     """ Checkout the channel's branch in pmaports.git.
         :channel_new: channel name (e.g. "edge", "v21.03")
@@ -168,7 +155,7 @@ def switch_to_channel_branch(args, channel_new):
     # List current and new branches/channels
     channels_cfg = pmb.helpers.git.parse_channels_cfg(args)
     branch_new = channels_cfg["channels"][channel_new]["branch_pmaports"]
-    branch_current = pmb.helpers.git.rev_parse(args, args.aports,
+    branch_current = pmb.helpers.git.rev_parse(args, pkgrepo_default_path(),
                                                extra_args=["--abbrev-ref"])
     logging.info(f"Currently checked out branch '{branch_current}' of"
                  f" pmaports.git is on channel '{channel_current}'.")
@@ -181,10 +168,10 @@ def switch_to_channel_branch(args, channel_new):
     # Attempt to switch branch (git gives a nice error message, mentioning
     # which files need to be committed/stashed, so just pass it through)
     if pmb.helpers.run.user(args, ["git", "checkout", branch_new],
-                            args.aports, "interactive", check=False):
+                            pkgrepo_default_path(), "interactive", check=False):
         raise RuntimeError("Failed to switch branch. Go to your pmaports and"
                            " fix what git complained about, then try again: "
-                           f"{args.aports}")
+                           f"{pkgrepo_default_path()}")
 
     # Invalidate all caches
     pmb.helpers.other.init_cache()
@@ -193,9 +180,8 @@ def switch_to_channel_branch(args, channel_new):
     read_config(args)
     return True
 
-
-def install_githooks(args):
-    hooks_dir = os.path.join(args.aports, ".githooks")
+def _install_githooks_for_aport(args, aport):
+    hooks_dir = os.path.join(aport, ".githooks")
     if not os.path.exists(hooks_dir):
         logging.info("No .githooks dir found")
         return
@@ -203,6 +189,10 @@ def install_githooks(args):
         src = os.path.join(hooks_dir, h)
         # Use git default hooks dir so users can ignore our hooks
         # if they dislike them by setting "core.hooksPath" git config
-        dst = os.path.join(args.aports, ".git", "hooks", h)
+        dst = os.path.join(aport, ".git", "hooks", h)
         if pmb.helpers.run.user(args, ["cp", src, dst], check=False):
             logging.warning(f"WARNING: Copying git hook failed: {dst}")
+
+def install_githooks(args):
+    for aport in pkgrepo_paths():
+        _install_githooks_for_aport(args, aport)

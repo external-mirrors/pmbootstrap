@@ -10,7 +10,6 @@ import stat
 import pmb.helpers.apk
 import pmb.helpers.run
 import pmb.config
-import pmb.config.load
 import pmb.parse.apkindex
 import pmb.helpers.http
 import pmb.parse.version
