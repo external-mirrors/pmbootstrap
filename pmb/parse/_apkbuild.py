@@ -345,7 +345,7 @@ def kernels(args, device):
                         "downstream": "Downstream description"}
     """
     # Read the APKBUILD
-    apkbuild_path = pmb.helpers.devices.find_path(args, device, 'APKBUILD')
+    apkbuild_path = pmb.helpers.devices.find_path(device, 'APKBUILD')
     if apkbuild_path is None:
         return None
     subpackages = apkbuild(apkbuild_path)["subpackages"]
