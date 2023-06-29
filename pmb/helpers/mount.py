@@ -1,6 +1,8 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
+import pmb.helpers
+from pmb.core import Suffix
 import pmb.helpers.run
 
 
@@ -106,3 +108,18 @@ def umount_all(args, folder):
         pmb.helpers.run.root(args, ["umount", mountpoint])
         if ismount(mountpoint):
             raise RuntimeError("Failed to umount: " + mountpoint)
+
+
+def mount_device_rootfs(args, suffix_rootfs: Suffix, suffix_mount: Suffix=Suffix.native()):
+    """
+    Mount the device rootfs.
+    :param suffix_rootfs: the chroot suffix, where the rootfs that will be
+                          installed on the device has been created (e.g.
+                          "rootfs_qemu-amd64")
+    :param suffix_mount: the chroot suffix, where the device rootfs will be
+                         mounted (e.g. "native")
+    """
+    mountpoint = f"/mnt/{suffix_rootfs}"
+    pmb.helpers.mount.bind(args, f"{args.work}/{suffix_rootfs.chroot()}",
+                           f"{args.work}/{suffix_mount.chroot()}{mountpoint}")
+    return mountpoint

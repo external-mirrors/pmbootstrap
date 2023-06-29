@@ -13,9 +13,10 @@ import pmb.helpers.pmaports
 import pmb.helpers.run
 import pmb.parse.apkindex
 import pmb.parse.version
+from pmb.core import Suffix
 
 
-def copy_to_buildpath(args, package, suffix="native"):
+def copy_to_buildpath(args, package, suffix: Suffix=Suffix.native()):
     # Sanity check
     aport = pmb.helpers.pmaports.find(args, package)
     if not os.path.exists(aport + "/APKBUILD"):
@@ -23,7 +24,7 @@ def copy_to_buildpath(args, package, suffix="native"):
                          aport)
 
     # Clean up folder
-    build = args.work + "/chroot_" + suffix + "/home/pmos/build"
+    build = f"{args.work}/{suffix.chroot()}/home/pmos/build"
     if os.path.exists(build):
         pmb.chroot.root(args, ["rm", "-rf", "/home/pmos/build"], suffix)
 
@@ -129,13 +130,13 @@ def index_repo(args, arch=None):
         pmb.parse.apkindex.clear_cache(f"{path}/APKINDEX.tar.gz")
 
 
-def configure_abuild(args, suffix, verify=False):
+def configure_abuild(args, suffix: Suffix, verify=False):
     """
     Set the correct JOBS count in abuild.conf
 
     :param verify: internally used to test if changing the config has worked.
     """
-    path = args.work + "/chroot_" + suffix + "/etc/abuild.conf"
+    path = f"{args.work}/{suffix.chroot()}/etc/abuild.conf"
     prefix = "export JOBS="
     with open(path, encoding="utf-8") as handle:
         for line in handle:
@@ -155,7 +156,7 @@ def configure_abuild(args, suffix, verify=False):
     pmb.chroot.root(args, ["sed", "-i", f"$ a\\{prefix}{args.jobs}", "/etc/abuild.conf"], suffix)
 
 
-def configure_ccache(args, suffix="native", verify=False):
+def configure_ccache(args, suffix: Suffix=Suffix.native(), verify=False):
     """
     Set the maximum ccache size
 

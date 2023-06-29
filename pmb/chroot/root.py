@@ -8,6 +8,7 @@ import pmb.chroot
 import pmb.chroot.binfmt
 import pmb.helpers.run
 import pmb.helpers.run_core
+from pmb.core import Suffix
 
 
 def executables_absolute_path():
@@ -25,7 +26,7 @@ def executables_absolute_path():
     return ret
 
 
-def root(args, cmd, suffix="native", working_dir="/", output="log",
+def root(args, cmd, suffix: Suffix=Suffix.native(), working_dir="/", output="log",
          output_return=False, check=None, env={}, auto_init=True,
          disable_timeout=False, add_proxy_env_vars=True):
     """
@@ -43,7 +44,7 @@ def root(args, cmd, suffix="native", working_dir="/", output="log",
     arguments and the return value.
     """
     # Initialize chroot
-    chroot = f"{args.work}/chroot_{suffix}"
+    chroot = f"{args.work}/{suffix.chroot()}"
     if not auto_init and not os.path.islink(f"{chroot}/bin/sh"):
         raise RuntimeError(f"Chroot does not exist: {chroot}")
     if auto_init:

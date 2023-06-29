@@ -12,7 +12,7 @@ import pmb.helpers.pmaports
 import pmb.helpers.repo
 import pmb.parse
 import pmb.parse.arch
-
+from pmb.core import Suffix
 
 def skip_already_built(pkgname, arch):
     """
@@ -185,7 +185,7 @@ def is_necessary_warn_depends(args, apkbuild, arch, force, depends_built):
 
 
 def init_buildenv(args, apkbuild, arch, strict=False, force=False, cross=None,
-                  suffix="native", skip_init_buildenv=False, src=None):
+                  suffix: Suffix = Suffix.native(), skip_init_buildenv=False, src=None):
     """
     Build all dependencies, check if we need to build at all (otherwise we've
     just initialized the build environment for nothing) and then setup the
@@ -256,7 +256,7 @@ def get_pkgver(original_pkgver, original_source=False, now=None):
     return no_suffix + new_suffix
 
 
-def override_source(args, apkbuild, pkgver, src, suffix="native"):
+def override_source(args, apkbuild, pkgver, src, suffix: Suffix=Suffix.native()):
     """
     Mount local source inside chroot and append new functions (prepare() etc.)
     to the APKBUILD to make it use the local source.
@@ -266,12 +266,12 @@ def override_source(args, apkbuild, pkgver, src, suffix="native"):
 
     # Mount source in chroot
     mount_path = "/mnt/pmbootstrap/source-override/"
-    mount_path_outside = args.work + "/chroot_" + suffix + mount_path
+    mount_path_outside = f"{args.work}/{suffix.chroot()}{mount_path}"
     pmb.helpers.mount.bind(args, src, mount_path_outside, umount=True)
 
     # Delete existing append file
     append_path = "/tmp/APKBUILD.append"
-    append_path_outside = args.work + "/chroot_" + suffix + append_path
+    append_path_outside = f"{args.work}/{suffix.chroot()}{append_path}"
     if os.path.exists(append_path_outside):
         pmb.chroot.root(args, ["rm", append_path], suffix)
 
@@ -324,13 +324,13 @@ def override_source(args, apkbuild, pkgver, src, suffix="native"):
     pmb.chroot.user(args, ["mv", append_path + "_", apkbuild_path], suffix)
 
 
-def mount_pmaports(args, destination, suffix="native"):
+def mount_pmaports(args, destination, suffix: Suffix=Suffix.native()):
     """
     Mount pmaports.git in chroot.
 
     :param destination: mount point inside the chroot
     """
-    outside_destination = args.work + "/chroot_" + suffix + destination
+    outside_destination = f"{args.work}/{suffix.chroot()}{destination}"
     pmb.helpers.mount.bind(args, args.aports, outside_destination, umount=True)
 
 
@@ -364,7 +364,7 @@ def link_to_git_dir(args, suffix):
 
 
 def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
-               suffix="native", src=None, bootstrap=None):
+               suffix: Suffix=Suffix.native(), src=None, bootstrap=None):
     """
     Set up all environment variables and construct the abuild command (all
     depending on the cross-compiler method and target architecture), copy
@@ -388,7 +388,7 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
     pkgver = get_pkgver(apkbuild["pkgver"], src is None)
     output = (arch + "/" + apkbuild["pkgname"] + "-" + pkgver +
               "-r" + apkbuild["pkgrel"] + ".apk")
-    message = "(" + suffix + ") build " + output
+    message = f"({suffix}) build " + output
     if src:
         message += " (source: " + src + ")"
     logging.info(message)
@@ -445,7 +445,7 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
     return (output, cmd, env)
 
 
-def finish(args, apkbuild, arch, output, strict=False, suffix="native"):
+def finish(args, apkbuild, arch, output, strict=False, suffix: Suffix=Suffix.native()):
     """
     Various finishing tasks that need to be done after a build.
     """
@@ -463,7 +463,7 @@ def finish(args, apkbuild, arch, output, strict=False, suffix="native"):
 
     # Uninstall build dependencies (strict mode)
     if strict or "pmb:strict" in apkbuild["options"]:
-        logging.info("(" + suffix + ") uninstall build dependencies")
+        logging.info(f"({suffix}) uninstall build dependencies")
         pmb.chroot.user(args, ["abuild", "undeps"], suffix, "/home/pmos/build",
                         env={"SUDO_APK": "abuild-apk --no-progress"})
         # If the build depends contain postmarketos-keys or postmarketos-base,

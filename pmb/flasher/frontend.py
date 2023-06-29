@@ -11,13 +11,14 @@ import pmb.chroot.initfs
 import pmb.chroot.other
 import pmb.helpers.frontend
 import pmb.parse.kconfig
+from pmb.core import Suffix, SuffixType
 
 
 def kernel(args):
     # Rebuild the initramfs, just to make sure (see #69)
     flavor = pmb.helpers.frontend._parse_flavor(args, args.autoinstall)
     if args.autoinstall:
-        pmb.chroot.initfs.build(args, flavor, "rootfs_" + args.device)
+        pmb.chroot.initfs.build(args, flavor, Suffix(SuffixType.ROOTFS, args.device))
 
     # Check kernel config
     pmb.parse.kconfig.check(args, flavor, must_exist=False)
@@ -40,8 +41,8 @@ def kernel(args):
 
 
 def list_flavors(args):
-    suffix = "rootfs_" + args.device
-    logging.info("(" + suffix + ") installed kernel flavors:")
+    suffix = Suffix(SuffixType.ROOTFS, args.device)
+    logging.info(f"({suffix}) installed kernel flavors:")
     logging.info("* " + pmb.chroot.other.kernel_flavor_installed(args, suffix))
 
 
@@ -53,7 +54,7 @@ def rootfs(args):
     if pmb.config.flashers.get(method, {}).get("split", False):
         suffix = "-root.img"
 
-    img_path = f"{args.work}/chroot_native/home/pmos/rootfs/{args.device}"\
+    img_path = f"{args.work}/{Suffix.native().chroot()}/home/pmos/rootfs/{args.device}"\
                f"{suffix}"
     if not os.path.exists(img_path):
         raise RuntimeError("The rootfs has not been generated yet, please run"
@@ -92,15 +93,15 @@ def sideload(args):
     pmb.flasher.install_depends(args)
 
     # Mount the buildroot
-    suffix = "buildroot_" + args.deviceinfo["arch"]
+    suffix = Suffix(SuffixType.BUILDROOT, args.deviceinfo["arch"])
     mountpoint = "/mnt/" + suffix
-    pmb.helpers.mount.bind(args, args.work + "/chroot_" + suffix,
-                           args.work + "/chroot_native/" + mountpoint)
+    pmb.helpers.mount.bind(args, f"{args.work}/{suffix.chroot()}",
+                           args.work + f"/{Suffix.native().chroot()}/" + mountpoint)
 
     # Missing recovery zip error
     zip_path = ("/var/lib/postmarketos-android-recovery-installer/pmos-" +
                 args.device + ".zip")
-    if not os.path.exists(args.work + "/chroot_native" + mountpoint +
+    if not os.path.exists(args.work + f"/{Suffix.native().chroot()}" + mountpoint +
                           zip_path):
         raise RuntimeError("The recovery zip has not been generated yet,"
                            " please run 'pmbootstrap install' with the"
@@ -137,7 +138,7 @@ def flash_lk2nd(args):
     if not lk2nd_pkg:
         raise RuntimeError(f"{device_pkg} does not depend on any lk2nd package")
 
-    suffix = "rootfs_" + args.device
+    suffix = Suffix(SuffixType.ROOTFS, args.device)
     pmb.chroot.apk.install(args, [lk2nd_pkg], suffix)
 
     logging.info("(native) flash lk2nd image")

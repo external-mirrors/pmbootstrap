@@ -11,6 +11,7 @@ import pmb.config.workdir
 import pmb.helpers.pmaports
 import pmb.helpers.run
 import pmb.parse.apkindex
+from pmb.core import Suffix, SuffixType
 
 
 def zap(args, confirm=True, dry=False, pkgs_local=False, http=False,
@@ -52,12 +53,7 @@ def zap(args, confirm=True, dry=False, pkgs_local=False, http=False,
     pmb.chroot.shutdown(args)
 
     # Deletion patterns for folders inside args.work
-    patterns = [
-        "chroot_native",
-        "chroot_buildroot_*",
-        "chroot_installer_*",
-        "chroot_rootfs_*",
-    ]
+    patterns = list(Suffix.iter_patterns())
     if pkgs_local:
         patterns += ["packages"]
     if http:
@@ -161,9 +157,13 @@ def zap_pkgs_online_mismatch(args, confirm=True, dry=False):
     # Iterate over existing apk caches
     for path in paths:
         arch = os.path.basename(path).split("_", 2)[2]
-        suffix = f"buildroot_{arch}"
         if arch == pmb.config.arch_native:
-            suffix = "native"
+            suffix = Suffix.native()
+        else:
+            try:
+                suffix = Suffix(SuffixType.BUILDROOT, arch)
+            except ValueError:
+                continue # Ignore invalid directory name
 
         # Clean the cache with apk
         logging.info(f"({suffix}) apk -v cache clean")

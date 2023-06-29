@@ -12,6 +12,7 @@ import pmb.chroot.other
 import pmb.helpers.pmaports
 import pmb.helpers.run
 import pmb.parse
+from pmb.core import Suffix
 
 
 def get_arch(apkbuild):
@@ -47,7 +48,7 @@ def get_outputdir(args, pkgname, apkbuild):
     """
     # Old style ($srcdir/build)
     ret = "/home/pmos/build/src/build"
-    chroot = args.work + "/chroot_native"
+    chroot = args.work + f"/{Suffix.native().chroot()}"
     if os.path.exists(chroot + ret + "/.config"):
         logging.warning("*****")
         logging.warning("NOTE: The code in this linux APKBUILD is pretty old."
@@ -60,7 +61,7 @@ def get_outputdir(args, pkgname, apkbuild):
     # New style ($builddir)
     cmd = "srcdir=/home/pmos/build/src source APKBUILD; echo $builddir"
     ret = pmb.chroot.user(args, ["sh", "-c", cmd],
-                          "native", "/home/pmos/build",
+                          Suffix.native(), "/home/pmos/build",
                           output_return=True).rstrip()
     if os.path.exists(chroot + ret + "/.config"):
         return ret
@@ -81,9 +82,9 @@ def get_outputdir(args, pkgname, apkbuild):
 def extract_and_patch_sources(args, pkgname, arch):
     pmb.build.copy_to_buildpath(args, pkgname)
     logging.info("(native) extract kernel source")
-    pmb.chroot.user(args, ["abuild", "unpack"], "native", "/home/pmos/build")
+    pmb.chroot.user(args, ["abuild", "unpack"], Suffix.native(), "/home/pmos/build")
     logging.info("(native) apply patches")
-    pmb.chroot.user(args, ["abuild", "prepare"], "native",
+    pmb.chroot.user(args, ["abuild", "prepare"], Suffix.native(),
                     "/home/pmos/build", output="interactive",
                     env={"CARCH": arch})
 
@@ -149,7 +150,7 @@ def menuconfig(args, pkgname, use_oldconfig):
                     outputdir, output="tui", env=env)
 
     # Find the updated config
-    source = args.work + "/chroot_native" + outputdir + "/.config"
+    source = args.work + f"/{Suffix.native().chroot()}" + outputdir + "/.config"
     if not os.path.exists(source):
         raise RuntimeError("No kernel config generated: " + source)
 

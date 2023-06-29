@@ -10,6 +10,7 @@ import pmb.config
 import pmb.config.pmaports
 import pmb.flasher
 import pmb.helpers.file
+from pmb.core import Suffix, SuffixType
 
 
 def symlinks(args, flavor, folder):
@@ -41,9 +42,9 @@ def symlinks(args, flavor, folder):
     }
 
     # Generate a list of patterns
-    path_native = args.work + "/chroot_native"
-    path_boot = args.work + "/chroot_rootfs_" + args.device + "/boot"
-    path_buildroot = args.work + "/chroot_buildroot_" + args.deviceinfo["arch"]
+    path_native = f"{args.work}/{Suffix.native().chroot()}"
+    path_boot = f"{args.work}/{Suffix(SuffixType.ROOTFS, args.device)}/boot"
+    path_buildroot = f"{args.work}/{Suffix(SuffixType.BUILDROOT, args.deviceinfo['arch'])}"
     patterns = [f"{path_boot}/boot.img{suffix}",
                 f"{path_boot}/initramfs{suffix}*",
                 f"{path_boot}/uInitrd{suffix}",

@@ -13,6 +13,7 @@ from .helpers import frontend
 from .helpers import logging as pmb_logging
 from .helpers import mount
 from .helpers import other
+from pmb.core import Suffix
 
 # pmbootstrap version
 __version__ = "2.2.1"
@@ -65,7 +66,7 @@ def main():
             logging.info("Run pmbootstrap -h for usage information.")
 
         # Still active notice
-        if mount.ismount(args.work + "/chroot_native/dev"):
+        if mount.ismount(args.work + f"/{Suffix.native().chroot()}/dev"):
             logging.info("NOTE: chroot is still active (use 'pmbootstrap"
                          " shutdown' as necessary)")
         logging.info("DONE!")

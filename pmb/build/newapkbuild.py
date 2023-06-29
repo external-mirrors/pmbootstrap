@@ -7,12 +7,14 @@ import pmb.chroot.user
 import pmb.helpers.cli
 import pmb.parse
 
+from pmb.core import Suffix
+
 
 def newapkbuild(args, folder, args_passed, force=False):
     # Initialize build environment and build folder
     pmb.build.init(args)
     build = "/home/pmos/build"
-    build_outside = args.work + "/chroot_native" + build
+    build_outside = args.work + f"/{Suffix.native().chroot()}" + build
     if os.path.exists(build_outside):
         pmb.chroot.root(args, ["rm", "-r", build])
     pmb.chroot.user(args, ["mkdir", "-p", build])

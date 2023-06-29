@@ -6,9 +6,10 @@ import logging
 
 import pmb.config
 import pmb.chroot.apk
+from pmb.core import Suffix
 
 
-def list_chroot(args, suffix, remove_prefix=True):
+def list_chroot(args, suffix: Suffix, remove_prefix=True):
     ret = []
     prefix = pmb.config.initfs_hook_prefix
     for pkgname in pmb.chroot.apk.installed(args, suffix).keys():
@@ -28,7 +29,7 @@ def list_aports(args):
     return ret
 
 
-def ls(args, suffix):
+def ls(args, suffix: Suffix):
     hooks_chroot = list_chroot(args, suffix)
     hooks_aports = list_aports(args)
 
@@ -37,7 +38,7 @@ def ls(args, suffix):
         logging.info(line)
 
 
-def add(args, hook, suffix):
+def add(args, hook, suffix: Suffix):
     if hook not in list_aports(args):
         raise RuntimeError("Invalid hook name!"
                            " Run 'pmbootstrap initfs hook_ls'"
@@ -46,14 +47,14 @@ def add(args, hook, suffix):
     pmb.chroot.apk.install(args, [f"{prefix}{hook}"], suffix)
 
 
-def delete(args, hook, suffix):
+def delete(args, hook, suffix: Suffix):
     if hook not in list_chroot(args, suffix):
         raise RuntimeError("There is no such hook installed!")
     prefix = pmb.config.initfs_hook_prefix
     pmb.chroot.root(args, ["apk", "del", f"{prefix}{hook}"], suffix)
 
 
-def update(args, suffix):
+def update(args, suffix: Suffix):
     """
     Rebuild and update all hooks that are out of date
     """

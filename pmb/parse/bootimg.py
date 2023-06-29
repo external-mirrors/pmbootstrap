@@ -3,6 +3,7 @@
 import os
 import logging
 import pmb
+from pmb.core import Suffix
 
 
 def is_dtb(path):
@@ -54,7 +55,7 @@ def bootimg(args, path):
     pmb.chroot.apk.install(args, ["file", "unpackbootimg"])
 
     temp_path = pmb.chroot.other.tempfolder(args, "/tmp/bootimg_parser")
-    bootimg_path = f"{args.work}/chroot_native{temp_path}/boot.img"
+    bootimg_path = f"{args.work}/{Suffix.native().chroot()}{temp_path}/boot.img"
 
     # Copy the boot.img into the chroot temporary folder
     # and make it world readable

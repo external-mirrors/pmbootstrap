@@ -4,6 +4,8 @@ import pmb.chroot.apk
 import pmb.config
 import pmb.config.pmaports
 import pmb.helpers.mount
+from pmb.helpers.mount import mount_device_rootfs
+from pmb.core import Suffix, SuffixType
 
 
 def install_depends(args):
@@ -45,10 +47,8 @@ def init(args):
 
     # Mount folders from host system
     for folder in pmb.config.flash_mount_bind:
-        pmb.helpers.mount.bind(args, folder, args.work +
-                               "/chroot_native" + folder)
+        pmb.helpers.mount.bind(args, folder, f"{args.work}"
+                               f"/{Suffix.native().chroot()}/{folder}")
 
     # Mount device chroot inside native chroot (required for kernel/ramdisk)
-    mountpoint = "/mnt/rootfs_" + args.device
-    pmb.helpers.mount.bind(args, args.work + "/chroot_rootfs_" + args.device,
-                           args.work + "/chroot_native" + mountpoint)
+    mount_device_rootfs(args, Suffix(SuffixType.ROOTFS, args.device))

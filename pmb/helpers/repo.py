@@ -8,6 +8,8 @@ Functions that work with binary package repos. See also:
 import os
 import hashlib
 import logging
+from typing import List
+
 import pmb.config.pmaports
 import pmb.helpers.http
 import pmb.helpers.run
@@ -53,7 +55,7 @@ def urls(args, user_repository=True, postmarketos_mirror=True, alpine=True,
     :returns: list of mirror strings, like ["/mnt/pmbootstrap/packages",
                                             "http://...", ...]
     """
-    ret = []
+    ret: List[str] = []
 
     # Get mirrordirs from channels.cfg (postmarketOS mirrordir is the same as
     # the pmaports branch of the channel, no need to make it more complicated)
@@ -87,6 +89,7 @@ def urls(args, user_repository=True, postmarketos_mirror=True, alpine=True,
             directories.append("testing")
         for dir in directories:
             ret.append(f"{args.mirror_alpine}{mirrordir_alpine}/{dir}")
+
     return ret
 
 

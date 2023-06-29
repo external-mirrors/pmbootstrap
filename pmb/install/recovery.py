@@ -23,7 +23,7 @@ def create_zip(args, suffix):
                            ["postmarketos-android-recovery-installer"],
                            suffix)
 
-    logging.info("(" + suffix + ") create recovery zip")
+    logging.info(f"({suffix}) create recovery zip")
 
     for key in vars:
         pmb.flasher.check_partition_blacklist(args, key, vars[key])
@@ -50,7 +50,7 @@ def create_zip(args, suffix):
         options["FLAVOR"] = f"-{flavor}" if flavor is not None else "-"
 
     # Write to a temporary file
-    config_temp = args.work + "/chroot_" + suffix + "/tmp/install_options"
+    config_temp = f"{args.work}/{suffix.chroot()}/tmp/install_options"
     with open(config_temp, "w") as handle:
         for key, value in options.items():
             if isinstance(value, bool):

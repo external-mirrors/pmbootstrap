@@ -7,6 +7,7 @@ import pmb.config
 import pmb.chroot.apk
 import pmb.helpers.pmaports
 import pmb.parse.arch
+from pmb.core import Suffix, SuffixType
 
 
 def arch_from_deviceinfo(args, pkgname, aport):
@@ -70,17 +71,17 @@ def arch(args, pkgname):
         return None
 
 
-def suffix(apkbuild, arch):
+def suffix(apkbuild, arch) -> Suffix:
     if arch == pmb.config.arch_native:
-        return "native"
+        return Suffix.native()
 
     if "pmb:cross-native" in apkbuild["options"]:
-        return "native"
+        return Suffix.native()
 
-    return "buildroot_" + arch
+    return Suffix(SuffixType.BUILDROOT, arch)
 
 
-def crosscompile(args, apkbuild, arch, suffix):
+def crosscompile(args, apkbuild, arch, suffix: Suffix):
     """
         :returns: None, "native", "crossdirect"
     """
@@ -88,7 +89,7 @@ def crosscompile(args, apkbuild, arch, suffix):
         return None
     if not pmb.parse.arch.cpu_emulation_required(arch):
         return None
-    if suffix == "native":
+    if suffix.type() == SuffixType.NATIVE:
         return "native"
     if "!pmb:crossdirect" in apkbuild["options"]:
         return None

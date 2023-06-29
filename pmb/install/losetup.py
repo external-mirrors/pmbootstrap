@@ -9,6 +9,7 @@ import time
 import pmb.helpers.mount
 import pmb.helpers.run
 import pmb.chroot
+from pmb.core import Suffix
 
 
 def init(args):
@@ -18,7 +19,7 @@ def init(args):
         if os.path.isdir(loopdevice):
             continue
         pmb.helpers.mount.bind_file(args, loopdevice,
-                                    args.work + "/chroot_native/" + loopdevice)
+                                    f"{args.work}/{Suffix.native().chroot()}/{loopdevice}")
 
 
 def mount(args, img_path):

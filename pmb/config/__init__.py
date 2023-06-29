@@ -931,10 +931,10 @@ flash_methods = [
 # These folders will be mounted at the same location into the native
 # chroot, before the flash programs get started.
 flash_mount_bind = [
-    "/sys/bus/usb/devices/",
-    "/sys/dev/",
-    "/sys/devices/",
-    "/dev/bus/usb/"
+    "sys/bus/usb/devices/",
+    "sys/dev/",
+    "sys/devices/",
+    "dev/bus/usb/"
 ]
 
 """

@@ -6,6 +6,7 @@ import pmb.helpers.run
 import pmb.helpers.frontend
 import pmb.chroot.initfs
 import pmb.export
+from pmb.core import Suffix, SuffixType
 
 
 def frontend(args):
@@ -15,7 +16,7 @@ def frontend(args):
         pmb.helpers.run.user(args, ["mkdir", "-p", target])
 
     # Rootfs image note
-    chroot = args.work + "/chroot_native"
+    chroot = args.work + f"/{Suffix.native().chroot()}"
     pattern = chroot + "/home/pmos/rootfs/" + args.device + "*.img"
     if not glob.glob(pattern):
         logging.info("NOTE: To export the rootfs image, run 'pmbootstrap"
@@ -24,7 +25,7 @@ def frontend(args):
     # Rebuild the initramfs, just to make sure (see #69)
     flavor = pmb.helpers.frontend._parse_flavor(args, args.autoinstall)
     if args.autoinstall:
-        pmb.chroot.initfs.build(args, flavor, "rootfs_" + args.device)
+        pmb.chroot.initfs.build(args, flavor, Suffix(SuffixType.ROOTFS, args.device))
 
     # Do the export, print all files
     logging.info("Export symlinks to: " + target)

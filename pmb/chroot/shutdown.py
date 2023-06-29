@@ -10,6 +10,7 @@ import pmb.chroot
 import pmb.helpers.mount
 import pmb.install.losetup
 import pmb.parse.arch
+from pmb.core import Suffix
 
 
 def kill_adb(args):
@@ -37,7 +38,7 @@ def shutdown_cryptsetup_device(args, name):
     """
     :param name: cryptsetup device name, usually "pm_crypt" in pmbootstrap
     """
-    if not os.path.exists(args.work + "/chroot_native/dev/mapper/" + name):
+    if not os.path.exists(args.work + f"/{Suffix.native().chroot()}/dev/mapper/" + name):
         return
     pmb.chroot.apk.install(args, ["cryptsetup"])
     status = pmb.chroot.root(args, ["cryptsetup", "status", name],
@@ -65,11 +66,11 @@ def shutdown(args, only_install_related=False):
 
     # Umount installation-related paths (order is important!)
     pmb.helpers.mount.umount_all(args, args.work +
-                                 "/chroot_native/mnt/install")
+                                 f"/{Suffix.native().chroot()}/mnt/install")
     shutdown_cryptsetup_device(args, "pm_crypt")
 
     # Umount all losetup mounted images
-    chroot = args.work + "/chroot_native"
+    chroot = args.work + f"/{Suffix.native().chroot()}"
     if pmb.helpers.mount.ismount(chroot + "/dev/loop-control"):
         pattern = chroot + "/home/pmos/rootfs/*.img"
         for path_outside in glob.glob(pattern):

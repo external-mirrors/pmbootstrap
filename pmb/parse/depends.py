@@ -6,6 +6,7 @@ import pmb.chroot.apk
 import pmb.helpers.pmaports
 import pmb.parse.apkindex
 import pmb.parse.arch
+from pmb.core import Suffix
 
 
 def package_from_aports(args, pkgname_depend):
@@ -31,7 +32,7 @@ def package_from_aports(args, pkgname_depend):
             "version": version}
 
 
-def package_provider(args, pkgname, pkgnames_install, suffix="native"):
+def package_provider(args, pkgname, pkgnames_install, suffix: Suffix=Suffix.native()):
     """
     :param pkgnames_install: packages to be installed
     :returns: a block from the apkindex: {"pkgname": "...", ...}
@@ -90,7 +91,7 @@ def package_provider(args, pkgname, pkgnames_install, suffix="native"):
 
 
 def package_from_index(args, pkgname_depend, pkgnames_install, package_aport,
-                       suffix="native"):
+                       suffix: Suffix=Suffix.native()):
     """
     :returns: None when there is no aport and no binary package, or a dict with
               the keys pkgname, depends, version from either the aport or the
@@ -115,7 +116,7 @@ def package_from_index(args, pkgname_depend, pkgnames_install, package_aport,
     return provider
 
 
-def recurse(args, pkgnames, suffix="native"):
+def recurse(args, pkgnames, suffix: Suffix=Suffix.native()):
     """
     Find all dependencies of the given pkgnames.
 

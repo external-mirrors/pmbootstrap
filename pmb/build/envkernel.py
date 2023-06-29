@@ -10,6 +10,7 @@ import pmb.chroot
 import pmb.helpers
 import pmb.helpers.pmaports
 import pmb.parse
+from pmb.core import Suffix
 
 
 def match_kbuild_out(word):
@@ -118,7 +119,7 @@ def run_abuild(args, pkgname, arch, apkbuild_path, kbuild_out):
     :param apkbuild_path: path to APKBUILD of the kernel aport
     :param kbuild_out: kernel build system output sub-directory
     """
-    chroot = args.work + "/chroot_native"
+    chroot = args.work + f"/{Suffix.native().chroot()}"
     build_path = "/home/pmos/build"
     kbuild_out_source = "/mnt/linux/.output"
 
@@ -142,7 +143,7 @@ def run_abuild(args, pkgname, arch, apkbuild_path, kbuild_out):
 
     # Create symlink from abuild working directory to envkernel build directory
     build_output = "" if kbuild_out == "" else "/" + kbuild_out
-    if build_output != "":
+    if False or build_output != "":
         if os.path.islink(chroot + "/mnt/linux/" + build_output) and \
                 os.path.lexists(chroot + "/mnt/linux/" + build_output):
             pmb.chroot.root(args, ["rm", "/mnt/linux/" + build_output])
@@ -207,12 +208,12 @@ def package_kernel(args):
 
     output = (arch + "/" + apkbuild["pkgname"] + "-" + apkbuild["pkgver"] +
               "-r" + apkbuild["pkgrel"] + ".apk")
-    message = "(" + suffix + ") build " + output
+    message = f"({suffix}) build " + output
     logging.info(message)
 
     try:
         run_abuild(args, pkgname, arch, apkbuild_path, kbuild_out)
     except Exception as e:
-        pmb.helpers.mount.umount_all(args, f"{args.work}/chroot_native/mnt/linux")
+        pmb.helpers.mount.umount_all(args, f"{args.work}/{Suffix.native()}/mnt/linux")
         raise e
     pmb.build.other.index_repo(args, arch)

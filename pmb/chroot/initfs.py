@@ -7,9 +7,10 @@ import pmb.chroot.other
 import pmb.chroot.apk
 import pmb.config.pmaports
 import pmb.helpers.cli
+from pmb.core import Suffix, SuffixType
 
 
-def build(args, flavor, suffix):
+def build(args, flavor, suffix: Suffix):
     # Update mkinitfs and hooks
     pmb.chroot.apk.install(args, ["postmarketos-mkinitfs"], suffix)
     pmb.chroot.initfs_hooks.update(args, suffix)
@@ -20,7 +21,7 @@ def build(args, flavor, suffix):
     if pmaports_cfg.get("supported_mkinitfs_without_flavors", False):
         pmb.chroot.root(args, ["mkinitfs"], suffix)
     else:
-        release_file = (f"{args.work}/chroot_{suffix}/usr/share/kernel/"
+        release_file = (f"{args.work}/{suffix.chroot()}/usr/share/kernel/"
                         f"{flavor}/kernel.release")
         with open(release_file, "r") as handle:
             release = handle.read().rstrip()
@@ -29,7 +30,7 @@ def build(args, flavor, suffix):
                             suffix)
 
 
-def extract(args, flavor, suffix, extra=False):
+def extract(args, flavor, suffix: Suffix, extra=False):
     """
     Extract the initramfs to /tmp/initfs-extracted or the initramfs-extra to
     /tmp/initfs-extra-extracted and return the outside extraction path.
@@ -46,7 +47,7 @@ def extract(args, flavor, suffix, extra=False):
         inside = "/tmp/initfs-extra-extracted"
         initfs_file += "-extra"
 
-    outside = f"{args.work}/chroot_{suffix}{inside}"
+    outside = f"{args.work}/{suffix.chroot()}{inside}"
     if os.path.exists(outside):
         if not pmb.helpers.cli.confirm(args, f"Extraction folder {outside}"
                                        " already exists."
@@ -56,7 +57,7 @@ def extract(args, flavor, suffix, extra=False):
 
     # Extraction script (because passing a file to stdin is not allowed
     # in pmbootstrap's chroot/shell functions for security reasons)
-    with open(f"{args.work}/chroot_{suffix}/tmp/_extract.sh", "w") as handle:
+    with open(f"{args.work}/{suffix.chroot()}/tmp/_extract.sh", "w") as handle:
         handle.write(
             "#!/bin/sh\n"
             f"cd {inside} && cpio -i < _initfs\n")
@@ -87,7 +88,7 @@ def ls(args, flavor, suffix, extra=False):
 
 def frontend(args):
     # Find the appropriate kernel flavor
-    suffix = f"rootfs_{args.device}"
+    suffix = Suffix(SuffixType.ROOTFS, args.device)
     flavor = pmb.chroot.other.kernel_flavor_installed(args, suffix)
 
     # Handle initfs actions

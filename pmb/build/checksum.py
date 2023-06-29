@@ -6,6 +6,7 @@ import pmb.chroot
 import pmb.build
 import pmb.helpers.run
 import pmb.helpers.pmaports
+from pmb.core import Suffix
 
 
 def update(args, pkgname):
@@ -17,7 +18,7 @@ def update(args, pkgname):
                     working_dir="/home/pmos/build")
 
     # Copy modified APKBUILD back
-    source = args.work + "/chroot_native/home/pmos/build/APKBUILD"
+    source = args.work + f"/{Suffix.native().chroot()}/home/pmos/build/APKBUILD"
     target = pmb.helpers.pmaports.find(args, pkgname) + "/"
     pmb.helpers.run.user(args, ["cp", source, target])
 

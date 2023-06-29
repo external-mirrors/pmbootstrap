@@ -10,9 +10,10 @@ import time
 
 import pmb.config
 import pmb.config.pmaports
+from pmb.core import Suffix
 
 
-def chroot_save_init(args, suffix):
+def chroot_save_init(args, suffix: Suffix):
     """ Save the chroot initialization data in $WORK/workdir.cfg. """
     # Read existing cfg
     cfg = configparser.ConfigParser()
@@ -27,8 +28,8 @@ def chroot_save_init(args, suffix):
 
     # Update sections
     channel = pmb.config.pmaports.read_config(args)["channel"]
-    cfg["chroot-channels"][suffix] = channel
-    cfg["chroot-init-dates"][suffix] = str(int(time.time()))
+    cfg["chroot-channels"][str(suffix)] = channel
+    cfg["chroot-init-dates"][str(suffix)] = str(int(time.time()))
 
     # Write back
     with open(path, "w") as handle:
@@ -52,14 +53,14 @@ def chroots_outdated(args):
         return False
 
     date_outdated = time.time() - pmb.config.chroot_outdated
-    for suffix in cfg[key]:
-        date_init = int(cfg[key][suffix])
+    for suffix_str in cfg[key]:
+        date_init = int(cfg[key][suffix_str])
         if date_init <= date_outdated:
             return True
     return False
 
 
-def chroot_check_channel(args, suffix):
+def chroot_check_channel(args, suffix: Suffix):
     path = args.work + "/workdir.cfg"
     msg_again = "Run 'pmbootstrap zap' to delete your chroots and try again."
     msg_unknown = ("Could not figure out on which release channel the"
@@ -70,11 +71,11 @@ def chroot_check_channel(args, suffix):
     cfg = configparser.ConfigParser()
     cfg.read(path)
     key = "chroot-channels"
-    if key not in cfg or suffix not in cfg[key]:
+    if key not in cfg or str(suffix) not in cfg[key]:
         raise RuntimeError(f"{msg_unknown} {msg_again}")
 
     channel = pmb.config.pmaports.read_config(args)["channel"]
-    channel_cfg = cfg[key][suffix]
+    channel_cfg = cfg[key][str(suffix)]
     if channel != channel_cfg:
         raise RuntimeError(f"Chroot '{suffix}' was created for the"
                            f" '{channel_cfg}' channel, but you are on the"
@@ -100,12 +101,12 @@ def clean(args):
     for key in ["chroot-init-dates", "chroot-channels"]:
         if key not in cfg:
             continue
-        for suffix in cfg[key]:
-            path_suffix = args.work + "/chroot_" + suffix
-            if os.path.exists(path_suffix):
+        for suffix_str in cfg[key]:
+            suffix = Suffix.from_str(suffix_str)
+            if os.path.exists(f"{args.work}/{suffix.chroot()}"):
                 continue
             changed = True
-            del cfg[key][suffix]
+            del cfg[key][suffix_str]
 
     # Write back
     if changed:

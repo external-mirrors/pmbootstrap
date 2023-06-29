@@ -17,6 +17,7 @@ import pmb.config.pmaports
 import pmb.helpers.run
 import pmb.parse.arch
 import pmb.parse.cpuinfo
+from pmb.core import Suffix, SuffixType
 
 
 def system_image(args):
@@ -24,7 +25,7 @@ def system_image(args):
     Returns path to rootfs for specified device. In case that it doesn't
     exist, raise and exception explaining how to generate it.
     """
-    path = f"{args.work}/chroot_native/home/pmos/rootfs/{args.device}.img"
+    path = f"{args.work}/{Suffix.native().chroot()}/home/pmos/rootfs/{args.device}.img"
     if not os.path.exists(path):
         logging.debug("Could not find rootfs: " + path)
         raise RuntimeError("The rootfs has not been generated yet, please "
@@ -37,7 +38,7 @@ def create_second_storage(args):
     Generate a second storage image if it does not exist.
     :returns: path to the image or None
     """
-    path = f"{args.work}/chroot_native/home/pmos/rootfs/{args.device}-2nd.img"
+    path = f"{args.work}/{Suffix.native().chroot()}/home/pmos/rootfs/{args.device}-2nd.img"
     pmb.helpers.run.root(args, ["touch", path])
     pmb.helpers.run.root(args, ["chmod", "a+w", path])
     resize_image(args, args.second_storage, path)
@@ -64,7 +65,7 @@ def create_gdk_loader_cache(args):
     """
     gdk_cache_dir = "/usr/lib/gdk-pixbuf-2.0/2.10.0/"
     custom_cache_path = gdk_cache_dir + "loaders-pmos-chroot.cache"
-    rootfs_native = args.work + "/chroot_native"
+    rootfs_native = args.work + f"/{Suffix.native().chroot()}"
     if os.path.isfile(rootfs_native + custom_cache_path):
         return rootfs_native + custom_cache_path
 
@@ -95,8 +96,8 @@ def command_qemu(args, arch, img_path, img_path_2nd=None):
 
     port_ssh = str(args.port)
 
-    suffix = "rootfs_" + args.device
-    rootfs = args.work + "/chroot_" + suffix
+    suffix = Suffix(SuffixType.ROOTFS, args.device)
+    rootfs = f"{args.work}/{suffix.chroot()}"
     flavor = pmb.chroot.other.kernel_flavor_installed(args, suffix)
     flavor_suffix = f"-{flavor}"
     # Backwards compatibility with old mkinitfs (pma#660)
@@ -123,7 +124,7 @@ def command_qemu(args, arch, img_path, img_path_2nd=None):
         env = {}
         command = [qemu_bin]
     else:
-        rootfs_native = args.work + "/chroot_native"
+        rootfs_native = args.work + f"/{Suffix.native().chroot()}"
         env = {"QEMU_MODULE_DIR": f"{rootfs_native}/usr/lib/qemu",
                "GBM_DRIVERS_PATH": f"{rootfs_native}/usr/lib/xorg/modules/dri",
                "LIBGL_DRIVERS_PATH": f"{rootfs_native}"

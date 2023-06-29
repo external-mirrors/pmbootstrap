@@ -5,6 +5,7 @@ import glob
 import logging
 import pmb.chroot.apk
 import pmb.install
+from pmb.core import Suffix
 
 
 def kernel_flavor_installed(args, suffix, autoinstall=True):
@@ -24,14 +25,14 @@ def kernel_flavor_installed(args, suffix, autoinstall=True):
                     pmb.install.get_kernel_package(args, args.device))
         pmb.chroot.apk.install(args, packages, suffix)
 
-    pattern = f"{args.work}/chroot_{suffix}/usr/share/kernel/*"
+    pattern = f"{args.work}/{suffix.chroot()}/usr/share/kernel/*"
     glob_result = glob.glob(pattern)
 
     # There should be only one directory here
     return os.path.basename(glob_result[0]) if glob_result else None
 
 
-def tempfolder(args, path, suffix="native"):
+def tempfolder(args, path, suffix: Suffix=Suffix.native()):
     """
     Create a temporary folder inside the chroot that belongs to "user".
     The folder gets deleted, if it already exists.
@@ -39,7 +40,7 @@ def tempfolder(args, path, suffix="native"):
     :param path: of the temporary folder inside the chroot
     :returns: the path
     """
-    if os.path.exists(args.work + "/chroot_" + suffix + path):
+    if os.path.exists(f"{args.work}/{suffix.chroot()}" + path):
         pmb.chroot.root(args, ["rm", "-r", path])
     pmb.chroot.user(args, ["mkdir", "-p", path])
     return path
@@ -68,7 +69,7 @@ def copy_xauthority(args):
                            original)
 
     # Copy to chroot and chown
-    copy = args.work + "/chroot_native/home/pmos/.Xauthority"
+    copy = args.work + f"/{Suffix.native().chroot()}/home/pmos/.Xauthority"
     if os.path.exists(copy):
         pmb.helpers.run.root(args, ["rm", copy])
     pmb.helpers.run.root(args, ["cp", original, copy])

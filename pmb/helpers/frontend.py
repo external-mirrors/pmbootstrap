@@ -35,6 +35,7 @@ import pmb.parse
 import pmb.qemu
 import pmb.sideload
 from argparse import Namespace
+from pmb.core import SuffixType, Suffix
 
 
 def _parse_flavor(args, autoinstall=True):
@@ -46,7 +47,7 @@ def _parse_flavor(args, autoinstall=True):
     # identifier that is typically in the form
     # "postmarketos-<manufacturer>-<device/chip>", e.g.
     # "postmarketos-qcom-sdm845"
-    suffix = "rootfs_" + args.device
+    suffix = Suffix(SuffixType.ROOTFS, args.device)
     flavor = pmb.chroot.other.kernel_flavor_installed(
         args, suffix, autoinstall)
 
@@ -57,23 +58,25 @@ def _parse_flavor(args, autoinstall=True):
     return flavor
 
 
-def _parse_suffix(args):
+def _parse_suffix(args) -> Suffix:
     if "rootfs" in args and args.rootfs:
-        return "rootfs_" + args.device
+        return Suffix(SuffixType.ROOTFS, args.device)
     elif args.buildroot:
         if args.buildroot == "device":
-            return "buildroot_" + args.deviceinfo["arch"]
+            return Suffix(SuffixType.BUILDROOT, args.deviceinfo["arch"])
         else:
-            return "buildroot_" + args.buildroot
+            return Suffix(SuffixType.BUILDROOT, args.buildroot)
     elif args.suffix:
-        return args.suffix
+        (_t, s) = args.suffix.split("_")
+        t: SuffixType = SuffixType(_t)
+        return Suffix(t, s)
     else:
-        return "native"
+        return Suffix(SuffixType.NATIVE)
 
 
 def _install_ondev_verify_no_rootfs(args):
     chroot_dest = "/var/lib/rootfs.img"
-    dest = f"{args.work}/chroot_installer_{args.device}{chroot_dest}"
+    dest = f"{args.work}/{Suffix(SuffixType.INSTALLER, args.device).chroot()}{chroot_dest}"
     if os.path.exists(dest):
         return
 
@@ -158,11 +161,11 @@ def netboot(args):
 def chroot(args):
     # Suffix
     suffix = _parse_suffix(args)
-    if (args.user and suffix != "native" and
-            not suffix.startswith("buildroot_")):
+    if (args.user and suffix != Suffix.native() and
+            not suffix.type() == SuffixType.BUILDROOT):
         raise RuntimeError("--user is only supported for native or"
                            " buildroot_* chroots.")
-    if args.xauth and suffix != "native":
+    if args.xauth and suffix != Suffix.native():
         raise RuntimeError("--xauth is only supported for native chroot.")
 
     # apk: check minimum version, install packages
@@ -187,12 +190,12 @@ def chroot(args):
 
     # Run the command as user/root
     if args.user:
-        logging.info("(" + suffix + ") % su pmos -c '" +
+        logging.info(f"({suffix}) % su pmos -c '" +
                      " ".join(args.command) + "'")
         pmb.chroot.user(args, args.command, suffix, output=args.output,
                         env=env)
     else:
-        logging.info("(" + suffix + ") % " + " ".join(args.command))
+        logging.info(f"({suffix}) % " + " ".join(args.command))
         pmb.chroot.root(args, args.command, suffix, output=args.output,
                         env=env)
 
@@ -540,7 +543,7 @@ def stats(args):
 
     # Install ccache and display stats
     pmb.chroot.apk.install(args, ["ccache"], suffix)
-    logging.info("(" + suffix + ") % ccache -s")
+    logging.info(f"({suffix}) % ccache -s")
     pmb.chroot.user(args, ["ccache", "-s"], suffix, output="stdout")
 
 

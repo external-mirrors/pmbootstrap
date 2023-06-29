@@ -12,9 +12,10 @@ import pmb.config.workdir
 import pmb.helpers.repo
 import pmb.helpers.run
 import pmb.parse.arch
+from pmb.core import Suffix, SuffixType
 
 
-def copy_resolv_conf(args, suffix="native"):
+def copy_resolv_conf(args, suffix: Suffix=Suffix.native()):
     """
     Use pythons super fast file compare function (due to caching)
     and copy the /etc/resolv.conf to the chroot, in case it is
@@ -22,7 +23,7 @@ def copy_resolv_conf(args, suffix="native"):
     If the file doesn't exist, create an empty file with 'touch'.
     """
     host = "/etc/resolv.conf"
-    chroot = f"{args.work}/chroot_{suffix}{host}"
+    chroot = f"{args.work}/{suffix.chroot()}{host}"
     if os.path.exists(host):
         if not os.path.exists(chroot) or not filecmp.cmp(host, chroot):
             pmb.helpers.run.root(args, ["cp", host, chroot])
@@ -30,28 +31,28 @@ def copy_resolv_conf(args, suffix="native"):
         pmb.helpers.run.root(args, ["touch", chroot])
 
 
-def mark_in_chroot(args, suffix="native"):
+def mark_in_chroot(args, suffix: Suffix=Suffix.native()):
     """
     Touch a flag so we can know when we're running in chroot (and
     don't accidentally flash partitions on our host). This marker
     gets removed in pmb.chroot.shutdown (pmbootstrap shutdown).
     """
-    in_chroot_file = f"{args.work}/chroot_{suffix}/in-pmbootstrap"
+    in_chroot_file = f"{args.work}/{suffix.chroot()}/in-pmbootstrap"
     if not os.path.exists(in_chroot_file):
         pmb.helpers.run.root(args, ["touch", in_chroot_file])
 
 
-def setup_qemu_emulation(args, suffix):
+def setup_qemu_emulation(args, suffix: Suffix):
     arch = pmb.parse.arch.from_chroot_suffix(args, suffix)
     if not pmb.parse.arch.cpu_emulation_required(arch):
         return
 
-    chroot = f"{args.work}/chroot_{suffix}"
+    chroot = f"{args.work}/{suffix.chroot()}"
     arch_qemu = pmb.parse.arch.alpine_to_qemu(arch)
 
     # mount --bind the qemu-user binary
     pmb.chroot.binfmt.register(args, arch)
-    pmb.helpers.mount.bind_file(args, f"{args.work}/chroot_native"
+    pmb.helpers.mount.bind_file(args, f"{args.work}/{Suffix.native().chroot()}"
                                       f"/usr/bin/qemu-{arch_qemu}",
                                 f"{chroot}/usr/bin/qemu-{arch_qemu}-static",
                                 create_folders=True)
@@ -78,10 +79,10 @@ def init_usr_merge(args, suffix):
     logging.info(f"({suffix}) merge /usr")
     script = f"{pmb.config.pmb_src}/pmb/data/merge-usr.sh"
     pmb.helpers.run.root(args, ["sh", "-e", script, "CALLED_FROM_PMB",
-                                f"{args.work}/chroot_{suffix}"])
+                                f"{args.work}/{suffix.chroot()}"])
 
 
-def init(args, suffix="native", usr_merge=None, mirrors_pmos=None):
+def init(args, suffix: Suffix=Suffix.native(), usr_merge=None, mirrors_pmos=None):
     """
     Initialize a chroot by copying the resolv.conf and updating
     /etc/apk/repositories. If /bin/sh is missing, create the chroot from
@@ -95,7 +96,7 @@ def init(args, suffix="native", usr_merge=None, mirrors_pmos=None):
                          repo_bootstrap.
     """
     # When already initialized: just prepare the chroot
-    chroot = f"{args.work}/chroot_{suffix}"
+    chroot = f"{args.work}/{suffix.chroot()}"
     arch = pmb.parse.arch.from_chroot_suffix(args, suffix)
 
     pmb.chroot.mount(args, suffix)
@@ -132,7 +133,7 @@ def init(args, suffix="native", usr_merge=None, mirrors_pmos=None):
                                      "add", "alpine-base"])
 
     # Building chroots: create "pmos" user, add symlinks to /home/pmos
-    if not suffix.startswith("rootfs_"):
+    if not suffix.type() == SuffixType.ROOTFS:
         pmb.chroot.root(args, ["adduser", "-D", "pmos", "-u",
                                pmb.config.chroot_uid_user],
                         suffix, auto_init=False)

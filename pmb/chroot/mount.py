@@ -6,6 +6,7 @@ import os
 import pmb.config
 import pmb.parse
 import pmb.helpers.mount
+from pmb.core import Suffix
 
 
 def create_device_nodes(args, suffix):
@@ -13,7 +14,7 @@ def create_device_nodes(args, suffix):
     Create device nodes for null, zero, full, random, urandom in the chroot.
     """
     try:
-        chroot = args.work + "/chroot_" + suffix
+        chroot = f"{args.work}/{suffix.chroot()}"
 
         # Create all device nodes as specified in the config
         for dev in pmb.config.chroot_device_nodes:
@@ -48,14 +49,14 @@ def create_device_nodes(args, suffix):
                            suffix + "' chroot.")
 
 
-def mount_dev_tmpfs(args, suffix="native"):
+def mount_dev_tmpfs(args, suffix: Suffix=Suffix.native()):
     """
     Mount tmpfs inside the chroot's dev folder to make sure we can create
     device nodes, even if the filesystem of the work folder does not support
     it.
     """
     # Do nothing when it is already mounted
-    dev = args.work + "/chroot_" + suffix + "/dev"
+    dev = f"{args.work}/{suffix.chroot()}/dev"
     if pmb.helpers.mount.ismount(dev):
         return
 
@@ -76,7 +77,7 @@ def mount_dev_tmpfs(args, suffix="native"):
     pmb.helpers.run.root(args, ["ln", "-sf", "/proc/self/fd", f"{dev}/"])
 
 
-def mount(args, suffix="native"):
+def mount(args, suffix: Suffix=Suffix.native()):
     # Mount tmpfs as the chroot's /dev
     mount_dev_tmpfs(args, suffix)
 
@@ -92,17 +93,17 @@ def mount(args, suffix="native"):
 
     # Mount if necessary
     for source, target in mountpoints.items():
-        target_full = args.work + "/chroot_" + suffix + target
+        target_full = f"{args.work}/{suffix.chroot()}{target}"
         pmb.helpers.mount.bind(args, source, target_full)
 
 
 def mount_native_into_foreign(args, suffix):
-    source = args.work + "/chroot_native"
-    target = args.work + "/chroot_" + suffix + "/native"
+    source = args.work + f"/{Suffix.native().chroot()}"
+    target = f"{args.work}/{suffix.chroot()}/native"
     pmb.helpers.mount.bind(args, source, target)
 
     musl = os.path.basename(glob.glob(source + "/lib/ld-musl-*.so.1")[0])
-    musl_link = args.work + "/chroot_" + suffix + "/lib/" + musl
+    musl_link = f"{args.work}/{suffix.chroot()}/lib/{musl}"
     if not os.path.lexists(musl_link):
         pmb.helpers.run.root(args, ["ln", "-s", "/native/lib/" + musl,
                                     musl_link])

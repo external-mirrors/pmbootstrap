@@ -7,6 +7,7 @@ import os
 import shlex
 import pmb.chroot
 import pmb.helpers.cli
+from pmb.core import Suffix
 
 
 def get_ci_scripts(topdir):
@@ -110,7 +111,7 @@ def copy_git_repo_to_chroot(args, topdir):
         :param topdir: top directory of the git repository, get it with:
                        pmb.helpers.git.get_topdir() """
     pmb.chroot.init(args)
-    tarball_path = f"{args.work}/chroot_native/tmp/git.tar.gz"
+    tarball_path = f"{args.work}/{Suffix.native().chroot()}/tmp/git.tar.gz"
     files = pmb.helpers.git.get_files(args, topdir)
 
     with open(f"{tarball_path}.files", "w") as handle:

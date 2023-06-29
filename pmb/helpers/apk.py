@@ -8,9 +8,10 @@ import pmb.helpers.cli
 import pmb.helpers.run
 import pmb.helpers.run_core
 import pmb.parse.version
+from pmb.core import Suffix
 
 
-def _run(args, command, chroot=False, suffix="native", output="log"):
+def _run(args, command, chroot=False, suffix: Suffix=Suffix.native(), output="log"):
     """
     Run a command.
 
@@ -28,7 +29,7 @@ def _run(args, command, chroot=False, suffix="native", output="log"):
     return pmb.helpers.run.root(args, command, output=output)
 
 
-def _prepare_fifo(args, chroot=False, suffix="native"):
+def _prepare_fifo(args, chroot=False, suffix: Suffix=Suffix.native()):
     """
     Prepare the progress fifo for reading / writing.
 
@@ -42,7 +43,7 @@ def _prepare_fifo(args, chroot=False, suffix="native"):
     """
     if chroot:
         fifo = "/tmp/apk_progress_fifo"
-        fifo_outside = f"{args.work}/chroot_{suffix}{fifo}"
+        fifo_outside = f"{args.work}/{suffix.chroot()}{fifo}"
     else:
         _run(args, ["mkdir", "-p", f"{args.work}/tmp"])
         fifo = fifo_outside = f"{args.work}/tmp/apk_progress_fifo"
@@ -85,7 +86,7 @@ def _compute_progress(line):
     return cur / tot if tot > 0 else 0
 
 
-def apk_with_progress(args, command, chroot=False, suffix="native"):
+def apk_with_progress(args, command, chroot=False, suffix: Suffix=Suffix.native()):
     """
     Run an apk subcommand while printing a progress bar to STDOUT.
 

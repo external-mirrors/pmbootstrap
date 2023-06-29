@@ -6,6 +6,7 @@ import time
 import pmb.chroot
 import pmb.config
 import pmb.install.losetup
+from pmb.core import Suffix
 
 
 def partitions_mount(args, layout, disk):
@@ -48,7 +49,7 @@ def partitions_mount(args, layout, disk):
 
     for i in partitions:
         source = f"{partition_prefix}{i}"
-        target = args.work + "/chroot_native/dev/installp" + str(i)
+        target = args.work + f"/{Suffix.native().chroot()}/dev/installp" + str(i)
         pmb.helpers.mount.bind_file(args, source, target)
 
 

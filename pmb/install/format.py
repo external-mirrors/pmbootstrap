@@ -3,6 +3,7 @@
 import os
 import logging
 import pmb.chroot
+from pmb.core import Suffix
 
 
 def install_fsprogs(args, filesystem):
@@ -66,7 +67,7 @@ def format_luks_root(args, device):
     pmb.chroot.root(args, ["cryptsetup", "luksOpen", device, "pm_crypt"],
                     output="interactive")
 
-    if not os.path.exists(f"{args.work}/chroot_native/{mountpoint}"):
+    if not os.path.exists(f"{args.work}/{Suffix.native().chroot()}/{mountpoint}"):
         raise RuntimeError("Failed to open cryptdevice!")
 
 

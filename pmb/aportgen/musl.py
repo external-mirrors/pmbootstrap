@@ -6,6 +6,7 @@ import pmb.chroot.apk
 import pmb.chroot.apk_static
 import pmb.helpers.run
 import pmb.parse.apkindex
+from pmb.core import Suffix
 
 
 def generate(args, pkgname):
@@ -21,12 +22,12 @@ def generate(args, pkgname):
     tempdir = "/tmp/aportgen"
     pmb.chroot.root(args, ["rm", "-rf", tempdir])
     pmb.helpers.run.user(args, ["mkdir", "-p", f"{args.work}/aportgen",
-                                f"{args.work}/chroot_native/{tempdir}"])
+                                f"{args.work}/{Suffix.native().chroot()}/{tempdir}"])
 
     # Write the APKBUILD
     channel_cfg = pmb.config.pmaports.read_config_channel(args)
     mirrordir = channel_cfg["mirrordir_alpine"]
-    apkbuild_path = f"{args.work}/chroot_native/{tempdir}/APKBUILD"
+    apkbuild_path = f"{args.work}/{Suffix.native().chroot()}/{tempdir}/APKBUILD"
     apk_name = f"$srcdir/musl-$pkgver-r$pkgrel-$_arch-{mirrordir}.apk"
     apk_dev_name = f"$srcdir/musl-dev-$pkgver-r$pkgrel-$_arch-{mirrordir}.apk"
     with open(apkbuild_path, "w", encoding="utf-8") as handle:

@@ -7,6 +7,7 @@ import time
 
 import pmb.chroot.root
 import pmb.helpers.run
+from pmb.core import Suffix
 
 
 def start_nbd_server(args, ip="172.16.42.2", port=9999):
@@ -18,7 +19,7 @@ def start_nbd_server(args, ip="172.16.42.2", port=9999):
 
     pmb.chroot.apk.install(args, ['nbd'])
 
-    chroot = f"{args.work}/chroot_native"
+    chroot = f"{args.work}/{Suffix.native().chroot()}"
 
     rootfs_path = f"/mnt/pmbootstrap/netboot/{args.device}.img"
     if not os.path.exists(chroot + rootfs_path) or args.replace:
