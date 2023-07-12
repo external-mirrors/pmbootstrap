@@ -5,6 +5,8 @@ import os
 import pmb.config
 import pmb.helpers.git
 
+from pmb.core.pkgrepo import pkgrepo_default_path
+
 """ This file constructs the args variable, which is passed to almost all
     functions in the pmbootstrap code base. Here's a listing of the kind of
     information it stores.
@@ -69,9 +71,9 @@ def check_pmaports_path(args):
     """ Make sure that args.aports exists when it was overridden by --aports.
         Without this check, 'pmbootstrap init' would start cloning the
         pmaports into the default folder when args.aports does not exist. """
-    if args.from_argparse.aports and not os.path.exists(args.aports):
+    if args.from_argparse.aports and not os.path.exists(pkgrepo_default_path()):
         raise ValueError("pmaports path (specified with --aports) does"
-                         " not exist: " + args.aports)
+                         " not exist: " + pkgrepo_default_path())
 
 
 def replace_placeholders(args):
@@ -88,7 +90,7 @@ def replace_placeholders(args):
             setattr(args, key, old.replace("$WORK", args.work))
 
     # Replace ~ (path variables only)
-    for key in ["aports", "config", "log", "work"]:
+    for key in ["config", "log", "work"]:
         if key in args:
             setattr(args, key, os.path.expanduser(getattr(args, key)))
 

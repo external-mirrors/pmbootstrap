@@ -1,6 +1,7 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import logging
+from typing import List
 import pmb.chroot
 import pmb.chroot.apk
 import pmb.helpers.pmaports
@@ -109,7 +110,7 @@ def package_from_index(args, pkgname_depend, pkgnames_install, package_aport,
     return provider
 
 
-def recurse(args, pkgnames, suffix: Suffix=Suffix.native()) -> list[str]:
+def recurse(args, pkgnames, suffix: Suffix=Suffix.native()) -> List[str]:
     """
     Find all dependencies of the given pkgnames.
 
@@ -126,7 +127,7 @@ def recurse(args, pkgnames, suffix: Suffix=Suffix.native()) -> list[str]:
     # Iterate over todo-list until is is empty
     todo = list(pkgnames)
     required_by = {}
-    ret: list[str] = []
+    ret: List[str] = []
     while len(todo):
         # Skip already passed entries
         pkgname_depend = todo.pop(0)

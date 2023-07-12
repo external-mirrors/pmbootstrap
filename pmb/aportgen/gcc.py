@@ -1,8 +1,11 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+import os
 import pmb.aportgen.core
 import pmb.helpers.git
 import pmb.helpers.run
+
+from pmb.core.pkgrepo import pkgrepo_path
 
 
 def generate(args, pkgname):
@@ -13,10 +16,10 @@ def generate(args, pkgname):
         upstream = pmb.aportgen.core.get_upstream_aport(args, "gcc", arch)
         based_on = "main/gcc (from Alpine)"
     elif prefix == "gcc4":
-        upstream = f"{args.aports}/main/gcc4"
+        upstream = os.path.join(pkgrepo_path("pmaports"), "main/gcc4")
         based_on = "main/gcc4 (from postmarketOS)"
     elif prefix == "gcc6":
-        upstream = f"{args.aports}/main/gcc6"
+        upstream = os.path.join(pkgrepo_path("pmaports"), "main/gcc6")
         based_on = "main/gcc6 (from postmarketOS)"
     else:
         raise ValueError(f"Invalid prefix '{prefix}', expected gcc, gcc4 or"

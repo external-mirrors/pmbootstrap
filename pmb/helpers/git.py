@@ -11,14 +11,13 @@ import pmb.config
 import pmb.helpers.pmaports
 import pmb.helpers.run
 
+from pmb.core.pkgrepo import pkgrepo_default_path, pkgrepo_names
 
 def get_path(args, name_repo):
     """ Get the path to the repository, which is either the default one in the
         work dir, or a user-specified one in args.
 
         :returns: full path to repository """
-    if name_repo == "pmaports":
-        return args.aports
     return args.work + "/cache_git/" + name_repo
 
 
@@ -52,7 +51,7 @@ def clone(args, name_repo):
         open(fetch_head, "w").close()
 
 
-def rev_parse(args, path, revision="HEAD", extra_args: list = []):
+def rev_parse(args, path, revision="HEAD", extra_args: list = [], check=False):
     """ Run "git rev-parse" in a specific repository dir.
 
         :param path: to the git repository
@@ -62,8 +61,14 @@ def rev_parse(args, path, revision="HEAD", extra_args: list = []):
         :returns: commit string like "90cd0ad84d390897efdcf881c0315747a4f3a966"
                   or (with --abbrev-ref): the branch name, e.g. "master" """
     command = ["git", "rev-parse"] + extra_args + [revision]
-    rev = pmb.helpers.run.user(args, command, path, output_return=True)
-    return rev.rstrip()
+    try:
+        rev = pmb.helpers.run.user(args, command, path, output_return=True, check=check)
+        return rev.rstrip()
+    except RuntimeError as exc:
+        if check:
+            return None
+        else:
+            raise exc
 
 
 def can_fast_forward(args, path, branch_upstream, branch="HEAD"):
@@ -87,6 +92,7 @@ def get_upstream_remote(args, name_repo):
     """ Find the remote, which matches the git URL from the config. Usually
         "origin", but the user may have set up their git repository
         differently. """
+    # XXX: Allow specifying these in pmbootstrap.cfg
     url = pmb.config.git_repos[name_repo]
     path = get_path(args, name_repo)
     command = ["git", "remote", "-v"]
@@ -97,6 +103,16 @@ def get_upstream_remote(args, name_repo):
     raise RuntimeError("{}: could not find remote name for URL '{}' in git"
                        " repository: {}".format(name_repo, url, path))
 
+def upstream_default_branch(args, name_repo):
+    remote = get_upstream_remote(args, name_repo)
+    path = get_path(args, name_repo)
+    for ref in ["HEAD", "master", "main"]:
+        rev = rev_parse(args, path, revision=f"{remote}/{ref}",
+                        extra_args=["--abbrev-ref"], check=True)
+        if rev:
+            return rev
+    
+    raise RuntimeError(f"Could not find default branch for {name_repo} in {remote}")
 
 def parse_channels_cfg(args):
     """ Parse channels.cfg from pmaports.git, origin/master branch.
@@ -112,14 +128,17 @@ def parse_channels_cfg(args):
     if pmb.helpers.other.cache[cache_key]:
         return pmb.helpers.other.cache[cache_key]
 
+    aport_path = pkgrepo_default_path()
+    aport = os.path.basename(aport_path)
+
     # Read with configparser
     cfg = configparser.ConfigParser()
     if args.config_channels:
         cfg.read([args.config_channels])
     else:
-        remote = get_upstream_remote(args, "pmaports")
-        command = ["git", "show", f"{remote}/master:channels.cfg"]
-        stdout = pmb.helpers.run.user(args, command, args.aports,
+        branch_ref = upstream_default_branch(args, aport)
+        command = ["git", "show", f"{branch_ref}:channels.cfg"]
+        stdout = pmb.helpers.run.user(args, command, aport_path,
                                       output_return=True, check=False)
         try:
             cfg.read_string(stdout)
@@ -127,12 +146,16 @@ def parse_channels_cfg(args):
             logging.info("NOTE: fix this by fetching your pmaports.git, e.g."
                          " with 'pmbootstrap pull'")
             raise RuntimeError("Failed to read channels.cfg from"
-                               f" '{remote}/master' branch of your local"
+                               f" '{branch_ref}' of your local"
                                " pmaports clone")
 
     # Meta section
     ret = {"channels": {}}
     ret["meta"] = {"recommended": cfg.get("channels.cfg", "recommended")}
+
+    aport_branch_keys = [f"branch_{aport}" for aport in pkgrepo_names()]
+    if "branch_aports_upstream" in aport_branch_keys:
+        aport_branch_keys.remove("branch_aports_upstream")
 
     # Channels
     for channel in cfg.sections():
@@ -142,8 +165,9 @@ def parse_channels_cfg(args):
         channel_new = pmb.helpers.pmaports.get_channel_new(channel)
 
         ret["channels"][channel_new] = {}
-        for key in ["description", "branch_pmaports", "branch_aports",
-                    "mirrordir_alpine"]:
+        # XXX: handle upstream aports too!
+        for key in ["description", "branch_aports",
+                    "mirrordir_alpine"] + aport_branch_keys:
             value = cfg.get(channel, key)
             ret["channels"][channel_new][key] = value
 
@@ -157,13 +181,13 @@ def get_branches_official(args, name_repo):
     # This functions gets called with pmaports and aports_upstream, because
     # both are displayed in "pmbootstrap status". But it only makes sense
     # to display pmaports there, related code will be refactored soon (#1903).
-    if name_repo != "pmaports":
+    if name_repo == "aports_upstream":
         return ["master"]
 
     channels_cfg = parse_channels_cfg(args)
     ret = []
     for channel, channel_data in channels_cfg["channels"].items():
-        ret.append(channel_data["branch_pmaports"])
+        ret.append(channel_data[f"branch_{name_repo}"])
     return ret
 
 

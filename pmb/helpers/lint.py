@@ -20,7 +20,7 @@ def check(args, pkgnames):
 
     # Mount pmaports.git inside the chroot so that we don't have to copy the
     # package folders
-    pmaports = "/mnt/pmaports"
+    pmaports = "/mnt/aports"
     pmb.build.mount_pmaports(args, pmaports)
 
     # Locate all APKBUILDs and make the paths be relative to the pmaports
@@ -31,7 +31,7 @@ def check(args, pkgnames):
         if not os.path.exists(aport + "/APKBUILD"):
             raise ValueError("Path does not contain an APKBUILD file:" +
                              aport)
-        relpath = os.path.relpath(aport, args.aports)
+        relpath = os.path.relpath(aport, os.path.join(args.work, "cache_git"))
         apkbuilds.append(f"{relpath}/APKBUILD")
 
     # Run apkbuild-lint in chroot from the pmaports mount point. This will

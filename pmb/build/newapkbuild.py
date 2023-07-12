@@ -8,6 +8,7 @@ import pmb.helpers.cli
 import pmb.parse
 
 from pmb.core import Suffix
+from pmb.core.pkgrepo import pkgrepo_default_path
 
 
 def newapkbuild(args, folder, args_passed, force=False):
@@ -28,7 +29,7 @@ def newapkbuild(args, folder, args_passed, force=False):
     # Paths for copying
     source_apkbuild = glob_result[0]
     pkgname = pmb.parse.apkbuild(source_apkbuild, False)["pkgname"]
-    target = args.aports + "/" + folder + "/" + pkgname
+    target = os.path.join(pkgrepo_default_path(), folder, pkgname)
 
     # Move /home/pmos/build/$pkgname/* to /home/pmos/build/*
     for path in glob.glob(build_outside + "/*/*"):
