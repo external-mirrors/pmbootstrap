@@ -6,6 +6,7 @@ import os
 import pmb.config
 import pmb.helpers.devices
 
+from pmb.core.pkgrepo import pkgrepo_default_path
 
 def sanity_check(info, path):
     # Resolve path for more readable error messages
@@ -121,8 +122,8 @@ def deviceinfo(args, device=None, kernel=None):
     if not kernel:
         kernel = args.kernel
 
-    if not os.path.exists(args.aports):
-        logging.fatal(f"Aports directory is missing, expected: {args.aports}")
+    if not os.path.exists(pkgrepo_default_path()):
+        logging.fatal(f"Aports directory is missing, expected: {pkgrepo_default_path()}")
         logging.fatal("Please provide a path to the aports directory using the"
                       " -p flag")
         raise RuntimeError("Aports directory missing")

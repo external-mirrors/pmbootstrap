@@ -456,7 +456,7 @@ def deviceinfo_parse(args):
     # Default to all devices
     devices = args.devices
     if not devices:
-        devices = pmb.helpers.devices.list_codenames(args)
+        devices = pmb.helpers.devices.list_codenames()
 
     # Iterate over all devices
     kernel = args.deviceinfo_parse_kernel

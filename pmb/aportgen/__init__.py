@@ -11,6 +11,8 @@ import pmb.aportgen.grub_efi
 import pmb.config
 import pmb.helpers.cli
 
+from pmb.core.pkgrepo import pkgrepo_default_path
+
 
 def get_cross_package_arches(pkgname):
     """
@@ -52,7 +54,7 @@ def generate(args, pkgname):
                                    {"confirm_overwrite": True})
     else:
         prefix, folder, options = properties(pkgname)
-    path_target = args.aports + "/" + folder + "/" + pkgname
+    path_target = os.path.join(pkgrepo_default_path(), folder, pkgname)
 
     # Confirm overwrite
     if options["confirm_overwrite"] and os.path.exists(path_target):

@@ -36,6 +36,10 @@ def bind(args, source, destination, create_folders=True, umount=False):
     for path in [source, destination]:
         if os.path.exists(path):
             continue
+        # if os.path.basename(path) == "apk":
+        #     pmb.helpers.run.root(args, ["mkdir", "-p", os.path.basename(path)])
+        #     pmb.helpers.run.root(args, ["touch", path])
+        #     pmb.helpers.run.root(args, ["chmod", "+rx", "o+rx", path])
         if create_folders:
             pmb.helpers.run.root(args, ["mkdir", "-p", path])
         else:

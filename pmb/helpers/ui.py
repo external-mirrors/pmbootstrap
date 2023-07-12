@@ -1,9 +1,9 @@
 # Copyright 2023 Clayton Craft
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-import glob
-import pmb.helpers.pmaports
 import pmb.parse
+
+from pmb.core.pkgrepo import pkgrepo_iglob
 
 
 def list(args, arch):
@@ -16,7 +16,7 @@ def list(args, arch):
     ret = [("none", "Bare minimum OS image for testing and manual"
                     " customization. The \"console\" UI should be selected if"
                     " a graphical UI is not desired.")]
-    for path in sorted(glob.glob(args.aports + "/main/postmarketos-ui-*")):
+    for path in sorted(pkgrepo_iglob("main/postmarketos-ui-*")):
         apkbuild = pmb.parse.apkbuild(f"{path}/APKBUILD")
         ui = os.path.basename(path).split("-", 2)[2]
         if pmb.helpers.package.check_arch(args, apkbuild["pkgname"], arch):

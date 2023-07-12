@@ -5,12 +5,11 @@ Functions that work with pmaports. See also:
 - pmb/helpers/repo.py (work with binary package repos)
 - pmb/helpers/package.py (work with both)
 """
-import glob
 import logging
 import os
 
 import pmb.parse
-
+from pmb.core.pkgrepo import pkgrepo_iter_package_dirs
 
 def _find_apkbuilds(args):
     # Try to get a cached result first (we assume that the aports don't change
@@ -20,16 +19,10 @@ def _find_apkbuilds(args):
         return apkbuilds
 
     apkbuilds = {}
-    for apkbuild in glob.iglob(f"{args.aports}/**/*/APKBUILD", recursive=True):
-        package = os.path.basename(os.path.dirname(apkbuild))
-        if package in apkbuilds:
-            raise RuntimeError(f"Package {package} found in multiple aports "
-                               "subfolders. Please put it only in one folder.")
-        apkbuilds[package] = apkbuild
+    for pkgdir in pkgrepo_iter_package_dirs():
+        apkbuilds[os.path.basename(pkgdir)] = os.path.join(pkgdir, "APKBUILD")
 
-    # Sort dictionary so we don't need to do it over and over again in
-    # get_list()
-    apkbuilds = dict(sorted(apkbuilds.items()))
+    apkbuilds = dict(apkbuilds.items())
 
     # Save result in cache
     pmb.helpers.other.cache["pmb.helpers.pmaports.apkbuilds"] = apkbuilds

@@ -13,6 +13,7 @@ import pmb.helpers.pmaports
 import pmb.helpers.repo
 import pmb.parse
 import pmb.parse.arch
+from pmb.core.pkgrepo import pkgrepo_path, pkgrepo_name_from_subdir
 from pmb.helpers.exceptions import BuildFailedError
 
 
@@ -342,12 +343,12 @@ def mount_pmaports(args, destination, suffix="native"):
     :param destination: mount point inside the chroot
     """
     outside_destination = args.work + "/chroot_" + suffix + destination
-    pmb.helpers.mount.bind(args, args.aports, outside_destination, umount=True)
+    pmb.helpers.mount.bind(args, pkgrepo_path(args.aports), outside_destination, umount=True)
 
 
-def link_to_git_dir(args, suffix):
+def link_to_git_dir(args, aports, suffix):
     """
-    Make /home/pmos/build/.git point to the .git dir from pmaports.git, with a
+    Make /home/pmos/build/.git point to the .git dir from {aports}.git, with a
     symlink so abuild does not fail (#1841).
 
     abuild expects the current working directory to be a subdirectory of a
@@ -360,13 +361,13 @@ def link_to_git_dir(args, suffix):
     pmaports.git for SOURCE_DATE_EPOCH and have that in the resulting apk's
     .PKGINFO.
     """
-    # Mount pmaports.git in chroot, in case the user did not use pmbootstrap to
-    # clone it (e.g. how we build on sourcehut). Do this here and not at the
-    # initialization of the chroot, because the pmaports dir may not exist yet
-    # at that point. Use umount=True, so we don't have an old path mounted
-    # (some tests change the pmaports dir).
-    destination = "/mnt/pmaports"
-    mount_pmaports(args, destination, suffix)
+    # Mount the default aports repo in chroot, in case the user did not use
+    # pmbootstrap to clone it (e.g. how we build on sourcehut). Do this here
+    # and not at the initialization of the chroot, because the aports dir
+    # may not exist yet at that point. Use umount=True, so we don't have an
+    # old path mounted (some tests change the pmaports dir).
+    destination = "/mnt/aports"
+    mount_pmaports(args, destination, which=aports, suffix=suffix)
 
     # Create .git symlink
     pmb.chroot.user(args, ["mkdir", "-p", "/home/pmos/build"], suffix)
@@ -449,9 +450,10 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
         cmd += ["-f"]
 
     # Copy the aport to the chroot and build it
-    pmb.build.copy_to_buildpath(args, apkbuild["pkgname"], suffix)
+    aport_dir = pmb.helpers.pmaports.find(args, apkbuild["pkgname"])
+    pmb.build.copy_to_buildpath(args, aport_dir, suffix)
     override_source(args, apkbuild, pkgver, src, suffix)
-    link_to_git_dir(args, suffix)
+    link_to_git_dir(args, pkgrepo_name_from_subdir(aport_dir), suffix)
     pmb.chroot.user(args, cmd, suffix, "/home/pmos/build", env=env)
     return (output, cmd, env)
 

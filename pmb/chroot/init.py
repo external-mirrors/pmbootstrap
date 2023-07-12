@@ -152,11 +152,16 @@ def init(args, suffix="native", usr_merge=UsrMerge.AUTO,
 
     pmb.config.workdir.chroot_save_init(args, suffix)
 
+    channel_cfg = pmb.config.pmaports.read_config_channel(args)
+    mirrordir_alpine = channel_cfg["mirrordir_alpine"]
+    host_pkg_repo = os.path.join(args.work, "packages", mirrordir_alpine)
+
     # Install alpine-base
     pmb.helpers.repo.update(args, arch)
     pmb.chroot.apk_static.run(args, ["--root", chroot,
                                      "--cache-dir", apk_cache,
                                      "--initdb", "--arch", arch,
+                                     "--repository", host_pkg_repo,
                                      "add", "alpine-base"])
 
     # Building chroots: create "pmos" user, add symlinks to /home/pmos

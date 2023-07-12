@@ -1183,6 +1183,30 @@ def get_recommends(args, packages, initial=True):
     return ret
 
 
+def get_build_time_provides(args, packages):
+    """
+    Walk through the dependency tree and find all the provides, assume we're using them.
+    """
+    provides = dict()
+    for p in packages:
+        apkbuild = pmb.helpers.pmaports.get(args, p, must_exist=False, subpackages=False)
+        if not apkbuild:
+            continue
+        if apkbuild["provides"]:
+            for x in apkbuild["provides"]:
+                provides[x.split("=", 1)[0]] = apkbuild["pkgname"]
+        for pkg in apkbuild["makedepends"] + apkbuild["depends"]:
+            if pkg.startswith("device-") or pkg.startswith("linux-"):
+                continue
+            # Append the list while we iterate it
+            if pkg in provides.keys():
+                packages.append(provides[pkg])
+            else:
+                packages.append(pkg)
+    
+    return provides
+
+
 def create_device_rootfs(args, step, steps):
     # List all packages to be installed (including the ones specified by --add)
     # and upgrade the installed packages/apkindexes
