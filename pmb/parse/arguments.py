@@ -837,6 +837,8 @@ def arguments():
     build.add_argument("--strict", action="store_true", help="(slower) zap and"
                        " install only required depends when building, to"
                        " detect dependency errors")
+    build.add_argument("--bootstrap", action="store_true", help="build a bootstrap"
+                       " version of the package, only supported by some packages")
     build.add_argument("--src", help="override source used to build the"
                        " package with a local folder (the APKBUILD must"
                        " expect the source to be in $builddir, so you might"

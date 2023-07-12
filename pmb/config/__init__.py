@@ -713,6 +713,10 @@ apkbuild_package_attributes = {
     "install": {"array": True},
     "triggers": {"array": True},
 
+    # Denotes dependencies that aren't needed when
+    # bootstrapping the package.
+    "_bootstrap_exclude": {"array": True},
+
     # Packages can specify soft dependencies in "_pmb_recommends" to be
     # explicitly installed by default, and not implicitly as a hard dependency
     # of the package ("depends"). This makes these apps uninstallable, without
