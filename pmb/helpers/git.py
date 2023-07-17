@@ -108,7 +108,7 @@ def upstream_default_branch(args, name_repo):
     path = get_path(args, name_repo)
     for ref in ["HEAD", "master", "main"]:
         rev = rev_parse(args, path, revision=f"{remote}/{ref}",
-                        extra_args=["--abbrev-ref"], check=True)
+                        extra_args=["--verify"], check=True)
         if rev:
             return rev
     
