@@ -114,7 +114,7 @@ def get_depends(args, apkbuild):
     return ret
 
 
-def build_depends(args, apkbuild, arch, strict, bootstrap=False):
+def build_depends(args, apkbuild, arch, strict, bootstrap=False, level=0):
     """
     Get and build dependencies with verbose logging messages.
 
@@ -157,7 +157,7 @@ def build_depends(args, apkbuild, arch, strict, bootstrap=False):
         for depend in depends:
             if depend.startswith("!"):
                 continue
-            if package(args, depend, arch, strict=strict):
+            if package(args, depend, arch, strict=strict, level=level+1):
                 depends_built += [depend]
         logging.verbose(pkgname + ": build dependencies: done, built: " +
                         ", ".join(depends_built))
@@ -190,7 +190,7 @@ def is_necessary_warn_depends(args, apkbuild, arch, force, depends_built):
 
 def init_buildenv(args, apkbuild, arch, strict=False, force=False, cross=None,
                   suffix: Suffix = Suffix.native(), skip_init_buildenv=False,
-                  src=None, bootstrap=False):
+                  src=None, bootstrap=False, level=0):
     """
     Build all dependencies, check if we need to build at all (otherwise we've
     just initialized the build environment for nothing) and then setup the
@@ -211,7 +211,7 @@ def init_buildenv(args, apkbuild, arch, strict=False, force=False, cross=None,
         depends_arch = pmb.config.arch_native
 
     # Build dependencies
-    depends, built = build_depends(args, apkbuild, depends_arch, strict, bootstrap)
+    depends, built = build_depends(args, apkbuild, depends_arch, strict, bootstrap, level=level)
 
     # Check if build is necessary
     if not is_necessary_warn_depends(args, apkbuild, arch, force, built):
@@ -473,7 +473,7 @@ def finish(args, apkbuild, arch, output, strict=False, suffix: Suffix=Suffix.nat
 
 
 def package(args, pkgname, arch=None, force=False, strict=False,
-            skip_init_buildenv=False, src=None, bootstrap=False):
+            skip_init_buildenv=False, src=None, bootstrap=False, level=0):
     """
     Build a package and its dependencies with Alpine Linux' abuild.
 
@@ -509,6 +509,14 @@ def package(args, pkgname, arch=None, force=False, strict=False,
     if not apkbuild:
         return
 
+    indent = "--" * level
+    if level > 0:
+        indent += " "
+    _pkginfo = pkgname
+    if pkgname != apkbuild["pkgname"]:
+        _pkginfo += f" ({apkbuild['pkgname']})"
+    logging.verbose(f"TRAVERSING: {indent}{_pkginfo}")
+
     if bootstrap:
         force = True
         if "pmb:bootstrap" not in apkbuild["options"]:
@@ -521,7 +529,7 @@ def package(args, pkgname, arch=None, force=False, strict=False,
     suffix = pmb.build.autodetect.suffix(apkbuild, arch)
     cross = pmb.build.autodetect.crosscompile(args, apkbuild, arch, suffix)
     if not init_buildenv(args, apkbuild, arch, strict, force, cross, suffix,
-                         skip_init_buildenv, src, bootstrap):
+                         skip_init_buildenv, src, bootstrap, level=level):
         return
 
     # Build and finish up
