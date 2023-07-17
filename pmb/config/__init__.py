@@ -872,7 +872,7 @@ default_ip = "172.16.42.1"
 # the installation to the device.
 # util-linux: losetup, fallocate
 install_native_packages = ["cryptsetup", "util-linux", "parted"]
-install_device_packages = ["postmarketos-base"]
+install_device_packages = ["canopy-base"]
 
 # Groups for the default user
 install_user_groups = ["wheel", "video", "audio", "input", "plugdev", "netdev"]
