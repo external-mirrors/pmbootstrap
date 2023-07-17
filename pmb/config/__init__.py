@@ -219,8 +219,6 @@ chroot_mount_bind = {
     "$WORK/config_apk_keys": "/etc/apk/keys",
     "$WORK/images_netboot": "/mnt/pmbootstrap-netboot",
     "$WORK/packages/$CHANNEL": "/mnt/pmbootstrap-packages",
-    # Use apk.static for SPEEED. Borked perms??
-    # "$WORK/apk.static": "/sbin/apk",
 }
 
 # Building chroots (all chroots, except for the rootfs_ chroot) get symlinks in
