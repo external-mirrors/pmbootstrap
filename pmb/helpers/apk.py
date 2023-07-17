@@ -97,7 +97,7 @@ def apk_with_progress(args, command, chroot=False, suffix: Suffix=Suffix.native(
     """
     fifo, fifo_outside = _prepare_fifo(args, chroot, suffix)
     command_with_progress = _create_command_with_progress(command, fifo)
-    log_msg = " ".join(command)
+    log_msg = f"({suffix}) % " + " ".join(command)
     with _run(args, ['cat', fifo], chroot=chroot, suffix=suffix,
               output="pipe") as p_cat:
         with _run(args, command_with_progress, chroot=chroot, suffix=suffix,
