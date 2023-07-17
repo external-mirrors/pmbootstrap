@@ -99,6 +99,7 @@ config_keys = [
     "ui",
     "ui_extras",
     "user",
+    "merge_usr",
     "work",
 ]
 
@@ -138,6 +139,7 @@ defaults = {
     "ui": "console",
     "ui_extras": False,
     "user": "user",
+    "merge_usr": True,
     "work": os.path.expanduser("~") + "/.local/var/pmbootstrap",
     "boot_size": "256",
     "extra_space": "0",
