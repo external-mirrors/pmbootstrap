@@ -75,6 +75,52 @@ def init_keys(args):
             pmb.helpers.run.root(args, ["cp", key, target])
 
 
+# XXX: FIXME: how do this better?
+def _usrmerge(args, chroot):
+    """
+    Migrate a chroot to merged /usr layout by generating
+    and running a shell script, this is much faster than
+    doing it all in plain python
+
+    Args:
+        args: args
+        chroot (str): path to the chroot
+    """
+    def mv_files(script, src, dest):
+        for root, dirs, files in os.walk(os.path.join(chroot, src), topdown=False):
+            fdir = os.path.relpath(root, os.path.join(chroot, src))
+            if fdir == ".":
+                fdir = ""
+            else:
+                script += f"mkdir -p {os.path.join(chroot, dest, fdir)};"
+            for file in files:
+                script += f"mv -f {os.path.join(root, file)} " \
+                          f"{os.path.join(chroot, dest, fdir, file)};"
+        script += f"rm -rf {os.path.join(chroot, src)};"
+        return script
+
+    # Move /bin, /sbin, and /usr/sbin to /usr/bin
+    script = ""
+    script = mv_files(script, "bin", "usr/bin")
+    script = mv_files(script, "sbin", "usr/bin")
+    script = mv_files(script, "usr/sbin", "usr/bin")
+    # Move /lib to /usr/lib
+    script = mv_files(script, "lib", "usr/lib")
+    # Create symlinks
+    script += f"ln -s usr/bin {chroot}/bin;"
+    script += f"ln -s usr/bin {chroot}/sbin;"
+    script += f"ln -s bin {chroot}/usr/sbin;"
+    script += f"ln -s usr/lib {chroot}/lib;"
+
+    # path = "/tmp/postmarketOS-chroot-migrate.sh"
+    # with open(path, "w") as f:
+    #     f.write(script)
+    #     f.flush()
+
+    #pmb.helpers.run.user(args, ["chmod", "+x", path])
+    pmb.helpers.run.root(args, ["sh", "-c", script])
+
+
 def init(args, suffix: Suffix=Suffix.native()):
     # When already initialized: just prepare the chroot
     chroot = f"{args.work}/{suffix.chroot()}"
@@ -113,10 +159,14 @@ def init(args, suffix: Suffix=Suffix.native()):
     # Install alpine-base
     pmb.helpers.repo.update(args, arch)
     pmb.chroot.apk_static.run(args, ["--root", chroot,
-                                     "--cache-dir", apk_cache,
-                                     "--initdb", "--arch", arch,
-                                     "--repository", host_pkg_repo,
-                                     "add", "alpine-base"])
+                                    "--cache-dir", apk_cache,
+                                    "--initdb", "--arch", arch,
+                                    "--repository", host_pkg_repo,
+                                    "add", "alpine-base"])
+
+    # XXX: add argument parsing for this
+    if pmb.config.get("merge_usr").lower() == "true":
+        _usrmerge(args, chroot)
 
     # Building chroots: create "pmos" user, add symlinks to /home/pmos
     if not suffix.type() == SuffixType.ROOTFS:
