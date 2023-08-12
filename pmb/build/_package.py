@@ -507,6 +507,9 @@ def package(args, pkgname, arch=None, force=False, strict=False,
                          skip_init_buildenv, src):
         return
 
+    if args.auto_checksum:
+        pmb.build.checksum.fix_local(args, pkgname)
+
     # Build and finish up
     (output, cmd, env) = run_abuild(args, apkbuild, arch, strict, force, cross,
                                     suffix, src)

@@ -73,6 +73,7 @@ def sudo(cmd: List[str]) -> List[str]:
 # Keys saved in the config file (mostly what we ask in 'pmbootstrap init')
 config_keys = [
     "aports",
+    "auto_checksum",
     "boot_size",
     "build_default_device_arch",
     "build_pkgs_on_install",
@@ -106,6 +107,9 @@ config_keys = [
 # overridden on the commandline)
 defaults = {
     "aports": "$WORK/cache_git/pmaports",
+    # Automatically correct checksums for local files in APKBUILD
+    # sources (NOT web sources).
+    "auto_checksum": True,
     "ccache_size": "5G",
     "is_default_channel": True,
     "cipher": "aes-xts-plain64",
@@ -716,6 +720,7 @@ apkbuild_attributes = {
     "pkgver": {},
     "subpackages": {},
     "url": {},
+    "sha512sums": {"array": True, "pairs": True},
 
     # cross-compilers
     "makedepends_build": {"array": True},

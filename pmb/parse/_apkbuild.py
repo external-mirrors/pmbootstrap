@@ -210,6 +210,14 @@ def _parse_attributes(path, lines, apkbuild_attributes, ret):
         if options.get("array", False):
             # Split up arrays, delete empty strings inside the list
             ret[attribute] = list(filter(None, ret[attribute].split(" ")))
+            if options.get("pairs", False):
+                # Convert an array of ["k1", "v1", "k2", "v2"] to
+                # [("k1", "v1"), ("k2", "v2")]
+                # The only user is sha512sum which uses "value  key" pairs
+                # so flip them, for now
+                right = ret[attribute][::2]
+                left = ret[attribute][1::2]
+                ret[attribute] = dict(zip(left, right))
         if options.get("int", False):
             if ret[attribute]:
                 ret[attribute] = int(ret[attribute])
