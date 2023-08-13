@@ -95,7 +95,7 @@ def modify_apkbuild(args, pkgname, aport):
                          args.work + "/aportgen"])
 
     pkgver = pmb.build._package.get_pkgver(apkbuild["pkgver"],
-                                           original_source=False)
+                                           clean=False)
     fields = {"pkgver": pkgver,
               "pkgrel": "0",
               "subpackages": "",

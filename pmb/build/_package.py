@@ -228,7 +228,7 @@ def init_buildenv(args, apkbuild, arch, strict=False, force=False, cross=None,
     return True
 
 
-def get_pkgver(original_pkgver, original_source=False, now=None):
+def get_pkgver(original_pkgver, clean=False, now=None):
     """
     Get the original pkgver when using the original source. Otherwise, get the
     pkgver with an appended suffix of current date and time. For example:
@@ -237,11 +237,10 @@ def get_pkgver(original_pkgver, original_source=False, now=None):
     replaced.
 
     :param original_pkgver: unmodified pkgver from the package's APKBUILD.
-    :param original_source: the original source is used instead of overriding
-                            it with --src.
+    :param clean: clean building, use original pkgver
     :param now: use a specific date instead of current date (for test cases)
     """
-    if original_source:
+    if clean:
         return original_pkgver
 
     # Append current date
@@ -256,8 +255,6 @@ def override_source(args, apkbuild, pkgver, src, suffix="native"):
     Mount local source inside chroot and append new functions (prepare() etc.)
     to the APKBUILD to make it use the local source.
     """
-    if not src:
-        return
 
     # Mount source in chroot
     mount_path = "/mnt/pmbootstrap-source-override/"
@@ -358,8 +355,14 @@ def link_to_git_dir(args, suffix):
                            "/home/pmos/build/.git"], suffix)
 
 
+def make_dirty(args, apkuild):
+    """
+    Update the pkgver with the datetime suffix
+    """
+
+
 def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
-               suffix="native", src=None):
+               suffix="native", src=None, dirty=False):
     """
     Set up all environment variables and construct the abuild command (all
     depending on the cross-compiler method and target architecture), copy
@@ -379,13 +382,17 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
                      " probably fail!")
 
     # Pretty log message
-    pkgver = get_pkgver(apkbuild["pkgver"], src is None)
+    pkgver = get_pkgver(apkbuild["pkgver"], not dirty or src is None)
     output = (arch + "/" + apkbuild["pkgname"] + "-" + pkgver +
               "-r" + apkbuild["pkgrel"] + ".apk")
     message = "(" + suffix + ") build " + output
     if src:
         message += " (source: " + src + ")"
     logging.info(message)
+
+    # We don't care about the dirty build logic if we're using --src
+    # as that does most of the same stuff anyway
+    dirty = dirty and src is None
 
     # Environment variables
     env = {"CARCH": arch,
@@ -426,7 +433,13 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
 
     # Copy the aport to the chroot and build it
     pmb.build.copy_to_buildpath(args, apkbuild["pkgname"], suffix)
-    override_source(args, apkbuild, pkgver, src, suffix)
+    if src:
+        override_source(args, apkbuild, pkgver, src, suffix)
+    elif dirty:
+        # Overwrite the pkgver with the dirty pkgver
+        pmb.chroot.user(args,
+                        ["sed", "-i",
+                         f"s/pkgver=.*/pkgver={pkgver}/g", "/home/pmos/build/APKBUILD"], suffix)
     link_to_git_dir(args, suffix)
     pmb.chroot.user(args, cmd, suffix, "/home/pmos/build", env=env)
     return (output, cmd, env)
@@ -459,7 +472,7 @@ def finish(args, apkbuild, arch, output, strict=False, suffix="native"):
 
 
 def package(args, pkgname, arch=None, force=False, strict=False,
-            skip_init_buildenv=False, src=None):
+            skip_init_buildenv=False, src=None, dirty=False):
     """
     Build a package and its dependencies with Alpine Linux' abuild.
 
@@ -494,17 +507,37 @@ def package(args, pkgname, arch=None, force=False, strict=False,
     # Detect the build environment (skip unnecessary builds)
     if not check_build_for_arch(args, pkgname, arch):
         return
+
+    # For a dirty build we want to force the build if either
+    # the checksums mismatch OR the package includes unstaged changes
+    if dirty:
+        path = pmb.helpers.pmaports.find(args, pkgname, True)
+
+        # Fix checksums in-place
+        force = pmb.build.checksum.fix_local(args, pkgname, os.path.join(path, "APKBUILD"))
+        # if the checksums were up to date, check if the package has been modified since
+        # the last build, and force if it has been
+        if not force:
+            build_time = pmb.helpers.pmaports.get_last_build_date(args, pkgname, arch)
+            mtime = pmb.helpers.pmaports.get_last_mtime(args, path)
+            force = build_time < mtime
+            if force:
+                logging.debug(f"{pkgname}: doing dirty build because package has been"
+                              " modified since last build")
+
     suffix = pmb.build.autodetect.suffix(apkbuild, arch)
     cross = pmb.build.autodetect.crosscompile(args, apkbuild, arch, suffix)
     if not init_buildenv(args, apkbuild, arch, strict, force, cross, suffix,
                          skip_init_buildenv, src):
         return
 
-    if args.auto_checksum:
+    # If not a dirty build (ie pkgver was bumped) then update checksums
+    # now we the build was intentional
+    if args.auto_checksum and not dirty:
         pmb.build.checksum.fix_local(args, pkgname)
 
     # Build and finish up
     (output, cmd, env) = run_abuild(args, apkbuild, arch, strict, force, cross,
-                                    suffix, src)
+                                    suffix, src, dirty)
     finish(args, apkbuild, arch, output, strict, suffix)
     return output

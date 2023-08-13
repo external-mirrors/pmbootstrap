@@ -220,6 +220,9 @@ def arguments_sideload(subparser):
     ret.add_argument("--install-key", help="install the apk key from this"
                      " machine if needed",
                      action="store_true", dest="install_key")
+    ret.add_argument("--build", action="store_true", help="dirty-build the package"
+                     " before sideloading it. Shortcut for 'pmbootstrap build --dirty"
+                     " xyz && pmbootstrap sideload xyz'")
     return ret
 
 
@@ -819,6 +822,9 @@ def arguments():
     build.add_argument("--strict", action="store_true", help="(slower) zap and"
                        " install only required depends when building, to"
                        " detect dependency errors")
+    build.add_argument("--dirty", action="store_true", help="append the current"
+                       " datetime to the pkgver, to make sure it is always"
+                       " newer than the last build")
     build.add_argument("--src", help="override source used to build the"
                        " package with a local folder (the APKBUILD must"
                        " expect the source to be in $builddir, so you might"

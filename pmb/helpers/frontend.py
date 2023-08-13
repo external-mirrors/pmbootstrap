@@ -138,6 +138,11 @@ def sideload(args):
         arch = args.arch
     user = args.user
     host = args.host
+    if args.build:
+        for package in args.packages:
+            arch_package = args.arch or pmb.build.autodetect.arch(args, package)
+            if not pmb.build.package(args, package, arch_package, dirty=True):
+                logging.debug(f"'{package}' is up to date, not dirty-building")
     pmb.sideload.sideload(args, user, host, args.port, arch, args.install_key,
                           args.packages)
 
