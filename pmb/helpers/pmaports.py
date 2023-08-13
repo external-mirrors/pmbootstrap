@@ -287,3 +287,34 @@ def get_channel_new(channel):
         logging.verbose(f"Legacy channel '{channel}' translated to '{ret}'")
         return ret
     return channel
+
+
+def get_last_build_date(args, pkgname, arch):
+    """ Get the last build date of a package in the binary repository.
+
+        :param pkgname: package name
+        :param arch: package architecture
+        :returns: date as string in the format "YYYY-MM-DD" or None
+    """
+    # Get the last build date from the APKINDEX
+    index_data = pmb.parse.apkindex.package(args, pkgname, arch, False)
+    if not index_data:
+        return None
+
+    return int(index_data["timestamp"])
+
+def get_last_mtime(args, pkg):
+    """
+    Get the last modified time of a package in pmaports.
+
+    :param pkg: package name or absolute path to package dir
+    """
+
+    path = pkg
+    if not os.path.isabs(path):
+        path = find(args, pkg)
+
+    if not path:
+        raise RuntimeError(f"Could not find package {pkg}")
+
+    return int(os.path.getmtime(path))
