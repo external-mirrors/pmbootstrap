@@ -354,13 +354,6 @@ def link_to_git_dir(args, suffix):
     pmb.chroot.user(args, ["ln", "-sf", destination + "/.git",
                            "/home/pmos/build/.git"], suffix)
 
-
-def make_dirty(args, apkuild):
-    """
-    Update the pkgver with the datetime suffix
-    """
-
-
 def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
                suffix="native", src=None, dirty=False):
     """
@@ -382,7 +375,7 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
                      " probably fail!")
 
     # Pretty log message
-    pkgver = get_pkgver(apkbuild["pkgver"], not dirty or src is None)
+    pkgver = get_pkgver(apkbuild["pkgver"], (not dirty) or src is not None)
     output = (arch + "/" + apkbuild["pkgname"] + "-" + pkgver +
               "-r" + apkbuild["pkgrel"] + ".apk")
     message = "(" + suffix + ") build " + output
@@ -514,13 +507,14 @@ def package(args, pkgname, arch=None, force=False, strict=False,
         path = pmb.helpers.pmaports.find(args, pkgname, True)
 
         # Fix checksums in-place
-        force = pmb.build.checksum.fix_local(args, pkgname, os.path.join(path, "APKBUILD"))
+        force = pmb.build.checksum.fix_local(args, pkgname, os.path.join(path, "APKBUILD")) \
+                or force
         # if the checksums were up to date, check if the package has been modified since
         # the last build, and force if it has been
         if not force:
             build_time = pmb.helpers.pmaports.get_last_build_date(args, pkgname, arch)
             mtime = pmb.helpers.pmaports.get_last_mtime(args, path)
-            force = build_time < mtime
+            force = build_time < mtime if build_time else True
             if force:
                 logging.debug(f"{pkgname}: doing dirty build because package has been"
                               " modified since last build")
