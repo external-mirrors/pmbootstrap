@@ -33,6 +33,7 @@ import pmb.netboot
 import pmb.parse
 import pmb.qemu
 import pmb.sideload
+from glob import iglob
 
 
 def _parse_flavor(args, autoinstall=True):
@@ -117,6 +118,19 @@ def build(args):
             logging.info("NOTE: Package '" + package + "' is up to date. Use"
                          " 'pmbootstrap build " + package + " --force'"
                          " if needed.")
+
+
+def list_apks(args):
+    """
+    Generate a list of all apk packages that would be built with the current pmaports
+    """
+    for apkbuild_path in iglob(f"{args.aports}/**/*/APKBUILD", recursive=True):
+        apkbuild = pmb.parse.apkbuild(apkbuild_path)
+        print(pmb.build.output_path("", apkbuild["pkgname"],
+                                    apkbuild["pkgver"], apkbuild["pkgrel"]))
+        for subpkg in apkbuild["subpackages"]:
+            print(pmb.build.output_path("", subpkg,
+                                        apkbuild["pkgver"], apkbuild["pkgrel"]))
 
 
 def build_init(args):
