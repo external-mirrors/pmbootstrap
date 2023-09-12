@@ -696,6 +696,7 @@ def arguments():
     sub.add_parser("work_migrate", help="run this before using pmbootstrap"
                                         " non-interactively to migrate the"
                                         " work folder version on demand")
+    sub.add_parser("list_apks", help="List all .apk files that pmbootstrap could build")
     arguments_repo_missing(sub)
     arguments_kconfig(sub)
     arguments_export(sub)

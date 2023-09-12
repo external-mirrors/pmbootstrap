@@ -363,6 +363,10 @@ def link_to_git_dir(args, suffix):
                            "/home/pmos/build/.git"], suffix)
 
 
+def output_path(arch, pkgname, pkgver, pkgrel):
+    return os.path.join(arch, f"{pkgname}-{pkgver}-r{pkgrel}.apk")
+
+
 def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
                suffix="native", src=None):
     """
@@ -385,9 +389,8 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
 
     # Pretty log message
     pkgver = get_pkgver(apkbuild["pkgver"], src is None)
-    output = (arch + "/" + apkbuild["pkgname"] + "-" + pkgver +
-              "-r" + apkbuild["pkgrel"] + ".apk")
-    message = "(" + suffix + ") build " + output
+    output = output_path(arch, apkbuild["pkgname"], pkgver, apkbuild["pkgrel"])
+    message = f"({suffix}) build " + output
     if src:
         message += " (source: " + src + ")"
     logging.info(message)
