@@ -86,6 +86,7 @@ def init(args, suffix="native"):
         pmb.config.workdir.chroot_check_channel(args, suffix)
         copy_resolv_conf(args, suffix)
         pmb.chroot.apk.update_repository_list(args, suffix)
+        pmb.chroot.mount_native_into_foreign(args, suffix)
         return
 
     # Require apk-tools-static

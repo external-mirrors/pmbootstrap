@@ -126,6 +126,9 @@ def copy_files_from_chroot(args, suffix):
     if os.path.exists(fifo):
         pmb.helpers.run.root(args, ["rm", fifo])
 
+    # Unmount crossdirect bits
+    pmb.chroot.unmount_crossdirect(args, suffix)
+
     # Get all folders inside the device rootfs (except for home)
     folders = []
     for path in glob.glob(mountpoint_outside + "/*"):
@@ -798,6 +801,8 @@ def install_system_image(args, size_reserve, suffix, step, steps,
             else:
                 pmb.install.partition(args, layout, size_boot, size_reserve)
     if not split:
+        import time
+        time.sleep(1)
         pmb.install.partitions_mount(args, layout, sdcard)
 
     pmb.install.format(args, layout, boot_label, root_label, sdcard)

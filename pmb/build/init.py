@@ -12,13 +12,16 @@ import pmb.chroot.apk
 import pmb.helpers.run
 
 
-def init_abuild_minimal(args, suffix="native"):
+def init_abuild_minimal(args, suffix="native", cross=None):
     """ Initialize a minimal chroot with abuild where one can do
         'abuild checksum'. """
     marker = f"{args.work}/chroot_{suffix}/tmp/pmb_chroot_abuild_init_done"
     if os.path.exists(marker):
         return
 
+    # For crossdirect we need the native versions of the libraries
+    if cross == "crossdirect":
+        pmb.chroot.apk.install(args, ["abuild"], "native", build=False)
     pmb.chroot.apk.install(args, ["abuild"], suffix, build=False)
 
     # Fix permissions
@@ -33,13 +36,13 @@ def init_abuild_minimal(args, suffix="native"):
     pathlib.Path(marker).touch()
 
 
-def init(args, suffix="native"):
+def init(args, suffix="native", cross=None):
     """ Initialize a chroot for building packages with abuild. """
     marker = f"{args.work}/chroot_{suffix}/tmp/pmb_chroot_build_init_done"
     if os.path.exists(marker):
         return
 
-    init_abuild_minimal(args, suffix)
+    init_abuild_minimal(args, suffix, cross)
 
     # Initialize chroot, install packages
     pmb.chroot.apk.install(args, pmb.config.build_packages, suffix,

@@ -193,6 +193,12 @@ chroot_uid_user = "12345"
 
 # The PATH variable used inside all chroots
 chroot_path = ":".join([
+    # "/native/usr/local/sbin",
+    # "/native/usr/local/bin",
+    # "/native/usr/sbin",
+    # "/native/usr/bin",
+    # "/native/sbin",
+    # "/native/bin",
     "/usr/lib/ccache/bin",
     "/usr/local/sbin",
     "/usr/local/bin",
@@ -224,6 +230,16 @@ chroot_mount_bind = {
     "$WORK/images_netboot": "/mnt/pmbootstrap-netboot",
     "$WORK/packages/$CHANNEL": "/mnt/pmbootstrap-packages",
 }
+
+# Utils to bind-bound from the native chroot to a foreign chroot
+# to minimise the amount of binaries we have to run through
+# qemu-user
+chroot_native_tools = {
+    #"/bin/busybox": "busybox", # only to handle shell script shebangs
+    #"/usr/sbin/mkinitfs": "postmarketos-mkinitfs",
+    "/sbin/apk": "apk-tools",
+}
+
 
 # Building chroots (all chroots, except for the rootfs_ chroot) get symlinks in
 # the "pmos" user's home folder pointing to mountfolders from above.

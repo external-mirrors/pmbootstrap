@@ -20,7 +20,7 @@ def ismount(folder):
     return False
 
 
-def bind(args, source, destination, create_folders=True, umount=False):
+def bind(args, source, destination, create_folders=True, umount=False, is_file=False):
     """
     Mount --bind a folder and create necessary directory structure.
     :param umount: when destination is already a mount point, umount it first.
@@ -33,14 +33,27 @@ def bind(args, source, destination, create_folders=True, umount=False):
             return
 
     # Check/create folders
-    for path in [source, destination]:
-        if os.path.exists(path):
-            continue
-        if create_folders:
-            pmb.helpers.run.root(args, ["mkdir", "-p", path])
+    if not os.path.exists(source):
+        if is_file:
+            raise RuntimeError(f"Mount failed, file does not exist: {source}")
+        elif create_folders:
+            pmb.helpers.run.root(args, ["mkdir", "-p", source])
         else:
-            raise RuntimeError("Mount failed, folder does not exist: " +
-                               path)
+            raise RuntimeError(f"Mount failed, folder does not exist: {source}")
+
+    if not os.path.exists(destination):
+        if is_file:
+            _dest = os.path.dirname(destination)
+            pmb.helpers.run.root(args, ["mkdir", "-p", _dest])
+            pmb.helpers.run.root(args, ["touch", destination])
+        elif create_folders:
+            pmb.helpers.run.root(args, ["mkdir", "-p", destination])
+        else:
+            raise RuntimeError(f"Mount failed, folder does not exist: {destination}")
+
+    # For bind-mounting files
+    if not os.path.isdir(source) and not os.path.exists(destination):
+        pmb.helpers.run.root(args, ["touch", destination])
 
     # Actually mount the folder
     pmb.helpers.run.root(args, ["mount", "--bind", source, destination])

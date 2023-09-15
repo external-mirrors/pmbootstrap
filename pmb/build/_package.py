@@ -211,10 +211,13 @@ def init_buildenv(args, apkbuild, arch, strict=False, force=False, cross=None,
 
     # Install and configure abuild, ccache, gcc, dependencies
     if not skip_init_buildenv:
-        pmb.build.init(args, suffix)
+        pmb.build.init(args, suffix, cross)
         pmb.build.other.configure_abuild(args, suffix)
         pmb.build.other.configure_ccache(args, suffix)
     if not strict and "pmb:strict" not in apkbuild["options"] and len(depends):
+        # For crossdirect we want dependencies in the native chroot too
+        if "!pmb:crossdirect" not in apkbuild["options"] and cross:
+            pmb.chroot.apk.install(args, depends, "native")
         pmb.chroot.apk.install(args, depends, suffix)
     if src:
         pmb.chroot.apk.install(args, ["rsync"], suffix)
@@ -222,8 +225,8 @@ def init_buildenv(args, apkbuild, arch, strict=False, force=False, cross=None,
     # Cross-compiler init
     if cross:
         pmb.build.init_compiler(args, depends, cross, arch)
-    if cross == "crossdirect":
-        pmb.chroot.mount_native_into_foreign(args, suffix)
+    # if cross == "crossdirect":
+    #     pmb.chroot.mount_native_into_foreign(args, suffix)
 
     return True
 
@@ -388,7 +391,7 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
     dirty = dirty and src is None
 
     # Environment variables
-    env = {"CARCH": arch,
+    env = {"CARCH": arch, "CBUILD": arch,
            "SUDO_APK": "abuild-apk --no-progress"}
     if cross == "native":
         hostspec = pmb.parse.arch.alpine_to_hostspec(arch)
