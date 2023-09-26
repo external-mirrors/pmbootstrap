@@ -207,7 +207,7 @@ def install_run_apk(args, to_add, to_add_local, to_del, suffix):
             # Virtual package related commands don't actually install or remove
             # packages, but only mark the right ones as explicitly installed.
             # They finish up almost instantly, so don't display a progress bar.
-            pmb.chroot.root(args, ["apk", "--no-progress"] + command,
+            pmb.chroot.root(args, ["apk", "--no-progress", "--allow-untrusted"] + command,
                             suffix=suffix)
 
 
