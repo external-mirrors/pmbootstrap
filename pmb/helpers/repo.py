@@ -83,6 +83,12 @@ def urls(args, user_repository=True, postmarketos_mirror=True, alpine=True):
             directories.append("testing")
         for dir in directories:
             ret.append(f"{args.mirror_alpine}{mirrordir_alpine}/{dir}")
+
+    if "ADDITIONAL_REPO" in os.environ:
+        # logging.info("Addition additional repo from environment variable: "
+        #             + os.environ["ADDITIONAL_REPO"])
+        ret.append(os.environ["ADDITIONAL_REPO"])
+
     return ret
 
 
