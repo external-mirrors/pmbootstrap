@@ -939,8 +939,7 @@ flashers = {
             ],
             "flash_dtbo": [["fastboot", "flash", "$PARTITION_DTBO",
                             "$BOOT/dtbo.img"]],
-            "boot": [["fastboot", "--cmdline", "$KERNEL_CMDLINE",
-                      "boot", "$BOOT/boot.img$FLAVOR"]],
+            "boot": [["fastboot", "boot", "$BOOT/boot.img$FLAVOR"]],
             "flash_lk2nd": [["fastboot", "flash", "$PARTITION_KERNEL",
                              "$BOOT/lk2nd.img"]]
         },
