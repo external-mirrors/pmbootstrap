@@ -207,8 +207,14 @@ def command_qemu(args, arch, img_path, img_path_2nd=None):
                            " yet.")
 
     if args.efi:
-        command += ["-drive",
-                    "if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF.fd"]
+        if pmb.config.arch_native == "aarch64":
+            command += ["-drive",
+                        "if=pflash,format=raw,readonly=on,file=/usr/share/AAVMF/AAVMF_CODE.fd"]
+        elif pmb.config.arch_native == "x86_64":
+            command += ["-drive",
+                        "if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF.fd"]
+        else:
+            raise RuntimeError("I don't know what I'm doing!")
 
     # Kernel Virtual Machine (KVM) support
     native = pmb.config.arch_native == args.deviceinfo["arch"]
@@ -314,7 +320,12 @@ def install_depends(args, arch):
         depends.remove("qemu-ui-opengl")
 
     if args.efi:
-        depends.append("ovmf")
+        if pmb.config.arch_native == "aarch64":
+            depends.append("aavmf")
+        elif pmb.config.arch_native == "x86_64":
+            depends.append("ovmf")
+        else:
+            raise RuntimeError("I don't know what I'm doing!")
 
     pmb.chroot.apk.install(args, depends)
 
