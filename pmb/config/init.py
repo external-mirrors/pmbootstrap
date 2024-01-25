@@ -121,8 +121,10 @@ def ask_for_channel(args):
     # The actual channel name is not saved in pmbootstrap.cfg, because then we
     # would need to sync it with what is checked out in pmaports.git.
     default = pmb.config.pmaports.read_config(args)["channel"]
-    choices = channels_cfg["channels"].keys()
-    if args.is_default_channel or default not in choices:
+    choices = list(channels_cfg["channels"].keys())
+    if default not in choices:
+        choices.append(default)
+    if args.is_default_channel: #or default not in choices:
         default = channels_cfg["meta"]["recommended"]
 
     # Ask until user gives valid channel
