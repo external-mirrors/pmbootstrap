@@ -365,7 +365,7 @@ def setup_keymap(args):
         logging.info("NOTE: No valid keymap specified for device")
 
 
-def setup_timezone(args):
+def setup_timezone_openrc(args):
     suffix = f"rootfs_{args.device}"
 
     arch = args.deviceinfo["arch"]
@@ -383,6 +383,20 @@ def setup_timezone(args):
         setup_tz_cmd += ["-z"]
     setup_tz_cmd += [args.timezone]
     pmb.chroot.root(args, setup_tz_cmd, suffix)
+
+
+def setup_timezone_systemd(args):
+    suffix = f"rootfs_{args.device}"
+    chroot = os.path.join(args.work, suffix)
+    pmb.chroot.root(args, ["ln", "-sf", os.path.join(chroot, "/usr/share/zoneinfo/", args.timezone),
+                           "/etc/localtime"], suffix)
+
+
+def setup_timezone(args):
+    if "systemd" in pmb.chroot.apk.installed(args, f"rootfs_{args.device}"):
+        setup_timezone_systemd(args)
+    else:
+        setup_timezone_openrc(args)
 
 
 def setup_hostname(args):
