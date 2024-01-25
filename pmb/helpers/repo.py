@@ -54,7 +54,7 @@ def urls(args, user_repository=True, postmarketos_mirror=True, alpine=True):
     # Get mirrordirs from channels.cfg (postmarketOS mirrordir is the same as
     # the pmaports branch of the channel, no need to make it more complicated)
     channel_cfg = pmb.config.pmaports.read_config_channel(args)
-    mirrordir_pmos = channel_cfg["branch_pmaports"]
+    mirrordir_pmos = "master" #channel_cfg["branch_pmaports"]
     mirrordir_alpine = channel_cfg["mirrordir_alpine"]
 
     # Local user repository (for packages compiled with pmbootstrap)
