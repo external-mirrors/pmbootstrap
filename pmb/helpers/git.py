@@ -118,7 +118,7 @@ def parse_channels_cfg(args):
         cfg.read([args.config_channels])
     else:
         remote = get_upstream_remote(args, "pmaports")
-        command = ["git", "show", f"{remote}/master:channels.cfg"]
+        command = ["cat", f"{get_path(args, 'pmaports')}/channels.cfg"]
         stdout = pmb.helpers.run.user(args, command, args.aports,
                                       output_return=True, check=False)
         try:
