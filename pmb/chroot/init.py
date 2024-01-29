@@ -151,17 +151,20 @@ def init(args, suffix="native"):
     pmb.chroot.apk.update_repository_list(args, suffix)
 
     pmb.config.workdir.chroot_save_init(args, suffix)
+    
+    cmd = ["--root", chroot,
+           "--cache-dir", apk_cache,
+           "--initdb", "--arch", arch]
+    
     channel_cfg = pmb.config.pmaports.read_config_channel(args)
-    mirrordir_alpine = channel_cfg["mirrordir_alpine"]
-    host_pkg_repo = os.path.join(args.work, "packages", mirrordir_alpine)
+    branch = channel_cfg["branch_pmaports"]
+    host_pkg_repo = os.path.join(args.work, "packages", branch)
+    for repo in [host_pkg_repo] + args.mirrors_postmarketos:
+        cmd += ["--repository", repo]
 
     # Install alpine-base
     pmb.helpers.repo.update(args, arch)
-    pmb.chroot.apk_static.run(args, ["--root", chroot,
-                                    "--cache-dir", apk_cache,
-                                    "--initdb", "--arch", arch,
-                                    "--repository", host_pkg_repo,
-                                    "add", "alpine-base"])
+    pmb.chroot.apk_static.run(args, cmd + ["add", "alpine-base"])
 
     # XXX: add argument parsing for this
     if args.merge_usr:
