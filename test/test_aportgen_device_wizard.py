@@ -148,6 +148,12 @@ def test_aportgen_device_wizard(args, monkeypatch):
     assert deviceinfo["generate_bootimg"] == ""
     assert deviceinfo["generate_legacy_uboot_initfs"] == ""
 
+    # Omit the device specific kernel, as we don't build it in this test
+    apkbuild_path = (f"{args.aports}/device/testing/"
+                     "device-testsuite-testdevice/APKBUILD")
+    pmb.helpers.run.user(args, ["sed", "-i", "s/linux-testsuite-testdevice//g",
+                         apkbuild_path])
+
     # Build the device package
     pkgname = "device-testsuite-testdevice"
     pmb.build.checksum.update(args, pkgname)
