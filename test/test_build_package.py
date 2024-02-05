@@ -281,7 +281,7 @@ def test_run_abuild(args, monkeypatch):
 
     # Force and strict
     cmd = ["abuild", "-D", "postmarketOS", "-r", "-f"]
-    assert func(args, apkbuild, "armhf", True, True) == (output, cmd, env)
+    assert func(args, apkbuild, "armhf", True) == (output, cmd, env)
 
     # cross=native
     env = {"CARCH": "armhf",

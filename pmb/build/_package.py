@@ -219,8 +219,6 @@ def init_buildenv(args, apkbuild, arch, strict=False, force=False, cross=None,
             pmb.build.other.configure_ccache(args, suffix)
             if "rust" in depends or "cargo" in depends:
                 pmb.chroot.apk.install(args, ["sccache"], suffix)
-    if not strict and "pmb:strict" not in apkbuild["options"] and len(depends):
-        pmb.chroot.apk.install(args, depends, suffix)
     if src:
         pmb.chroot.apk.install(args, ["rsync"], suffix)
 
@@ -363,8 +361,8 @@ def link_to_git_dir(args, suffix):
                            "/home/pmos/build/.git"], suffix)
 
 
-def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
-               suffix="native", src=None):
+def run_abuild(args, apkbuild, arch, force=False, cross=None, suffix="native",
+               src=None):
     """
     Set up all environment variables and construct the abuild command (all
     depending on the cross-compiler method and target architecture), copy
@@ -422,14 +420,9 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
         env["GOMODCACHE"] = "/home/pmos/go/pkg/mod"
 
     # Build the abuild command
-    cmd = ["abuild", "-D", "postmarketOS"]
-    if strict or "pmb:strict" in apkbuild["options"]:
-        if not strict:
-            logging.debug(apkbuild["pkgname"] + ": 'pmb:strict' found in"
-                          " options, building in strict mode")
-        cmd += ["-r"]  # install depends with abuild
-    else:
-        cmd += ["-d"]  # do not install depends with abuild
+    cmd = ["abuild",
+           "-r", # install depends with abuild
+           "-D", "postmarketOS"]
     if force:
         cmd += ["-f"]
 
@@ -512,7 +505,7 @@ def package(args, pkgname, arch=None, force=False, strict=False,
         return
 
     # Build and finish up
-    (output, cmd, env) = run_abuild(args, apkbuild, arch, strict, force, cross,
-                                    suffix, src)
+    (output, cmd, env) = run_abuild(args, apkbuild, arch, force, cross, suffix,
+                                    src)
     finish(args, apkbuild, arch, output, strict, suffix)
     return output
