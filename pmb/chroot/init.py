@@ -74,7 +74,23 @@ def init_keys(args):
             pmb.helpers.run.root(args, ["cp", key, target])
 
 
-def init(args, suffix="native"):
+def init_usr_merge(args, suffix):
+    logging.info(f"({suffix}) merge /usr")
+    script = f"{pmb.config.pmb_src}/pmb/data/merge-usr.sh"
+    pmb.helpers.run.root(args, ["sh", "-e", script, "CALLED_FROM_PMB",
+                                f"{args.work}/chroot_{suffix}"])
+
+
+def init(args, suffix="native", usr_merge=None):
+    """
+    Initialize a chroot by copying the resolv.conf and updating
+    /etc/apk/repositories. If /bin/sh is missing, create the chroot from
+    scratch.
+
+    :param usr_merge: set to True to force having a merged usr. Otherwise it is
+                      only done if the user chose to install systemd in
+                      pmbootstrap init.
+    """
     # When already initialized: just prepare the chroot
     chroot = f"{args.work}/chroot_{suffix}"
     arch = pmb.parse.arch.from_chroot_suffix(args, suffix)
@@ -127,3 +143,9 @@ def init(args, suffix="native"):
                 pmb.chroot.root(args, ["mkdir", "-p", target], suffix)
             pmb.chroot.user(args, ["ln", "-s", target, link_name], suffix)
             pmb.chroot.root(args, ["chown", "pmos:pmos", target], suffix)
+
+    # Merge /usr
+    if usr_merge is None:
+        usr_merge = pmb.config.is_systemd_selected(args)
+    if usr_merge:
+        init_usr_merge(args, suffix)
