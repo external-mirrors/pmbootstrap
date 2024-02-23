@@ -364,7 +364,7 @@ def link_to_git_dir(args, suffix):
 
 
 def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
-               suffix="native", src=None):
+               suffix="native", src=None, bootstrap=None):
     """
     Set up all environment variables and construct the abuild command (all
     depending on the cross-compiler method and target architecture), copy
@@ -372,6 +372,7 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
 
     :param cross: None, "native", or "crossdirect"
     :param src: override source used to build the package with a local folder
+    :param bootstrap: pass a BOOTSTRAP= env var with the given value to abuild
     :returns: (output, cmd, env), output is the destination apk path relative
               to the package folder ("x86_64/hello-1-r2.apk"). cmd and env are
               used by the test case, and they are the full abuild command and
@@ -421,6 +422,9 @@ def run_abuild(args, apkbuild, arch, strict=False, force=False, cross=None,
     if args.go_mod_cache:
         env["GOMODCACHE"] = "/home/pmos/go/pkg/mod"
 
+    if bootstrap:
+        env["BOOTSTRAP"] = bootstrap
+
     # Build the abuild command
     cmd = ["abuild", "-D", "postmarketOS"]
     if strict or "pmb:strict" in apkbuild["options"]:
@@ -468,7 +472,7 @@ def finish(args, apkbuild, arch, output, strict=False, suffix="native"):
 
 
 def package(args, pkgname, arch=None, force=False, strict=False,
-            skip_init_buildenv=False, src=None):
+            skip_init_buildenv=False, src=None, bootstrap=None):
     """
     Build a package and its dependencies with Alpine Linux' abuild.
 
@@ -487,6 +491,7 @@ def package(args, pkgname, arch=None, force=False, strict=False,
                                something during initialization of the build
                                environment (e.g. qemu aarch64 bug workaround)
     :param src: override source used to build the package with a local folder
+    :param bootstrap: pass a BOOTSTRAP= env var with the given value to abuild
     :returns: None if the build was not necessary
               output path relative to the packages folder ("armhf/ab-1-r2.apk")
     """
@@ -515,6 +520,6 @@ def package(args, pkgname, arch=None, force=False, strict=False,
 
     # Build and finish up
     (output, cmd, env) = run_abuild(args, apkbuild, arch, strict, force, cross,
-                                    suffix, src)
+                                    suffix, src, bootstrap)
     finish(args, apkbuild, arch, output, strict, suffix)
     return output
