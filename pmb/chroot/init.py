@@ -152,3 +152,7 @@ def init(args, suffix="native", usr_merge=None, mirrors_pmos=None):
         usr_merge = pmb.config.is_systemd_selected(args)
     if usr_merge:
         init_usr_merge(args, suffix)
+
+    # Upgrade packages in the chroot, in case alpine-base, apk, etc. have been
+    # built from source with pmbootstrap
+    pmb.chroot.root(args, ["apk", "--no-network", "upgrade", "-a"], suffix)
