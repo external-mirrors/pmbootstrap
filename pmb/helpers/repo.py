@@ -40,12 +40,16 @@ def hash(url, length=8):
     return ret
 
 
-def urls(args, user_repository=True, postmarketos_mirror=True, alpine=True):
+def urls(args, user_repository=True, postmarketos_mirror=True, alpine=True,
+         mirrors_pmos=None):
     """
     Get a list of repository URLs, as they are in /etc/apk/repositories.
     :param user_repository: add /mnt/pmbootstrap/packages
     :param postmarketos_mirror: add postmarketos mirror URLs
     :param alpine: add alpine mirror URLs
+    :param mirrors_pmos: set to a dict to override args.mirrors_postmarketos
+                         when creating the chroot. This is used in pmbootstrap
+                         repo_bootstrap.
     :returns: list of mirror strings, like ["/mnt/pmbootstrap/packages",
                                             "http://...", ...]
     """
@@ -62,8 +66,10 @@ def urls(args, user_repository=True, postmarketos_mirror=True, alpine=True):
         ret.append("/mnt/pmbootstrap/packages")
 
     # Upstream postmarketOS binary repository
+    if not mirrors_pmos:
+        mirrors_pmos = args.mirrors_postmarketos
     if postmarketos_mirror:
-        for mirror in args.mirrors_postmarketos:
+        for mirror in mirrors_pmos:
             # Remove "master" mirrordir to avoid breakage until bpo is adjusted
             # (build.postmarketos.org#63) and to give potential other users of
             # this flag a heads up.
