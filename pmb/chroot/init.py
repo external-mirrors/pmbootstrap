@@ -81,7 +81,7 @@ def init_usr_merge(args, suffix):
                                 f"{args.work}/chroot_{suffix}"])
 
 
-def init(args, suffix="native", usr_merge=None):
+def init(args, suffix="native", usr_merge=None, mirrors_pmos=None):
     """
     Initialize a chroot by copying the resolv.conf and updating
     /etc/apk/repositories. If /bin/sh is missing, create the chroot from
@@ -90,6 +90,9 @@ def init(args, suffix="native", usr_merge=None):
     :param usr_merge: set to True to force having a merged usr. Otherwise it is
                       only done if the user chose to install systemd in
                       pmbootstrap init.
+    :param mirrors_pmos: set to a dict to override args.mirrors_postmarketos
+                         when creating the chroot. This is used in pmbootstrap
+                         repo_bootstrap.
     """
     # When already initialized: just prepare the chroot
     chroot = f"{args.work}/chroot_{suffix}"
@@ -101,7 +104,7 @@ def init(args, suffix="native", usr_merge=None):
     if os.path.islink(f"{chroot}/bin/sh"):
         pmb.config.workdir.chroot_check_channel(args, suffix)
         copy_resolv_conf(args, suffix)
-        pmb.chroot.apk.update_repository_list(args, suffix)
+        pmb.chroot.apk.update_repository_list(args, suffix, mirrors_pmos)
         return
 
     # Require apk-tools-static
@@ -117,7 +120,7 @@ def init(args, suffix="native", usr_merge=None):
     # Initialize /etc/apk/keys/, resolv.conf, repositories
     init_keys(args)
     copy_resolv_conf(args, suffix)
-    pmb.chroot.apk.update_repository_list(args, suffix)
+    pmb.chroot.apk.update_repository_list(args, suffix, mirrors_pmos)
 
     pmb.config.workdir.chroot_save_init(args, suffix)
 
