@@ -116,6 +116,10 @@ def log_progress(msg):
 def run_steps(args, steps, arch, suffix):
     global progress_step
 
+    mirrors = ""
+    if not args.from_scratch:
+        mirrors = args.mirrors_postmarketos
+
     progress_done = 0
     for step, bootstrap_line in steps.items():
         progress_step = step.replace("bootstrap_", "BOOTSTRAP=")
