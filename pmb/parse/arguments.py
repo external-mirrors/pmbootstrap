@@ -524,6 +524,9 @@ def arguments_repo_bootstrap(subparser):
     ret = subparser.add_parser("repo_bootstrap")
     ret.add_argument("repository",
                      help="which repository to bootstrap (e.g. systemd)")
+    ret.add_argument("--from-scratch", action="store_true", dest="from_scratch",
+                     help="Ignore the postmarketOS binary repo and build all "
+                     "packages from source.")
     ret.add_argument("--arch", choices=arch_choices, dest="arch")
     return ret
 
