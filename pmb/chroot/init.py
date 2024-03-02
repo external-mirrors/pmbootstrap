@@ -81,7 +81,7 @@ def init_usr_merge(args, suffix):
                                 f"{args.work}/chroot_{suffix}"])
 
 
-def init(args, suffix="native", usr_merge=None, mirrors_pmos=None):
+def init(args, suffix="native", usr_merge=None, mirrors_pmos=""):
     """
     Initialize a chroot by copying the resolv.conf and updating
     /etc/apk/repositories. If /bin/sh is missing, create the chroot from
@@ -124,12 +124,20 @@ def init(args, suffix="native", usr_merge=None, mirrors_pmos=None):
 
     pmb.config.workdir.chroot_save_init(args, suffix)
 
+    cmd = ["--root", chroot,
+           "--cache-dir", apk_cache,
+           "--initdb", "--arch", arch]
+
+    channel_cfg = pmb.config.pmaports.read_config_channel(args)
+    branch = channel_cfg["mirrordir_alpine"]
+    host_pkg_repo = os.path.join(args.work, "packages", branch)
+    for repo in [host_pkg_repo] + [mirrors_pmos]:
+        cmd += ["--repository", repo]
+
+
     # Install alpine-base
     pmb.helpers.repo.update(args, arch)
-    pmb.chroot.apk_static.run(args, ["--root", chroot,
-                                     "--cache-dir", apk_cache,
-                                     "--initdb", "--arch", arch,
-                                     "add", "alpine-base"])
+    pmb.chroot.apk_static.run(args, cmd + ["add", "alpine-base"])
 
     # Building chroots: create "pmos" user, add symlinks to /home/pmos
     if not suffix.startswith("rootfs_"):
