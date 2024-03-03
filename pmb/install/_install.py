@@ -209,7 +209,7 @@ def set_user(args):
     """
     suffix = "rootfs_" + args.device
     if not pmb.chroot.user_exists(args, args.user, suffix):
-        pmb.chroot.root(args, ["adduser", "-D", "-u", "10000", "-s", "/usr/bin/bash", args.user],
+        pmb.chroot.root(args, ["adduser", "-D", "-u", "10000", "-s", "/bin/bash", args.user],
                         suffix)
 
     pmaports_cfg = pmb.config.pmaports.read_config(args)
