@@ -209,7 +209,7 @@ def set_user(args):
     """
     suffix = "rootfs_" + args.device
     if not pmb.chroot.user_exists(args, args.user, suffix):
-        pmb.chroot.root(args, ["adduser", "-D", "-u", "10000", args.user],
+        pmb.chroot.root(args, ["adduser", "-D", "-u", "10000", "-s", "/usr/bin/bash", args.user],
                         suffix)
 
     pmaports_cfg = pmb.config.pmaports.read_config(args)
@@ -1190,9 +1190,6 @@ def create_device_rootfs(args, step, steps):
                  ' ***')
 
     suffix = f"rootfs_{args.device}"
-    # Create user before installing packages, so post-install scripts of
-    # pmaports can figure out the username (legacy reasons: pmaports#820)
-    set_user(args)
 
     # Fill install_packages
     install_packages = (pmb.config.install_device_packages +
@@ -1256,7 +1253,10 @@ def create_device_rootfs(args, step, steps):
     # installed a hook without pmbootstrap - see #69 for more info)
     pmb.chroot.apk.install(args, install_packages, suffix)
     flavor = pmb.chroot.other.kernel_flavor_installed(args, suffix)
-    pmb.chroot.initfs.build(args, flavor, suffix)
+    #pmb.chroot.initfs.build(args, flavor, suffix)
+
+    # Set up the user now that /etc/skel is populated!
+    set_user(args)
 
     # Set the user password
     setup_login(args, suffix)
