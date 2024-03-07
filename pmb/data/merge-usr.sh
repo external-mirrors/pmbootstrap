@@ -18,21 +18,21 @@ if [ -L "$CHROOT"/bin ]; then
 fi
 
 # /bin -> /usr/bin
-mv "$CHROOT"/bin/* "$CHROOT"/usr/bin/
-rmdir "$CHROOT"/bin
+rsync -a "$CHROOT"/bin/ "$CHROOT"/usr/bin/
+rm -rf "$CHROOT"/bin
 ln -s usr/bin "$CHROOT"/bin
 
 # /sbin -> /usr/bin
-mv "$CHROOT"/sbin/* "$CHROOT"/usr/bin/
-rmdir "$CHROOT"/sbin
+rsync -a "$CHROOT"/sbin/* "$CHROOT"/usr/bin/
+rm -rf "$CHROOT"/sbin
 ln -s usr/bin "$CHROOT"/sbin
 
 # /lib -> /usr/lib
-mv "$CHROOT"/lib/* "$CHROOT"/usr/lib/
-rmdir "$CHROOT"/lib
+rsync -a "$CHROOT"/lib/* "$CHROOT"/usr/lib/
+rm -rf "$CHROOT"/lib
 ln -s usr/lib "$CHROOT"/lib
 
 # /usr/sbin -> /usr/bin
-mv "$CHROOT"/usr/sbin/* "$CHROOT"/usr/bin/
-rmdir "$CHROOT"/usr/sbin
+rsync -a "$CHROOT"/usr/sbin/* "$CHROOT"/usr/bin/
+rm -rf "$CHROOT"/usr/sbin
 ln -s bin "$CHROOT"/usr/sbin
