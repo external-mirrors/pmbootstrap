@@ -173,4 +173,4 @@ def run(args, parameters):
     if args.offline:
         parameters = ["--no-network"] + parameters
     pmb.helpers.apk.apk_with_progress(
-        args, [f"{args.work}/apk.static"] + parameters, chroot=False)
+        args, [f"/usr/bin/apk"] + parameters, chroot=False)
