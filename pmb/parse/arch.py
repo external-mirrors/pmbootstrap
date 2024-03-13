@@ -19,8 +19,9 @@ def alpine_native():
     }
     if machine in mapping:
         return mapping[machine]
-    raise ValueError("Can not map platform.machine '" + machine + "'"
-                     " to the right Alpine Linux architecture")
+    raise ValueError(
+        "Can not map platform.machine '" + machine + "'" " to the right Alpine Linux architecture"
+    )
 
 
 def from_chroot_suffix(args, suffix):
@@ -31,8 +32,7 @@ def from_chroot_suffix(args, suffix):
     if suffix.startswith("buildroot_"):
         return suffix.split("_", 1)[1]
 
-    raise ValueError("Invalid chroot suffix: " + suffix +
-                     " (wrong device chosen in 'init' step?)")
+    raise ValueError("Invalid chroot suffix: " + suffix + " (wrong device chosen in 'init' step?)")
 
 
 def alpine_to_qemu(arch):
@@ -52,8 +52,9 @@ def alpine_to_qemu(arch):
     for pattern, arch_qemu in mapping.items():
         if fnmatch.fnmatch(arch, pattern):
             return arch_qemu
-    raise ValueError("Can not map Alpine architecture '" + arch + "'"
-                     " to the right Debian architecture.")
+    raise ValueError(
+        "Can not map Alpine architecture '" + arch + "'" " to the right Debian architecture."
+    )
 
 
 def alpine_to_kernel(arch):
@@ -102,8 +103,9 @@ def alpine_to_hostspec(arch):
     if arch in mapping:
         return mapping[arch]
 
-    raise ValueError("Can not map Alpine architecture '" + arch + "'"
-                     " to the right hostspec value")
+    raise ValueError(
+        "Can not map Alpine architecture '" + arch + "'" " to the right hostspec value"
+    )
 
 
 def cpu_emulation_required(arch):

@@ -13,9 +13,18 @@ import pmb.helpers.run
 import pmb.parse.apkindex
 
 
-def zap(args, confirm=True, dry=False, pkgs_local=False, http=False,
-        pkgs_local_mismatch=False, pkgs_online_mismatch=False, distfiles=False,
-        rust=False, netboot=False):
+def zap(
+    args,
+    confirm=True,
+    dry=False,
+    pkgs_local=False,
+    http=False,
+    pkgs_local_mismatch=False,
+    pkgs_online_mismatch=False,
+    distfiles=False,
+    rust=False,
+    netboot=False,
+):
     """
     Shutdown everything inside the chroots (e.g. adb), umount
     everything and then safely remove folders from the work-directory.
@@ -74,8 +83,7 @@ def zap(args, confirm=True, dry=False, pkgs_local=False, http=False,
         pattern = os.path.realpath(f"{args.work}/{pattern}")
         matches = glob.glob(pattern)
         for match in matches:
-            if (not confirm or
-                    pmb.helpers.cli.confirm(args, f"Remove {match}?")):
+            if not confirm or pmb.helpers.cli.confirm(args, f"Remove {match}?"):
                 logging.info(f"% rm -rf {match}")
                 if not dry:
                     pmb.helpers.run.root(args, ["rm", "-rf", match])
@@ -100,8 +108,10 @@ def zap_pkgs_local_mismatch(args, confirm=True, dry=False):
     if not os.path.exists(f"{args.work}/packages/{channel}"):
         return
 
-    question = "Remove binary packages that are newer than the corresponding" \
-               f" pmaports (channel '{channel}')?"
+    question = (
+        "Remove binary packages that are newer than the corresponding"
+        f" pmaports (channel '{channel}')?"
+    )
     if confirm and not pmb.helpers.cli.confirm(args, question):
         return
 
@@ -120,15 +130,13 @@ def zap_pkgs_local_mismatch(args, confirm=True, dry=False):
             apk_path_short = f"{arch}/{pkgname}-{version}.apk"
             apk_path = f"{args.work}/packages/{channel}/{apk_path_short}"
             if not os.path.exists(apk_path):
-                logging.info("WARNING: Package mentioned in index not"
-                             f" found: {apk_path_short}")
+                logging.info("WARNING: Package mentioned in index not" f" found: {apk_path_short}")
                 continue
 
             # Aport path
             aport_path = pmb.helpers.pmaports.find(args, origin, False)
             if not aport_path:
-                logging.info(f"% rm {apk_path_short}"
-                             f" ({origin} aport not found)")
+                logging.info(f"% rm {apk_path_short}" f" ({origin} aport not found)")
                 if not dry:
                     pmb.helpers.run.root(args, ["rm", apk_path])
                     reindex = True
@@ -138,8 +146,7 @@ def zap_pkgs_local_mismatch(args, confirm=True, dry=False):
             apkbuild = pmb.parse.apkbuild(f"{aport_path}/APKBUILD")
             version_aport = f"{apkbuild['pkgver']}-r{apkbuild['pkgrel']}"
             if version != version_aport:
-                logging.info(f"% rm {apk_path_short}"
-                             f" ({origin} aport: {version_aport})")
+                logging.info(f"% rm {apk_path_short}" f" ({origin} aport: {version_aport})")
                 if not dry:
                     pmb.helpers.run.root(args, ["rm", apk_path])
                     reindex = True
@@ -153,9 +160,7 @@ def zap_pkgs_online_mismatch(args, confirm=True, dry=False):
     paths = glob.glob(f"{args.work}/cache_apk_*")
     if not len(paths):
         return
-    if (confirm and not pmb.helpers.cli.confirm(args,
-                                                "Remove outdated"
-                                                " binary packages?")):
+    if confirm and not pmb.helpers.cli.confirm(args, "Remove outdated" " binary packages?"):
         return
 
     # Iterate over existing apk caches

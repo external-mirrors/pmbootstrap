@@ -19,9 +19,7 @@ def create_zip(args, suffix):
     vars = pmb.flasher.variables(args, flavor, method)
 
     # Install recovery installer package in buildroot
-    pmb.chroot.apk.install(args,
-                           ["postmarketos-android-recovery-installer"],
-                           suffix)
+    pmb.chroot.apk.install(args, ["postmarketos-android-recovery-installer"], suffix)
 
     logging.info("(" + suffix + ") create recovery zip")
 
@@ -61,12 +59,12 @@ def create_zip(args, suffix):
         # Move config file from /tmp/ to zip root
         ["mv", "/tmp/install_options", "chroot/install_options"],
         # Create tar archive of the rootfs
-        ["tar", "-pcf", "rootfs.tar", "--exclude", "./home", "-C", rootfs,
-         "."],
+        ["tar", "-pcf", "rootfs.tar", "--exclude", "./home", "-C", rootfs, "."],
         # Append packages keys
         ["tar", "-prf", "rootfs.tar", "-C", "/", "./etc/apk/keys"],
         # Compress with -1 for speed improvement
         ["gzip", "-f1", "rootfs.tar"],
-        ["build-recovery-zip", args.device]]
+        ["build-recovery-zip", args.device],
+    ]
     for command in commands:
         pmb.chroot.root(args, command, suffix, zip_root)

@@ -5,20 +5,21 @@ import glob
 import pmb.parse
 
 
-def find_path(args, codename, file=''):
+def find_path(args, codename, file=""):
     """
     Find path to device APKBUILD under `device/*/device-`.
     :param codename: device codename
     :param file: file to look for (e.g. APKBUILD or deviceinfo), may be empty
     :returns: path to APKBUILD
     """
-    g = glob.glob(args.aports + "/device/*/device-" + codename + '/' + file)
+    g = glob.glob(args.aports + "/device/*/device-" + codename + "/" + file)
     if not g:
         return None
 
     if len(g) != 1:
-        raise RuntimeError(codename + " found multiple times in the device"
-                           " subdirectory of pmaports")
+        raise RuntimeError(
+            codename + " found multiple times in the device" " subdirectory of pmaports"
+        )
 
     return g[0]
 
@@ -32,10 +33,10 @@ def list_codenames(args, vendor=None, unmaintained=True):
     """
     ret = []
     for path in glob.glob(args.aports + "/device/*/device-*"):
-        if not unmaintained and '/unmaintained/' in path:
+        if not unmaintained and "/unmaintained/" in path:
             continue
         device = os.path.basename(path).split("-", 1)[1]
-        if (vendor is None) or device.startswith(vendor + '-'):
+        if (vendor is None) or device.startswith(vendor + "-"):
             ret.append(device)
     return ret
 

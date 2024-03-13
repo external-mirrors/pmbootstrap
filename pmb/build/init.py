@@ -14,8 +14,8 @@ import pmb.parse.arch
 
 
 def init_abuild_minimal(args, suffix="native"):
-    """ Initialize a minimal chroot with abuild where one can do
-        'abuild checksum'. """
+    """Initialize a minimal chroot with abuild where one can do
+    'abuild checksum'."""
     marker = f"{args.work}/chroot_{suffix}/tmp/pmb_chroot_abuild_init_done"
     if os.path.exists(marker):
         return
@@ -23,10 +23,8 @@ def init_abuild_minimal(args, suffix="native"):
     pmb.chroot.apk.install(args, ["abuild"], suffix, build=False)
 
     # Fix permissions
-    pmb.chroot.root(args, ["chown", "root:abuild",
-                           "/var/cache/distfiles"], suffix)
-    pmb.chroot.root(args, ["chmod", "g+w",
-                           "/var/cache/distfiles"], suffix)
+    pmb.chroot.root(args, ["chown", "root:abuild", "/var/cache/distfiles"], suffix)
+    pmb.chroot.root(args, ["chmod", "g+w", "/var/cache/distfiles"], suffix)
 
     # Add user to group abuild
     pmb.chroot.root(args, ["adduser", "pmos", "abuild"], suffix)
@@ -35,7 +33,7 @@ def init_abuild_minimal(args, suffix="native"):
 
 
 def init(args, suffix="native"):
-    """ Initialize a chroot for building packages with abuild. """
+    """Initialize a chroot for building packages with abuild."""
     marker = f"{args.work}/chroot_{suffix}/tmp/pmb_chroot_build_init_done"
     if os.path.exists(marker):
         return
@@ -43,27 +41,27 @@ def init(args, suffix="native"):
     init_abuild_minimal(args, suffix)
 
     # Initialize chroot, install packages
-    pmb.chroot.apk.install(args, pmb.config.build_packages, suffix,
-                           build=False)
+    pmb.chroot.apk.install(args, pmb.config.build_packages, suffix, build=False)
 
     # Generate package signing keys
     chroot = args.work + "/chroot_" + suffix
     if not os.path.exists(args.work + "/config_abuild/abuild.conf"):
         logging.info("(" + suffix + ") generate abuild keys")
-        pmb.chroot.user(args, ["abuild-keygen", "-n", "-q", "-a"],
-                        suffix, env={"PACKAGER": "pmos <pmos@local>"})
+        pmb.chroot.user(
+            args, ["abuild-keygen", "-n", "-q", "-a"], suffix, env={"PACKAGER": "pmos <pmos@local>"}
+        )
 
         # Copy package signing key to /etc/apk/keys
-        for key in glob.glob(chroot +
-                             "/mnt/pmbootstrap/abuild-config/*.pub"):
-            key = key[len(chroot):]
+        for key in glob.glob(chroot + "/mnt/pmbootstrap/abuild-config/*.pub"):
+            key = key[len(chroot) :]
             pmb.chroot.root(args, ["cp", key, "/etc/apk/keys/"], suffix)
 
     apk_arch = pmb.parse.arch.from_chroot_suffix(args, suffix)
 
     # Add apk wrapper that runs native apk and lies about arch
-    if pmb.parse.arch.cpu_emulation_required(apk_arch) and \
-            not os.path.exists(chroot + "/usr/local/bin/abuild-apk"):
+    if pmb.parse.arch.cpu_emulation_required(apk_arch) and not os.path.exists(
+        chroot + "/usr/local/bin/abuild-apk"
+    ):
         with open(chroot + "/tmp/apk_wrapper.sh", "w") as handle:
             content = f"""
                 #!/bin/sh
@@ -82,20 +80,22 @@ def init(args, suffix="native"):
             for i in range(len(lines)):
                 lines[i] = lines[i][16:]
             handle.write("\n".join(lines))
-        pmb.chroot.root(args, ["cp", "/tmp/apk_wrapper.sh",
-                               "/usr/local/bin/abuild-apk"], suffix)
+        pmb.chroot.root(args, ["cp", "/tmp/apk_wrapper.sh", "/usr/local/bin/abuild-apk"], suffix)
         pmb.chroot.root(args, ["chmod", "+x", "/usr/local/bin/abuild-apk"], suffix)
 
     # abuild.conf: Don't clean the build folder after building, so we can
     # inspect it afterwards for debugging
-    pmb.chroot.root(args, ["sed", "-i", "-e", "s/^CLEANUP=.*/CLEANUP=''/",
-                           "/etc/abuild.conf"], suffix)
+    pmb.chroot.root(
+        args, ["sed", "-i", "-e", "s/^CLEANUP=.*/CLEANUP=''/", "/etc/abuild.conf"], suffix
+    )
 
     # abuild.conf: Don't clean up installed packages in strict mode, so
     # abuild exits directly when pressing ^C in pmbootstrap.
-    pmb.chroot.root(args, ["sed", "-i", "-e",
-                           "s/^ERROR_CLEANUP=.*/ERROR_CLEANUP=''/",
-                           "/etc/abuild.conf"], suffix)
+    pmb.chroot.root(
+        args,
+        ["sed", "-i", "-e", "s/^ERROR_CLEANUP=.*/ERROR_CLEANUP=''/", "/etc/abuild.conf"],
+        suffix,
+    )
 
     pathlib.Path(marker).touch()
 

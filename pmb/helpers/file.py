@@ -19,11 +19,11 @@ def replace(path, old, new):
 
 
 def replace_apkbuild(args, pkgname, key, new, in_quotes=False):
-    """ Replace one key=value line in an APKBUILD and verify it afterwards.
-        :param pkgname: package name, e.g. "hello-world"
-        :param key: key that should be replaced, e.g. "pkgver"
-        :param new: new value
-        :param in_quotes: expect the value to be in quotation marks ("") """
+    """Replace one key=value line in an APKBUILD and verify it afterwards.
+    :param pkgname: package name, e.g. "hello-world"
+    :param key: key that should be replaced, e.g. "pkgver"
+    :param new: new value
+    :param in_quotes: expect the value to be in quotation marks ("")"""
     # Read old value
     path = pmb.helpers.pmaports.find(args, pkgname) + "/APKBUILD"
     apkbuild = pmb.parse.apkbuild(path)
@@ -34,20 +34,21 @@ def replace_apkbuild(args, pkgname, key, new, in_quotes=False):
         line_old = '{}="{}"'.format(key, old)
         line_new = '{}="{}"'.format(key, new)
     else:
-        line_old = '{}={}'.format(key, old)
-        line_new = '{}={}'.format(key, new)
+        line_old = "{}={}".format(key, old)
+        line_new = "{}={}".format(key, new)
 
     # Replace
     replace(path, "\n" + line_old + "\n", "\n" + line_new + "\n")
 
     # Verify
-    del (pmb.helpers.other.cache["apkbuild"][path])
+    del pmb.helpers.other.cache["apkbuild"][path]
     apkbuild = pmb.parse.apkbuild(path)
     if apkbuild[key] != str(new):
-        raise RuntimeError("Failed to set '{}' for pmaport '{}'. Make sure"
-                           " that there's a line with exactly the string '{}'"
-                           " and nothing else in: {}".format(key, pkgname,
-                                                             line_old, path))
+        raise RuntimeError(
+            "Failed to set '{}' for pmaport '{}'. Make sure"
+            " that there's a line with exactly the string '{}'"
+            " and nothing else in: {}".format(key, pkgname, line_old, path)
+        )
 
 
 def is_up_to_date(path_sources, path_target=None, lastmod_target=None):
@@ -62,8 +63,7 @@ def is_up_to_date(path_sources, path_target=None, lastmod_target=None):
     """
 
     if path_target and lastmod_target:
-        raise RuntimeError(
-            "Specify path_target *or* lastmod_target, not both!")
+        raise RuntimeError("Specify path_target *or* lastmod_target, not both!")
 
     lastmod_source = None
     for path_source in path_sources:
@@ -92,8 +92,7 @@ def symlink(args, file, link):
     Checks if the symlink is already present, otherwise create it.
     """
     if os.path.exists(link):
-        if (os.path.islink(link) and
-                os.path.realpath(os.readlink(link)) == os.path.realpath(file)):
+        if os.path.islink(link) and os.path.realpath(os.readlink(link)) == os.path.realpath(file):
             return
         raise RuntimeError("File exists: " + link)
     elif os.path.islink(link):

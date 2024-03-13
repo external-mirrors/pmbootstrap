@@ -17,7 +17,7 @@ def arm_big_little_first_group_ncpus():
     counter = 0
     part = None
 
-    with open('/proc/cpuinfo', 'r') as cpuinfo:
+    with open("/proc/cpuinfo", "r") as cpuinfo:
         for line in cpuinfo:
             match = pattern.match(line)
             if match:

@@ -39,8 +39,7 @@ def bind(args, source, destination, create_folders=True, umount=False):
         if create_folders:
             pmb.helpers.run.root(args, ["mkdir", "-p", path])
         else:
-            raise RuntimeError("Mount failed, folder does not exist: " +
-                               path)
+            raise RuntimeError("Mount failed, folder does not exist: " + path)
 
     # Actually mount the folder
     pmb.helpers.run.root(args, ["mount", "--bind", source, destination])
@@ -69,8 +68,7 @@ def bind_file(args, source, destination, create_folders=False):
         pmb.helpers.run.root(args, ["touch", destination])
 
     # Mount
-    pmb.helpers.run.root(args, ["mount", "--bind", source,
-                                destination])
+    pmb.helpers.run.root(args, ["mount", "--bind", source, destination])
 
 
 def umount_all_list(prefix, source="/proc/mounts"):
@@ -85,14 +83,13 @@ def umount_all_list(prefix, source="/proc/mounts"):
         for line in handle:
             words = line.split()
             if len(words) < 2:
-                raise RuntimeError("Failed to parse line in " + source + ": " +
-                                   line)
+                raise RuntimeError("Failed to parse line in " + source + ": " + line)
             mountpoint = words[1]
             if mountpoint.startswith(prefix):
                 # Remove "\040(deleted)" suffix (#545)
                 deleted_str = r"\040(deleted)"
                 if mountpoint.endswith(deleted_str):
-                    mountpoint = mountpoint[:-len(deleted_str)]
+                    mountpoint = mountpoint[: -len(deleted_str)]
                 ret.append(mountpoint)
     ret.sort(reverse=True)
     return ret

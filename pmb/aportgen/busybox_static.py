@@ -20,8 +20,9 @@ def generate(args, pkgname):
     # Prepare aportgen tempdir inside and outside of chroot
     tempdir = "/tmp/aportgen"
     pmb.chroot.root(args, ["rm", "-rf", tempdir])
-    pmb.helpers.run.user(args, ["mkdir", "-p", f"{args.work}/aportgen",
-                                f"{args.work}/chroot_native/{tempdir}"])
+    pmb.helpers.run.user(
+        args, ["mkdir", "-p", f"{args.work}/aportgen", f"{args.work}/chroot_native/{tempdir}"]
+    )
 
     # Write the APKBUILD
     channel_cfg = pmb.config.pmaports.read_config_channel(args)

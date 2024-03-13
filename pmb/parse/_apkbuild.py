@@ -27,15 +27,19 @@ revar4 = re.compile(r"\${([a-zA-Z_]+[a-zA-Z0-9_]*)#(.*)}")
 
 def replace_variable(apkbuild, value: str) -> str:
     def log_key_not_found(match):
-        logging.verbose(f"{apkbuild['pkgname']}: key '{match.group(1)}' for"
-                        f" replacing '{match.group(0)}' not found, ignoring")
+        logging.verbose(
+            f"{apkbuild['pkgname']}: key '{match.group(1)}' for"
+            f" replacing '{match.group(0)}' not found, ignoring"
+        )
 
     # ${foo}
     for match in revar.finditer(value):
         try:
-            logging.verbose("{}: replace '{}' with '{}'".format(
-                            apkbuild["pkgname"], match.group(0),
-                            apkbuild[match.group(1)]))
+            logging.verbose(
+                "{}: replace '{}' with '{}'".format(
+                    apkbuild["pkgname"], match.group(0), apkbuild[match.group(1)]
+                )
+            )
             value = value.replace(match.group(0), apkbuild[match.group(1)], 1)
         except KeyError:
             log_key_not_found(match)
@@ -44,9 +48,9 @@ def replace_variable(apkbuild, value: str) -> str:
     for match in revar2.finditer(value):
         try:
             newvalue = apkbuild[match.group(1)]
-            logging.verbose("{}: replace '{}' with '{}'".format(
-                            apkbuild["pkgname"], match.group(0),
-                            newvalue))
+            logging.verbose(
+                "{}: replace '{}' with '{}'".format(apkbuild["pkgname"], match.group(0), newvalue)
+            )
             value = value.replace(match.group(0), newvalue, 1)
         except KeyError:
             log_key_not_found(match)
@@ -60,8 +64,9 @@ def replace_variable(apkbuild, value: str) -> str:
             if replacement is None:  # arg 3 is optional
                 replacement = ""
             newvalue = newvalue.replace(search, replacement, 1)
-            logging.verbose("{}: replace '{}' with '{}'".format(
-                            apkbuild["pkgname"], match.group(0), newvalue))
+            logging.verbose(
+                "{}: replace '{}' with '{}'".format(apkbuild["pkgname"], match.group(0), newvalue)
+            )
             value = value.replace(match.group(0), newvalue, 1)
         except KeyError:
             log_key_not_found(match)
@@ -74,8 +79,9 @@ def replace_variable(apkbuild, value: str) -> str:
             substr = match.group(2)
             if newvalue.startswith(substr):
                 newvalue = newvalue.replace(substr, "", 1)
-            logging.verbose("{}: replace '{}' with '{}'".format(
-                            apkbuild["pkgname"], match.group(0), newvalue))
+            logging.verbose(
+                "{}: replace '{}' with '{}'".format(apkbuild["pkgname"], match.group(0), newvalue)
+            )
             value = value.replace(match.group(0), newvalue, 1)
         except KeyError:
             log_key_not_found(match)
@@ -117,7 +123,7 @@ def read_file(path):
     """
     with open(path, encoding="utf-8") as handle:
         lines = handle.readlines()
-        if handle.newlines != '\n':
+        if handle.newlines != "\n":
             raise RuntimeError(f"Wrong line endings in APKBUILD: {path}")
     return lines
 
@@ -148,11 +154,11 @@ def parse_attribute(attribute, lines, i, path):
     # Check for and cut off "attribute="
     if not lines[i].startswith(attribute + "="):
         return (False, None, i)
-    value = lines[i][len(attribute + "="):-1]
+    value = lines[i][len(attribute + "=") : -1]
 
     # Determine end quote sign
     end_char = None
-    for char in ["'", "\""]:
+    for char in ["'", '"']:
         if value.startswith(char):
             end_char = char
             value = value[1:]
@@ -177,8 +183,9 @@ def parse_attribute(attribute, lines, i, path):
         value += line.strip()
         i += 1
 
-    raise RuntimeError(f"Can't find closing quote sign ({end_char}) for"
-                       f" attribute '{attribute}' in: {path}")
+    raise RuntimeError(
+        f"Can't find closing quote sign ({end_char}) for" f" attribute '{attribute}' in: {path}"
+    )
 
 
 def _parse_attributes(path, lines, apkbuild_attributes, ret):
@@ -233,7 +240,7 @@ def _parse_subpackage(path, lines, apkbuild, subpackages, subpkg):
     """
     subpkgparts = subpkg.split(":")
     subpkgname = subpkgparts[0]
-    subpkgsplit = subpkgname[subpkgname.rfind("-") + 1:]
+    subpkgsplit = subpkgname[subpkgname.rfind("-") + 1 :]
     # If there are multiple sections to the subpackage, the middle one (item 1 in the
     # sequence in this case) is the custom function name which we should use instead of
     # the deduced one. For example:
@@ -268,13 +275,15 @@ def _parse_subpackage(path, lines, apkbuild, subpackages, subpkg):
         subpackages[subpkgname] = None
         logging.verbose(
             f"{apkbuild['pkgname']}: subpackage function '{subpkgsplit}' for "
-            f"subpackage '{subpkgname}' not found, ignoring")
+            f"subpackage '{subpkgname}' not found, ignoring"
+        )
         return
 
     if not end:
         raise RuntimeError(
             f"Could not find end of subpackage function, no line starts with "
-            f"'}}' after '{prefix}' in {path}")
+            f"'}}' after '{prefix}' in {path}"
+        )
 
     lines = lines[start:end]
     # Strip tabs before lines in function
@@ -291,8 +300,7 @@ def _parse_subpackage(path, lines, apkbuild, subpackages, subpkg):
     apkbuild["_pmb_recommends"] = ""
 
     # Parse relevant attributes for the subpackage
-    _parse_attributes(
-        path, lines, pmb.config.apkbuild_package_attributes, apkbuild)
+    _parse_attributes(path, lines, pmb.config.apkbuild_package_attributes, apkbuild)
 
     # Return only properties interesting for subpackages
     ret = {}
@@ -333,17 +341,18 @@ def apkbuild(path, check_pkgver=True, check_pkgname=True):
         if not os.path.realpath(path).endswith(suffix):
             logging.info(f"Folder: '{os.path.dirname(path)}'")
             logging.info(f"Pkgname: '{ret['pkgname']}'")
-            raise RuntimeError("The pkgname must be equal to the name of"
-                               " the folder that contains the APKBUILD!")
+            raise RuntimeError(
+                "The pkgname must be equal to the name of" " the folder that contains the APKBUILD!"
+            )
 
     # Sanity check: pkgver
     if check_pkgver:
         if not pmb.parse.version.validate(ret["pkgver"]):
             logging.info(
                 "NOTE: Valid pkgvers are described here: "
-                "https://wiki.alpinelinux.org/wiki/APKBUILD_Reference#pkgver")
-            raise RuntimeError(f"Invalid pkgver '{ret['pkgver']}' in"
-                               f" APKBUILD: {path}")
+                "https://wiki.alpinelinux.org/wiki/APKBUILD_Reference#pkgver"
+            )
+            raise RuntimeError(f"Invalid pkgver '{ret['pkgver']}' in" f" APKBUILD: {path}")
 
     # Fill cache
     pmb.helpers.other.cache["apkbuild"][path] = ret
@@ -362,7 +371,7 @@ def kernels(args, device):
                         "downstream": "Downstream description"}
     """
     # Read the APKBUILD
-    apkbuild_path = pmb.helpers.devices.find_path(args, device, 'APKBUILD')
+    apkbuild_path = pmb.helpers.devices.find_path(args, device, "APKBUILD")
     if apkbuild_path is None:
         return None
     subpackages = apkbuild(apkbuild_path)["subpackages"]
@@ -374,9 +383,8 @@ def kernels(args, device):
         if not subpkgname.startswith(subpackage_prefix):
             continue
         if subpkg is None:
-            raise RuntimeError(
-                f"Cannot find subpackage function for: {subpkgname}")
-        name = subpkgname[len(subpackage_prefix):]
+            raise RuntimeError(f"Cannot find subpackage function for: {subpkgname}")
+        name = subpkgname[len(subpackage_prefix) :]
         ret[name] = subpkg["pkgdesc"]
 
     # Return
@@ -394,11 +402,11 @@ def _parse_comment_tags(lines, tag):
     :param tag: the tag to parse, e.g. Maintainer
     :returns: array of values of the tag, one per line
     """
-    prefix = f'# {tag}:'
+    prefix = f"# {tag}:"
     ret = []
     for line in lines:
         if line.startswith(prefix):
-            ret.append(line[len(prefix):].strip())
+            ret.append(line[len(prefix) :].strip())
     return ret
 
 
@@ -412,7 +420,7 @@ def maintainers(path):
     :returns: array of (at least one) maintainer, or None
     """
     lines = read_file(path)
-    maintainers = _parse_comment_tags(lines, 'Maintainer')
+    maintainers = _parse_comment_tags(lines, "Maintainer")
     if not maintainers:
         return None
 
@@ -421,8 +429,8 @@ def maintainers(path):
     if len(maintainers) > 1:
         raise RuntimeError("Multiple Maintainer: lines in APKBUILD")
 
-    maintainers += _parse_comment_tags(lines, 'Co-Maintainer')
-    if '' in maintainers:
+    maintainers += _parse_comment_tags(lines, "Co-Maintainer")
+    if "" in maintainers:
         raise RuntimeError("Empty (Co-)Maintainer: tag")
     return maintainers
 
@@ -435,7 +443,7 @@ def unmaintained(path):
     :param path: full path to the APKBUILD
     :returns: reason why APKBUILD is unmaintained, or None
     """
-    unmaintained = _parse_comment_tags(read_file(path), 'Unmaintained')
+    unmaintained = _parse_comment_tags(read_file(path), "Unmaintained")
     if not unmaintained:
         return None
-    return '\n'.join(unmaintained)
+    return "\n".join(unmaintained)

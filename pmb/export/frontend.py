@@ -18,8 +18,10 @@ def frontend(args):
     chroot = args.work + "/chroot_native"
     pattern = chroot + "/home/pmos/rootfs/" + args.device + "*.img"
     if not glob.glob(pattern):
-        logging.info("NOTE: To export the rootfs image, run 'pmbootstrap"
-                     " install' first (without the 'disk' parameter).")
+        logging.info(
+            "NOTE: To export the rootfs image, run 'pmbootstrap"
+            " install' first (without the 'disk' parameter)."
+        )
 
     # Rebuild the initramfs, just to make sure (see #69)
     flavor = pmb.helpers.frontend._parse_flavor(args, args.autoinstall)

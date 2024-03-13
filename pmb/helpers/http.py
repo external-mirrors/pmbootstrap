@@ -10,30 +10,30 @@ import urllib.request
 import pmb.helpers.run
 
 
-def download(args, url, prefix, cache=True, loglevel=logging.INFO,
-             allow_404=False):
-    """ Download a file to disk.
+def download(args, url, prefix, cache=True, loglevel=logging.INFO, allow_404=False):
+    """Download a file to disk.
 
-        :param url: the http(s) address of to the file to download
-        :param prefix: for the cache, to make it easier to find (cache files
-                       get a hash of the URL after the prefix)
-        :param cache: if True, and url is cached, do not download it again
-        :param loglevel: change to logging.DEBUG to only display the download
-                         message in 'pmbootstrap log', not in stdout. We use
-                         this when downloading many APKINDEX files at once, no
-                         point in showing a dozen messages.
-        :param allow_404: do not raise an exception when the server responds
-                          with a 404 Not Found error. Only display a warning on
-                          stdout (no matter if loglevel is changed).
-        :returns: path to the downloaded file in the cache or None on 404 """
+    :param url: the http(s) address of to the file to download
+    :param prefix: for the cache, to make it easier to find (cache files
+                   get a hash of the URL after the prefix)
+    :param cache: if True, and url is cached, do not download it again
+    :param loglevel: change to logging.DEBUG to only display the download
+                     message in 'pmbootstrap log', not in stdout. We use
+                     this when downloading many APKINDEX files at once, no
+                     point in showing a dozen messages.
+    :param allow_404: do not raise an exception when the server responds
+                      with a 404 Not Found error. Only display a warning on
+                      stdout (no matter if loglevel is changed).
+    :returns: path to the downloaded file in the cache or None on 404"""
     # Create cache folder
     if not os.path.exists(args.work + "/cache_http"):
         pmb.helpers.run.user(args, ["mkdir", "-p", args.work + "/cache_http"])
 
     # Check if file exists in cache
     prefix = prefix.replace("/", "_")
-    path = (args.work + "/cache_http/" + prefix + "_" +
-            hashlib.sha256(url.encode("utf-8")).hexdigest())
+    path = (
+        args.work + "/cache_http/" + prefix + "_" + hashlib.sha256(url.encode("utf-8")).hexdigest()
+    )
     if os.path.exists(path):
         if cache:
             return path
@@ -41,8 +41,7 @@ def download(args, url, prefix, cache=True, loglevel=logging.INFO,
 
     # Offline and not cached
     if args.offline:
-        raise RuntimeError("File not found in cache and offline flag is"
-                           f" enabled: {url}")
+        raise RuntimeError("File not found in cache and offline flag is" f" enabled: {url}")
 
     # Download the file
     logging.log(loglevel, "Download " + url)
@@ -62,13 +61,13 @@ def download(args, url, prefix, cache=True, loglevel=logging.INFO,
 
 
 def retrieve(url, headers=None, allow_404=False):
-    """ Fetch the content of a URL and returns it as string.
+    """Fetch the content of a URL and returns it as string.
 
-        :param url: the http(s) address of to the resource to fetch
-        :param headers: dict of HTTP headers to use
-        :param allow_404: do not raise an exception when the server responds
-                          with a 404 Not Found error. Only display a warning
-        :returns: str with the content of the response
+    :param url: the http(s) address of to the resource to fetch
+    :param headers: dict of HTTP headers to use
+    :param allow_404: do not raise an exception when the server responds
+                      with a 404 Not Found error. Only display a warning
+    :returns: str with the content of the response
     """
     # Download the file
     logging.verbose("Retrieving " + url)
@@ -89,6 +88,6 @@ def retrieve(url, headers=None, allow_404=False):
 
 
 def retrieve_json(*args, **kwargs):
-    """ Fetch the contents of a URL, parse it as JSON and return it. See
-        retrieve() for the list of all parameters. """
+    """Fetch the contents of a URL, parse it as JSON and return it. See
+    retrieve() for the list of all parameters."""
     return json.loads(retrieve(*args, **kwargs))

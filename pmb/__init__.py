@@ -21,8 +21,7 @@ __version__ = "2.2.1"
 version = sys.version_info
 if version < (3, 9):
     print("You need at least Python 3.9 to run pmbootstrap")
-    print("(You are running it with Python " + str(version.major) +
-          "." + str(version.minor) + ")")
+    print("(You are running it with Python " + str(version.major) + "." + str(version.minor) + ")")
     sys.exit()
 
 
@@ -46,11 +45,13 @@ def main():
         if args.action == "init":
             return config_init.frontend(args)
         elif not os.path.exists(args.config):
-            raise RuntimeError("Please specify a config file, or run"
-                               " 'pmbootstrap init' to generate one.")
+            raise RuntimeError(
+                "Please specify a config file, or run" " 'pmbootstrap init' to generate one."
+            )
         elif not os.path.exists(args.work):
-            raise RuntimeError("Work path not found, please run 'pmbootstrap"
-                               " init' to create it.")
+            raise RuntimeError(
+                "Work path not found, please run 'pmbootstrap" " init' to create it."
+            )
 
         other.check_old_devices(args)
 
@@ -66,8 +67,9 @@ def main():
 
         # Still active notice
         if mount.ismount(args.work + "/chroot_native/dev"):
-            logging.info("NOTE: chroot is still active (use 'pmbootstrap"
-                         " shutdown' as necessary)")
+            logging.info(
+                "NOTE: chroot is still active (use 'pmbootstrap" " shutdown' as necessary)"
+            )
         logging.info("DONE!")
 
     except KeyboardInterrupt:
@@ -86,16 +88,16 @@ def main():
         # Hints about the log file (print to stdout only)
         log_hint = "Run 'pmbootstrap log' for details."
         if not args or not os.path.exists(args.log):
-            log_hint += (" Alternatively you can use '--details-to-stdout' to"
-                         " get more output, e.g. 'pmbootstrap"
-                         " --details-to-stdout init'.")
+            log_hint += (
+                " Alternatively you can use '--details-to-stdout' to"
+                " get more output, e.g. 'pmbootstrap"
+                " --details-to-stdout init'."
+            )
         print()
         print(log_hint)
         print()
-        print("Before you report this error, ensure that pmbootstrap is "
-              "up to date.")
-        print("Find the latest version here:"
-              " https://gitlab.com/postmarketOS/pmbootstrap/-/tags")
+        print("Before you report this error, ensure that pmbootstrap is " "up to date.")
+        print("Find the latest version here:" " https://gitlab.com/postmarketOS/pmbootstrap/-/tags")
         print(f"Your version: {__version__}")
         return 1
 

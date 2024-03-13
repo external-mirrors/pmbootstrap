@@ -18,16 +18,28 @@ def executables_absolute_path():
     for binary in ["sh", "chroot"]:
         path = shutil.which(binary, path=pmb.config.chroot_host_path)
         if not path:
-            raise RuntimeError(f"Could not find the '{binary}'"
-                               " executable. Make sure that it is in"
-                               " your current user's PATH.")
+            raise RuntimeError(
+                f"Could not find the '{binary}'"
+                " executable. Make sure that it is in"
+                " your current user's PATH."
+            )
         ret[binary] = path
     return ret
 
 
-def root(args, cmd, suffix="native", working_dir="/", output="log",
-         output_return=False, check=None, env={}, auto_init=True,
-         disable_timeout=False, add_proxy_env_vars=True):
+def root(
+    args,
+    cmd,
+    suffix="native",
+    working_dir="/",
+    output="log",
+    output_return=False,
+    check=None,
+    env={},
+    auto_init=True,
+    disable_timeout=False,
+    add_proxy_env_vars=True,
+):
     """
     Run a command inside a chroot as root.
 
@@ -58,14 +70,16 @@ def root(args, cmd, suffix="native", working_dir="/", output="log",
     msg += " ".join(cmd)
 
     # Merge env with defaults into env_all
-    env_all = {"CHARSET": "UTF-8",
-               "HISTFILE": "~/.ash_history",
-               "HOME": "/root",
-               "LANG": "UTF-8",
-               "PATH": pmb.config.chroot_path,
-               "PYTHONUNBUFFERED": "1",
-               "SHELL": "/bin/ash",
-               "TERM": "xterm"}
+    env_all = {
+        "CHARSET": "UTF-8",
+        "HISTFILE": "~/.ash_history",
+        "HOME": "/root",
+        "LANG": "UTF-8",
+        "PATH": pmb.config.chroot_path,
+        "PYTHONUNBUFFERED": "1",
+        "SHELL": "/bin/ash",
+        "TERM": "xterm",
+    }
     for key, value in env.items():
         env_all[key] = value
     if add_proxy_env_vars:
@@ -76,12 +90,22 @@ def root(args, cmd, suffix="native", working_dir="/", output="log",
     # cmd_chroot: ["/sbin/chroot", "/..._native", "/bin/sh", "-c", "echo test"]
     # cmd_sudo: ["sudo", "env", "-i", "sh", "-c", "PATH=... /sbin/chroot ..."]
     executables = executables_absolute_path()
-    cmd_chroot = [executables["chroot"], chroot, "/bin/sh", "-c",
-                  pmb.helpers.run_core.flat_cmd(cmd, working_dir)]
-    cmd_sudo = pmb.config.sudo([
-        "env", "-i", executables["sh"], "-c",
-        pmb.helpers.run_core.flat_cmd(cmd_chroot, env=env_all)]
+    cmd_chroot = [
+        executables["chroot"],
+        chroot,
+        "/bin/sh",
+        "-c",
+        pmb.helpers.run_core.flat_cmd(cmd, working_dir),
+    ]
+    cmd_sudo = pmb.config.sudo(
+        [
+            "env",
+            "-i",
+            executables["sh"],
+            "-c",
+            pmb.helpers.run_core.flat_cmd(cmd_chroot, env=env_all),
+        ]
     )
-    return pmb.helpers.run_core.core(args, msg, cmd_sudo, None, output,
-                                     output_return, check, True,
-                                     disable_timeout)
+    return pmb.helpers.run_core.core(
+        args, msg, cmd_sudo, None, output, output_return, check, True, disable_timeout
+    )

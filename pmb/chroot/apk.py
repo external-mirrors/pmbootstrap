@@ -55,8 +55,7 @@ def update_repository_list(args, suffix="native", check=False):
     if os.path.exists(path):
         pmb.helpers.run.root(args, ["rm", path])
     for line in lines_new:
-        pmb.helpers.run.root(args, ["sh", "-c", "echo "
-                                    f"{shlex.quote(line)} >> {path}"])
+        pmb.helpers.run.root(args, ["sh", "-c", "echo " f"{shlex.quote(line)} >> {path}"])
     update_repository_list(args, suffix, True)
 
 
@@ -72,16 +71,19 @@ def check_min_version(args, suffix="native"):
 
     # Skip if apk is not installed yet
     if not os.path.exists(f"{args.work}/chroot_{suffix}/sbin/apk"):
-        logging.debug(f"NOTE: Skipped apk version check for chroot '{suffix}'"
-                      ", because it is not installed yet!")
+        logging.debug(
+            f"NOTE: Skipped apk version check for chroot '{suffix}'"
+            ", because it is not installed yet!"
+        )
         return
 
     # Compare
     version_installed = installed(args, suffix)["apk-tools"]["version"]
     pmb.helpers.apk.check_outdated(
-        args, version_installed,
-        "Delete your http cache and zap all chroots, then try again:"
-        " 'pmbootstrap zap -hc'")
+        args,
+        version_installed,
+        "Delete your http cache and zap all chroots, then try again:" " 'pmbootstrap zap -hc'",
+    )
 
     # Mark this suffix as checked
     pmb.helpers.other.cache["apk_min_version_checked"].append(suffix)
@@ -99,11 +101,13 @@ def install_build(args, package, arch):
     # User may have disabled building packages during "pmbootstrap install"
     if args.action == "install" and not args.build_pkgs_on_install:
         if not pmb.parse.apkindex.package(args, package, arch, False):
-            raise RuntimeError(f"{package}: no binary package found for"
-                               f" {arch}, and compiling packages during"
-                               " 'pmbootstrap install' has been disabled."
-                               " Consider changing this option in"
-                               " 'pmbootstrap init'.")
+            raise RuntimeError(
+                f"{package}: no binary package found for"
+                f" {arch}, and compiling packages during"
+                " 'pmbootstrap install' has been disabled."
+                " Consider changing this option in"
+                " 'pmbootstrap init'."
+            )
         # Use the existing binary package
         return
 
@@ -185,13 +189,15 @@ def install_run_apk(args, to_add, to_add_local, to_del, suffix):
     # Use a virtual package to mark only the explicitly requested packages as
     # explicitly installed, not the ones in to_add_local
     if to_add_local:
-        commands += [["add", "-u", "--virtual", ".pmbootstrap"] + to_add_local,
-                     ["del", ".pmbootstrap"]]
+        commands += [
+            ["add", "-u", "--virtual", ".pmbootstrap"] + to_add_local,
+            ["del", ".pmbootstrap"],
+        ]
 
     if to_del:
         commands += [["del"] + to_del]
 
-    for (i, command) in enumerate(commands):
+    for i, command in enumerate(commands):
         # --no-interactive is a parameter to `add`, so it must be appended or apk
         # gets confused
         command += ["--no-interactive"]
@@ -199,14 +205,12 @@ def install_run_apk(args, to_add, to_add_local, to_del, suffix):
         if args.offline:
             command = ["--no-network"] + command
         if i == 0:
-            pmb.helpers.apk.apk_with_progress(args, ["apk"] + command,
-                                              chroot=True, suffix=suffix)
+            pmb.helpers.apk.apk_with_progress(args, ["apk"] + command, chroot=True, suffix=suffix)
         else:
             # Virtual package related commands don't actually install or remove
             # packages, but only mark the right ones as explicitly installed.
             # They finish up almost instantly, so don't display a progress bar.
-            pmb.chroot.root(args, ["apk", "--no-progress"] + command,
-                            suffix=suffix)
+            pmb.chroot.root(args, ["apk", "--no-progress"] + command, suffix=suffix)
 
 
 def install(args, packages, suffix="native", build=True):
@@ -225,8 +229,7 @@ def install(args, packages, suffix="native", build=True):
     arch = pmb.parse.arch.from_chroot_suffix(args, suffix)
 
     if not packages:
-        logging.verbose("pmb.chroot.apk.install called with empty packages list,"
-                        " ignoring")
+        logging.verbose("pmb.chroot.apk.install called with empty packages list," " ignoring")
         return
 
     # Initialize chroot

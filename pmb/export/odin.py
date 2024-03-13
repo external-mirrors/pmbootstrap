@@ -28,16 +28,16 @@ def odin(args, flavor, folder):
     # Validate method
     method = args.deviceinfo["flash_method"]
     if not method.startswith("heimdall-"):
-        raise RuntimeError("An odin flashable tar is not supported"
-                           f" for the flash method '{method}' specified"
-                           " in the current configuration."
-                           " Only 'heimdall' methods are supported.")
+        raise RuntimeError(
+            "An odin flashable tar is not supported"
+            f" for the flash method '{method}' specified"
+            " in the current configuration."
+            " Only 'heimdall' methods are supported."
+        )
 
     # Partitions
-    partition_kernel = \
-        args.deviceinfo["flash_heimdall_partition_kernel"] or "KERNEL"
-    partition_initfs = \
-        args.deviceinfo["flash_heimdall_partition_initfs"] or "RECOVERY"
+    partition_kernel = args.deviceinfo["flash_heimdall_partition_kernel"] or "KERNEL"
+    partition_initfs = args.deviceinfo["flash_heimdall_partition_initfs"] or "RECOVERY"
 
     # Temporary folder
     temp_folder = "/tmp/odin-flashable-tar"
@@ -54,9 +54,7 @@ def odin(args, flavor, folder):
         odin_device_tar = f"{args.device}.tar"
         odin_device_tar_md5 = f"{args.device}.tar.md5"
 
-        handle.write(
-            "#!/bin/sh\n"
-            f"cd {temp_folder}\n")
+        handle.write("#!/bin/sh\n" f"cd {temp_folder}\n")
         if method == "heimdall-isorec":
             handle.write(
                 # Kernel: copy and append md5
@@ -65,33 +63,44 @@ def odin(args, flavor, folder):
                 # Initramfs: recompress with lzop, append md5
                 f"gunzip -c /boot/initramfs{suffix_flavor}"
                 f" | lzop > {odin_initfs_md5}\n"
-                f"md5sum -t {odin_initfs_md5} >> {odin_initfs_md5}\n")
+                f"md5sum -t {odin_initfs_md5} >> {odin_initfs_md5}\n"
+            )
         elif method == "heimdall-bootimg":
             handle.write(
                 # boot.img: copy and append md5
                 f"cp /boot/boot.img{suffix_flavor} {odin_kernel_md5}\n"
-                f"md5sum -t {odin_kernel_md5} >> {odin_kernel_md5}\n")
+                f"md5sum -t {odin_kernel_md5} >> {odin_kernel_md5}\n"
+            )
         handle.write(
             # Create tar, remove included files and append md5
             f"tar -c -f {odin_device_tar} *.bin.md5\n"
             "rm *.bin.md5\n"
             f"md5sum -t {odin_device_tar} >> {odin_device_tar}\n"
-            f"mv {odin_device_tar} {odin_device_tar_md5}\n")
+            f"mv {odin_device_tar} {odin_device_tar_md5}\n"
+        )
 
-    commands = [["mkdir", "-p", temp_folder],
-                ["cat", "/tmp/_odin.sh"],  # for the log
-                ["sh", "/tmp/_odin.sh"],
-                ["rm", "/tmp/_odin.sh"]
-                ]
+    commands = [
+        ["mkdir", "-p", temp_folder],
+        ["cat", "/tmp/_odin.sh"],  # for the log
+        ["sh", "/tmp/_odin.sh"],
+        ["rm", "/tmp/_odin.sh"],
+    ]
     for command in commands:
         pmb.chroot.root(args, command, suffix)
 
     # Move Odin flashable tar to native chroot and cleanup temp folder
     pmb.chroot.user(args, ["mkdir", "-p", "/home/pmos/rootfs"])
-    pmb.chroot.root(args, ["mv", f"/mnt/rootfs_{args.device}{temp_folder}"
-                           f"/{odin_device_tar_md5}", "/home/pmos/rootfs/"]),
-    pmb.chroot.root(args, ["chown", "pmos:pmos",
-                           f"/home/pmos/rootfs/{odin_device_tar_md5}"])
+    (
+        pmb.chroot.root(
+            args,
+            [
+                "mv",
+                f"/mnt/rootfs_{args.device}{temp_folder}" f"/{odin_device_tar_md5}",
+                "/home/pmos/rootfs/",
+            ],
+        ),
+    )
+    pmb.chroot.root(args, ["chown", "pmos:pmos", f"/home/pmos/rootfs/{odin_device_tar_md5}"])
     pmb.chroot.root(args, ["rmdir", temp_folder], suffix)
 
     # Create the symlink

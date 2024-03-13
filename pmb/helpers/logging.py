@@ -12,6 +12,7 @@ class log_handler(logging.StreamHandler):
     """
     Write to stdout and to the already opened log file.
     """
+
     _args = None
 
     def emit(self, record):
@@ -19,9 +20,11 @@ class log_handler(logging.StreamHandler):
             msg = self.format(record)
 
             # INFO or higher: Write to stdout
-            if (not self._args.details_to_stdout and
-                not self._args.quiet and
-                    record.levelno >= logging.INFO):
+            if (
+                not self._args.details_to_stdout
+                and not self._args.quiet
+                and record.levelno >= logging.INFO
+            ):
                 stream = self.stream
 
                 styles = pmb.config.styles
@@ -86,11 +89,12 @@ def add_verbose_log_level():
     """
     logging.VERBOSE = 5
     logging.addLevelName(logging.VERBOSE, "VERBOSE")
-    logging.Logger.verbose = lambda inst, msg, * \
-        args, **kwargs: inst.log(logging.VERBOSE, msg, *args, **kwargs)
-    logging.verbose = lambda msg, *args, **kwargs: logging.log(logging.VERBOSE,
-                                                               msg, *args,
-                                                               **kwargs)
+    logging.Logger.verbose = lambda inst, msg, *args, **kwargs: inst.log(
+        logging.VERBOSE, msg, *args, **kwargs
+    )
+    logging.verbose = lambda msg, *args, **kwargs: logging.log(
+        logging.VERBOSE, msg, *args, **kwargs
+    )
 
 
 def init(args):
@@ -112,14 +116,12 @@ def init(args):
         else:
             logfd = open(os.devnull, "a+")
             if args.action != "init":
-                print(f"WARNING: Can't create log file in '{dir}', path"
-                      " does not exist!")
+                print(f"WARNING: Can't create log file in '{dir}', path" " does not exist!")
 
     # Set log format
     root_logger = logging.getLogger()
     root_logger.handlers = []
-    formatter = logging.Formatter("[%(asctime)s] %(message)s",
-                                  datefmt="%H:%M:%S")
+    formatter = logging.Formatter("[%(asctime)s] %(message)s", datefmt="%H:%M:%S")
 
     # Set log level
     add_verbose_log_level()

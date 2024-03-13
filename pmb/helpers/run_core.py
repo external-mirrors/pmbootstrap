@@ -66,24 +66,28 @@ def sanity_checks(output="log", output_return=False, check=None):
 
 
 def background(cmd, working_dir=None):
-    """ Run a subprocess in background and redirect its output to the log. """
-    ret = subprocess.Popen(cmd, stdout=pmb.helpers.logging.logfd,
-                           stderr=pmb.helpers.logging.logfd, cwd=working_dir)
+    """Run a subprocess in background and redirect its output to the log."""
+    ret = subprocess.Popen(
+        cmd, stdout=pmb.helpers.logging.logfd, stderr=pmb.helpers.logging.logfd, cwd=working_dir
+    )
     logging.debug(f"New background process: pid={ret.pid}, output=background")
     return ret
 
 
 def pipe(cmd, working_dir=None):
-    """ Run a subprocess in background and redirect its output to a pipe. """
-    ret = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                           stdin=subprocess.DEVNULL,
-                           stderr=pmb.helpers.logging.logfd, cwd=working_dir)
+    """Run a subprocess in background and redirect its output to a pipe."""
+    ret = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stdin=subprocess.DEVNULL,
+        stderr=pmb.helpers.logging.logfd,
+        cwd=working_dir,
+    )
     logging.verbose(f"New background process: pid={ret.pid}, output=pipe")
     return ret
 
 
-def pipe_read(process, output_to_stdout=False, output_return=False,
-              output_return_buffer=False):
+def pipe_read(process, output_to_stdout=False, output_return=False, output_return_buffer=False):
     """
     Read all available output from a subprocess and copy it to the log and
     optionally stdout and a buffer variable. This is only meant to be called by
@@ -123,13 +127,11 @@ def kill_process_tree(args, pid, ppids, sudo):
     :param sudo: use sudo to kill the process
     """
     if sudo:
-        pmb.helpers.run.root(args, ["kill", "-9", str(pid)],
-                             check=False)
+        pmb.helpers.run.root(args, ["kill", "-9", str(pid)], check=False)
     else:
-        pmb.helpers.run.user(args, ["kill", "-9", str(pid)],
-                             check=False)
+        pmb.helpers.run.user(args, ["kill", "-9", str(pid)], check=False)
 
-    for (child_pid, child_ppid) in ppids:
+    for child_pid, child_ppid in ppids:
         if child_ppid == str(pid):
             kill_process_tree(args, child_pid, ppids, sudo)
 
@@ -144,7 +146,7 @@ def kill_command(args, pid, sudo):
     cmd = ["ps", "-e", "-o", "pid,ppid"]
     ret = subprocess.run(cmd, check=True, stdout=subprocess.PIPE)
     ppids = []
-    proc_entries = ret.stdout.decode("utf-8").rstrip().split('\n')[1:]
+    proc_entries = ret.stdout.decode("utf-8").rstrip().split("\n")[1:]
     for row in proc_entries:
         items = row.split()
         if len(items) != 2:
@@ -154,9 +156,16 @@ def kill_command(args, pid, sudo):
     kill_process_tree(args, pid, ppids, sudo)
 
 
-def foreground_pipe(args, cmd, working_dir=None, output_to_stdout=False,
-                    output_return=False, output_timeout=True,
-                    sudo=False, stdin=None):
+def foreground_pipe(
+    args,
+    cmd,
+    working_dir=None,
+    output_to_stdout=False,
+    output_return=False,
+    output_timeout=True,
+    sudo=False,
+    stdin=None,
+):
     """
     Run a subprocess in foreground with redirected output and optionally kill
     it after being silent for too long.
@@ -175,9 +184,9 @@ def foreground_pipe(args, cmd, working_dir=None, output_to_stdout=False,
               * output: full program output string (output_return is True)
     """
     # Start process in background (stdout and stderr combined)
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT, cwd=working_dir,
-                               stdin=stdin)
+    process = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=working_dir, stdin=stdin
+    )
 
     # Make process.stdout non-blocking
     handle = process.stdout.fileno()
@@ -199,16 +208,17 @@ def foreground_pipe(args, cmd, working_dir=None, output_to_stdout=False,
         if output_timeout:
             wait_end = time.perf_counter()
             if wait_end - wait_start >= args.timeout:
-                logging.info("Process did not write any output for " +
-                             str(args.timeout) + " seconds. Killing it.")
-                logging.info("NOTE: The timeout can be increased with"
-                             " 'pmbootstrap -t'.")
+                logging.info(
+                    "Process did not write any output for "
+                    + str(args.timeout)
+                    + " seconds. Killing it."
+                )
+                logging.info("NOTE: The timeout can be increased with" " 'pmbootstrap -t'.")
                 kill_command(args, process.pid, sudo)
                 continue
 
         # Read all currently available output
-        pipe_read(process, output_to_stdout, output_return,
-                  output_buffer)
+        pipe_read(process, output_to_stdout, output_return, output_buffer)
 
     # There may still be output after the process quit
     pipe_read(process, output_to_stdout, output_return, output_buffer)
@@ -227,8 +237,7 @@ def foreground_tui(cmd, working_dir=None):
     vim, nano or the kernel's menuconfig) work properly.
     """
 
-    logging.debug("*** output passed to pmbootstrap stdout, not to this log"
-                  " ***")
+    logging.debug("*** output passed to pmbootstrap stdout, not to this log" " ***")
     process = subprocess.Popen(cmd, cwd=working_dir)
     return process.wait()
 
@@ -246,10 +255,11 @@ def check_return_code(args, code, log_message):
 
     if code:
         logging.debug("^" * 70)
-        logging.info("NOTE: The failed command's output is above the ^^^ line"
-                     " in the log file: " + args.log)
-        raise RuntimeError(f"Command failed (exit code {str(code)}): " +
-                           log_message)
+        logging.info(
+            "NOTE: The failed command's output is above the ^^^ line"
+            " in the log file: " + args.log
+        )
+        raise RuntimeError(f"Command failed (exit code {str(code)}): " + log_message)
 
 
 def sudo_timer_iterate():
@@ -291,8 +301,7 @@ def add_proxy_env_vars(env):
         "FTP_PROXY",
         "HTTPS_PROXY",
         "HTTP_PROXY",
-        "HTTP_PROXY_AUTH"
-        "ftp_proxy",
+        "HTTP_PROXY_AUTH" "ftp_proxy",
         "http_proxy",
         "https_proxy",
     ]
@@ -302,8 +311,17 @@ def add_proxy_env_vars(env):
             env[var] = os.environ[var]
 
 
-def core(args, log_message, cmd, working_dir=None, output="log",
-         output_return=False, check=None, sudo=False, disable_timeout=False):
+def core(
+    args,
+    log_message,
+    cmd,
+    working_dir=None,
+    output="log",
+    output_return=False,
+    check=None,
+    sudo=False,
+    disable_timeout=False,
+):
     """
     Run a command and create a log entry.
 
@@ -392,11 +410,9 @@ def core(args, log_message, cmd, working_dir=None, output="log",
 
         stdin = subprocess.DEVNULL if output in ["log", "stdout"] else None
 
-        (code, output_after_run) = foreground_pipe(args, cmd, working_dir,
-                                                   output_to_stdout,
-                                                   output_return,
-                                                   output_timeout,
-                                                   sudo, stdin)
+        (code, output_after_run) = foreground_pipe(
+            args, cmd, working_dir, output_to_stdout, output_return, output_timeout, sudo, stdin
+        )
 
     # Check the return code
     if check is not False:

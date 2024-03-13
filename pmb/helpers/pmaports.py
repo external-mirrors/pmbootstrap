@@ -5,6 +5,7 @@ Functions that work with pmaports. See also:
 - pmb/helpers/repo.py (work with binary package repos)
 - pmb/helpers/package.py (work with both)
 """
+
 import glob
 import logging
 import os
@@ -23,8 +24,10 @@ def _find_apkbuilds(args):
     for apkbuild in glob.iglob(f"{args.aports}/**/*/APKBUILD", recursive=True):
         package = os.path.basename(os.path.dirname(apkbuild))
         if package in apkbuilds:
-            raise RuntimeError(f"Package {package} found in multiple aports "
-                               "subfolders. Please put it only in one folder.")
+            raise RuntimeError(
+                f"Package {package} found in multiple aports "
+                "subfolders. Please put it only in one folder."
+            )
         apkbuilds[package] = apkbuild
 
     # Sort dictionary so we don't need to do it over and over again in
@@ -37,7 +40,7 @@ def _find_apkbuilds(args):
 
 
 def get_list(args):
-    """ :returns: list of all pmaport pkgnames (["hello-world", ...]) """
+    """:returns: list of all pmaport pkgnames (["hello-world", ...])"""
     return list(_find_apkbuilds(args).keys())
 
 
@@ -53,13 +56,18 @@ def guess_main_dev(args, subpkgname):
     pkgname = subpkgname[:-4]
     path = _find_apkbuilds(args).get(pkgname)
     if path:
-        logging.verbose(subpkgname + ": guessed to be a subpackage of " +
-                        pkgname + " (just removed '-dev')")
+        logging.verbose(
+            subpkgname + ": guessed to be a subpackage of " + pkgname + " (just removed '-dev')"
+        )
         return os.path.dirname(path)
 
-    logging.verbose(subpkgname + ": guessed to be a subpackage of " + pkgname +
-                    ", which we can't find in pmaports, so it's probably in"
-                    " Alpine")
+    logging.verbose(
+        subpkgname
+        + ": guessed to be a subpackage of "
+        + pkgname
+        + ", which we can't find in pmaports, so it's probably in"
+        " Alpine"
+    )
     return None
 
 
@@ -95,8 +103,7 @@ def guess_main(args, subpkgname):
         # Look in pmaports
         path = _find_apkbuilds(args).get(pkgname)
         if path:
-            logging.verbose(subpkgname + ": guessed to be a subpackage of " +
-                            pkgname)
+            logging.verbose(subpkgname + ": guessed to be a subpackage of " + pkgname)
             return os.path.dirname(path)
 
 
@@ -163,7 +170,7 @@ def find(args, package, must_exist=True):
             guess = guess_main(args, package)
             if guess:
                 # Parse the APKBUILD and verify if the guess was right
-                if _find_package_in_apkbuild(package, f'{guess}/APKBUILD'):
+                if _find_package_in_apkbuild(package, f"{guess}/APKBUILD"):
                     ret = guess
                 else:
                     # Otherwise parse all APKBUILDs (takes time!), is the
@@ -182,8 +189,7 @@ def find(args, package, must_exist=True):
 
     # Crash when necessary
     if ret is None and must_exist:
-        raise RuntimeError("Could not find aport for package: " +
-                           package)
+        raise RuntimeError("Could not find aport for package: " + package)
 
     # Save result in cache
     pmb.helpers.other.cache["find_aport"][package] = ret
@@ -191,22 +197,22 @@ def find(args, package, must_exist=True):
 
 
 def get(args, pkgname, must_exist=True, subpackages=True):
-    """ Find and parse an APKBUILD file.
-        Run 'pmbootstrap apkbuild_parse hello-world' for a full output example.
-        Relevant variables are defined in pmb.config.apkbuild_attributes.
+    """Find and parse an APKBUILD file.
+    Run 'pmbootstrap apkbuild_parse hello-world' for a full output example.
+    Relevant variables are defined in pmb.config.apkbuild_attributes.
 
-        :param pkgname: the package name to find
-        :param must_exist: raise an exception when it can't be found
-        :param subpackages: also search for subpackages with the specified
-                            names (slow! might need to parse all APKBUILDs to
-                            find it)
-        :returns: relevant variables from the APKBUILD as dictionary, e.g.:
-                  { "pkgname": "hello-world",
-                    "arch": ["all"],
-                    "pkgrel": "4",
-                    "pkgrel": "1",
-                    "options": [],
-                    ... }
+    :param pkgname: the package name to find
+    :param must_exist: raise an exception when it can't be found
+    :param subpackages: also search for subpackages with the specified
+                        names (slow! might need to parse all APKBUILDs to
+                        find it)
+    :returns: relevant variables from the APKBUILD as dictionary, e.g.:
+              { "pkgname": "hello-world",
+                "arch": ["all"],
+                "pkgrel": "4",
+                "pkgrel": "1",
+                "options": [],
+                ... }
     """
     pkgname = pmb.helpers.package.remove_operators(pkgname)
     if subpackages:
@@ -218,8 +224,7 @@ def get(args, pkgname, must_exist=True, subpackages=True):
         if path:
             return pmb.parse.apkbuild(path)
         if must_exist:
-            raise RuntimeError("Could not find APKBUILD for package:"
-                               f" {pkgname}")
+            raise RuntimeError("Could not find APKBUILD for package:" f" {pkgname}")
 
     return None
 
@@ -244,17 +249,16 @@ def find_providers(args, provide):
             if provides.split("=", 1)[0] == provide:
                 providers[subpkgname] = subpkg
 
-    return sorted(providers.items(), reverse=True,
-                  key=lambda p: p[1].get('provider_priority', 0))
+    return sorted(providers.items(), reverse=True, key=lambda p: p[1].get("provider_priority", 0))
 
 
 def get_repo(args, pkgname, must_exist=True):
-    """ Get the repository folder of an aport.
+    """Get the repository folder of an aport.
 
-        :pkgname: package name
-        :must_exist: raise an exception when it can't be found
-        :returns: a string like "main", "device", "cross", ...
-                  or None when the aport could not be found """
+    :pkgname: package name
+    :must_exist: raise an exception when it can't be found
+    :returns: a string like "main", "device", "cross", ...
+              or None when the aport could not be found"""
     aport = find(args, pkgname, must_exist)
     if not aport:
         return None
@@ -262,13 +266,13 @@ def get_repo(args, pkgname, must_exist=True):
 
 
 def check_arches(arches, arch):
-    """ Check if building for a certain arch is allowed.
+    """Check if building for a certain arch is allowed.
 
-        :param arches: list of all supported arches, as it can be found in the
-                       arch="" line of APKBUILDS (including all, noarch,
-                       !arch, ...). For example: ["x86_64", "x86", "!armhf"]
-        :param arch: the architecture to check for
-        :returns: True when building is allowed, False otherwise
+    :param arches: list of all supported arches, as it can be found in the
+                   arch="" line of APKBUILDS (including all, noarch,
+                   !arch, ...). For example: ["x86_64", "x86", "!armhf"]
+    :param arch: the architecture to check for
+    :returns: True when building is allowed, False otherwise
     """
     if "!" + arch in arches:
         return False
@@ -279,12 +283,12 @@ def check_arches(arches, arch):
 
 
 def get_channel_new(channel):
-    """ Translate legacy channel names to the new ones. Legacy names are still
-        supported for compatibility with old branches (pmb#2015).
-        :param channel: name as read from pmaports.cfg or channels.cfg, like
-                        "edge", "v21.03" etc., or potentially a legacy name
-                        like "stable".
-        :returns: name in the new format, e.g. "edge" or "v21.03"
+    """Translate legacy channel names to the new ones. Legacy names are still
+    supported for compatibility with old branches (pmb#2015).
+    :param channel: name as read from pmaports.cfg or channels.cfg, like
+                    "edge", "v21.03" etc., or potentially a legacy name
+                    like "stable".
+    :returns: name in the new format, e.g. "edge" or "v21.03"
     """
     legacy_cfg = pmb.config.pmaports_channels_legacy
     if channel in legacy_cfg:

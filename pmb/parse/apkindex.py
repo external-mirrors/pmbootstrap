@@ -64,7 +64,8 @@ def parse_next_block(path, lines, start):
                 if key in ret:
                     raise RuntimeError(
                         "Key " + key + " (" + letter + ":) specified twice"
-                        " in block: " + str(ret) + ", file: " + path)
+                        " in block: " + str(ret) + ", file: " + path
+                    )
                 ret[key] = line[2:-1]
 
     # Format and return the block
@@ -72,8 +73,7 @@ def parse_next_block(path, lines, start):
         # Check for required keys
         for key in ["arch", "pkgname", "version"]:
             if key not in ret:
-                raise RuntimeError(f"Missing required key '{key}' in block "
-                                   f"{ret}, file: {path}")
+                raise RuntimeError(f"Missing required key '{key}' in block " f"{ret}, file: {path}")
 
         # Format optional lists
         for key in ["provides", "depends"]:
@@ -93,9 +93,11 @@ def parse_next_block(path, lines, start):
 
     # No more blocks
     elif ret != {}:
-        raise RuntimeError("Last block in " + path + " does not end"
-                           " with a new line! Delete the file and"
-                           " try again. Last block: " + str(ret))
+        raise RuntimeError(
+            "Last block in " + path + " does not end"
+            " with a new line! Delete the file and"
+            " try again. Last block: " + str(ret)
+        )
     return None
 
 
@@ -171,8 +173,10 @@ def parse(path, multiple_providers=True):
     """
     # Require the file to exist
     if not os.path.isfile(path):
-        logging.verbose("NOTE: APKINDEX not found, assuming no binary packages"
-                        " exist for that architecture: " + path)
+        logging.verbose(
+            "NOTE: APKINDEX not found, assuming no binary packages"
+            " exist for that architecture: " + path
+        )
         return {}
 
     # Try to get a cached result first
@@ -205,8 +209,7 @@ def parse(path, multiple_providers=True):
 
         # Skip virtual packages
         if "timestamp" not in block:
-            logging.verbose("Skipped virtual package " + str(block) + " in"
-                            " file: " + path)
+            logging.verbose("Skipped virtual package " + str(block) + " in" " file: " + path)
             continue
 
         # Add the next package and all aliases
@@ -260,8 +263,10 @@ def clear_cache(path):
         del pmb.helpers.other.cache["apkindex"][path]
         return True
     else:
-        logging.verbose("Nothing to do, path was not in cache:" +
-                        str(pmb.helpers.other.cache["apkindex"].keys()))
+        logging.verbose(
+            "Nothing to do, path was not in cache:"
+            + str(pmb.helpers.other.cache["apkindex"].keys())
+        )
         return False
 
 
@@ -300,15 +305,25 @@ def providers(args, package, arch=None, must_exist=True, indexes=None):
             if provider_pkgname in ret:
                 version_last = ret[provider_pkgname]["version"]
                 if pmb.parse.version.compare(version, version_last) == -1:
-                    logging.verbose(package + ": provided by: " +
-                                    provider_pkgname + "-" + version + " in " +
-                                    path + " (but " + version_last + " is"
-                                    " higher)")
+                    logging.verbose(
+                        package
+                        + ": provided by: "
+                        + provider_pkgname
+                        + "-"
+                        + version
+                        + " in "
+                        + path
+                        + " (but "
+                        + version_last
+                        + " is"
+                        " higher)"
+                    )
                     continue
 
             # Add the provider to ret
-            logging.verbose(package + ": provided by: " + provider_pkgname +
-                            "-" + version + " in " + path)
+            logging.verbose(
+                package + ": provided by: " + provider_pkgname + "-" + version + " in " + path
+            )
             ret[provider_pkgname] = provider
 
     if ret == {} and must_exist:
@@ -338,7 +353,8 @@ def provider_highest_priority(providers, pkgname):
     if priority_providers:
         logging.debug(
             f"{pkgname}: picked provider(s) with highest priority "
-            f"{max_priority}: {', '.join(priority_providers.keys())}")
+            f"{max_priority}: {', '.join(priority_providers.keys())}"
+        )
         return priority_providers
 
     # None of the providers seems to have a provider_priority defined
@@ -358,7 +374,8 @@ def provider_shortest(providers, pkgname):
     if len(providers) != 1:
         logging.debug(
             f"{pkgname}: has multiple providers ("
-            f"{', '.join(providers.keys())}), picked shortest: {ret}")
+            f"{', '.join(providers.keys())}), picked shortest: {ret}"
+        )
     return providers[ret]
 
 
@@ -391,6 +408,5 @@ def package(args, package, arch=None, must_exist=True, indexes=None):
 
     # No provider
     if must_exist:
-        raise RuntimeError("Package '" + package + "' not found in any"
-                           " APKINDEX.")
+        raise RuntimeError("Package '" + package + "' not found in any" " APKINDEX.")
     return None

@@ -29,8 +29,7 @@ def check(args, pkgnames):
     for pkgname in pkgnames:
         aport = pmb.helpers.pmaports.find(args, pkgname)
         if not os.path.exists(aport + "/APKBUILD"):
-            raise ValueError("Path does not contain an APKBUILD file:" +
-                             aport)
+            raise ValueError("Path does not contain an APKBUILD file:" + aport)
         relpath = os.path.relpath(aport, args.aports)
         apkbuilds.append(f"{relpath}/APKBUILD")
 
@@ -40,8 +39,12 @@ def check(args, pkgnames):
     pkgstr = ", ".join(pkgnames)
     logging.info(f"(native) linting {pkgstr} with apkbuild-lint")
     options = pmb.config.apkbuild_custom_valid_options
-    return pmb.chroot.root(args, ["apkbuild-lint"] + apkbuilds,
-                           check=False, output="stdout",
-                           output_return=True,
-                           working_dir=pmaports,
-                           env={"CUSTOM_VALID_OPTIONS": " ".join(options)})
+    return pmb.chroot.root(
+        args,
+        ["apkbuild-lint"] + apkbuilds,
+        check=False,
+        output="stdout",
+        output_return=True,
+        working_dir=pmaports,
+        env={"CUSTOM_VALID_OPTIONS": " ".join(options)},
+    )

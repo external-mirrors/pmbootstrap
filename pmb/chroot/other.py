@@ -20,8 +20,7 @@ def kernel_flavor_installed(args, suffix, autoinstall=True):
     """
     # Automatically install the selected kernel
     if autoinstall:
-        packages = ([f"device-{args.device}"] +
-                    pmb.install.get_kernel_package(args, args.device))
+        packages = [f"device-{args.device}"] + pmb.install.get_kernel_package(args, args.device)
         pmb.chroot.apk.install(args, packages, suffix)
 
     pattern = f"{args.work}/chroot_{suffix}/usr/share/kernel/*"
@@ -53,19 +52,22 @@ def copy_xauthority(args):
     # Check $DISPLAY
     logging.info("(native) copy host Xauthority")
     if not os.environ.get("DISPLAY"):
-        raise RuntimeError("Your $DISPLAY variable is not set. If you have an"
-                           " X11 server running as your current user, try"
-                           " 'export DISPLAY=:0' and run your last"
-                           " pmbootstrap command again.")
+        raise RuntimeError(
+            "Your $DISPLAY variable is not set. If you have an"
+            " X11 server running as your current user, try"
+            " 'export DISPLAY=:0' and run your last"
+            " pmbootstrap command again."
+        )
 
     # Check $XAUTHORITY
     original = os.environ.get("XAUTHORITY")
     if not original:
-        original = os.path.join(os.environ['HOME'], '.Xauthority')
+        original = os.path.join(os.environ["HOME"], ".Xauthority")
     if not os.path.exists(original):
-        raise RuntimeError("Could not find your Xauthority file, try to export"
-                           " your $XAUTHORITY correctly. Looked here: " +
-                           original)
+        raise RuntimeError(
+            "Could not find your Xauthority file, try to export"
+            " your $XAUTHORITY correctly. Looked here: " + original
+        )
 
     # Copy to chroot and chown
     copy = args.work + "/chroot_native/home/pmos/.Xauthority"

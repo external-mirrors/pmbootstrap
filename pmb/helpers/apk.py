@@ -23,8 +23,7 @@ def _run(args, command, chroot=False, suffix="native", output="log"):
     arguments and the return value.
     """
     if chroot:
-        return pmb.chroot.root(args, command, output=output, suffix=suffix,
-                               disable_timeout=True)
+        return pmb.chroot.root(args, command, output=output, suffix=suffix, disable_timeout=True)
     return pmb.helpers.run.root(args, command, output=output)
 
 
@@ -77,7 +76,7 @@ def _compute_progress(line):
     """
     if not line:
         return 1
-    cur_tot = line.rstrip().split('/')
+    cur_tot = line.rstrip().split("/")
     if len(cur_tot) != 2:
         return 0
     cur = float(cur_tot[0])
@@ -98,17 +97,16 @@ def apk_with_progress(args, command, chroot=False, suffix="native"):
     fifo, fifo_outside = _prepare_fifo(args, chroot, suffix)
     command_with_progress = _create_command_with_progress(command, fifo)
     log_msg = " ".join(command)
-    with _run(args, ['cat', fifo], chroot=chroot, suffix=suffix,
-              output="pipe") as p_cat:
-        with _run(args, command_with_progress, chroot=chroot, suffix=suffix,
-                  output="background") as p_apk:
+    with _run(args, ["cat", fifo], chroot=chroot, suffix=suffix, output="pipe") as p_cat:
+        with _run(
+            args, command_with_progress, chroot=chroot, suffix=suffix, output="background"
+        ) as p_apk:
             while p_apk.poll() is None:
-                line = p_cat.stdout.readline().decode('utf-8')
+                line = p_cat.stdout.readline().decode("utf-8")
                 progress = _compute_progress(line)
                 pmb.helpers.cli.progress_print(args, progress)
             pmb.helpers.cli.progress_flush(args)
-            pmb.helpers.run_core.check_return_code(args, p_apk.returncode,
-                                                   log_msg)
+            pmb.helpers.run_core.check_return_code(args, p_apk.returncode, log_msg)
 
 
 def check_outdated(args, version_installed, action_msg):
@@ -129,6 +127,8 @@ def check_outdated(args, version_installed, action_msg):
     if pmb.parse.version.compare(version_installed, version_min) >= 0:
         return
 
-    raise RuntimeError("Found an outdated version of the 'apk' package"
-                       f" manager ({version_installed}, expected at least:"
-                       f" {version_min}). {action_msg}")
+    raise RuntimeError(
+        "Found an outdated version of the 'apk' package"
+        f" manager ({version_installed}, expected at least:"
+        f" {version_min}). {action_msg}"
+    )

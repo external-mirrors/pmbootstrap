@@ -51,10 +51,12 @@ def setup_qemu_emulation(args, suffix):
 
     # mount --bind the qemu-user binary
     pmb.chroot.binfmt.register(args, arch)
-    pmb.helpers.mount.bind_file(args, f"{args.work}/chroot_native"
-                                      f"/usr/bin/qemu-{arch_qemu}",
-                                f"{chroot}/usr/bin/qemu-{arch_qemu}-static",
-                                create_folders=True)
+    pmb.helpers.mount.bind_file(
+        args,
+        f"{args.work}/chroot_native" f"/usr/bin/qemu-{arch_qemu}",
+        f"{chroot}/usr/bin/qemu-{arch_qemu}-static",
+        create_folders=True,
+    )
 
 
 def init_keys(args):
@@ -95,8 +97,7 @@ def init(args, suffix="native"):
 
     # Initialize cache
     apk_cache = f"{args.work}/cache_apk_{arch}"
-    pmb.helpers.run.root(args, ["ln", "-s", "-f", "/var/cache/apk",
-                                f"{chroot}/etc/apk/cache"])
+    pmb.helpers.run.root(args, ["ln", "-s", "-f", "/var/cache/apk", f"{chroot}/etc/apk/cache"])
 
     # Initialize /etc/apk/keys/, resolv.conf, repositories
     init_keys(args)
@@ -107,16 +108,29 @@ def init(args, suffix="native"):
 
     # Install alpine-base
     pmb.helpers.repo.update(args, arch)
-    pmb.chroot.apk_static.run(args, ["--root", chroot,
-                                     "--cache-dir", apk_cache,
-                                     "--initdb", "--arch", arch,
-                                     "add", "alpine-base"])
+    pmb.chroot.apk_static.run(
+        args,
+        [
+            "--root",
+            chroot,
+            "--cache-dir",
+            apk_cache,
+            "--initdb",
+            "--arch",
+            arch,
+            "add",
+            "alpine-base",
+        ],
+    )
 
     # Building chroots: create "pmos" user, add symlinks to /home/pmos
     if not suffix.startswith("rootfs_"):
-        pmb.chroot.root(args, ["adduser", "-D", "pmos", "-u",
-                               pmb.config.chroot_uid_user],
-                        suffix, auto_init=False)
+        pmb.chroot.root(
+            args,
+            ["adduser", "-D", "pmos", "-u", pmb.config.chroot_uid_user],
+            suffix,
+            auto_init=False,
+        )
 
         # Create the links (with subfolders if necessary)
         for target, link_name in pmb.config.chroot_home_symlinks.items():

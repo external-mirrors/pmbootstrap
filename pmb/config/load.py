@@ -26,9 +26,11 @@ def load(args):
         # not some outdated version we saved some time back (eg. aports folder,
         # postmarketOS binary packages mirror).
         if key not in pmb.config.config_keys and key in cfg["pmbootstrap"]:
-            logging.debug("Ignored unconfigurable and possibly outdated"
-                          " default value from config:"
-                          f" {cfg['pmbootstrap'][key]}")
+            logging.debug(
+                "Ignored unconfigurable and possibly outdated"
+                " default value from config:"
+                f" {cfg['pmbootstrap'][key]}"
+            )
             del cfg["pmbootstrap"][key]
 
     return cfg

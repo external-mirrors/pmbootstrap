@@ -46,9 +46,17 @@ def format_function(name, body, remove_indent=4):
     return name + "() {\n" + ret + "}\n"
 
 
-def rewrite(args, pkgname, path_original="", fields={}, replace_pkgname=None,
-            replace_functions={}, replace_simple={}, below_header="",
-            remove_indent=4):
+def rewrite(
+    args,
+    pkgname,
+    path_original="",
+    fields={},
+    replace_pkgname=None,
+    replace_functions={},
+    replace_simple={},
+    below_header="",
+    remove_indent=4,
+):
     """
     Append a header to $WORK/aportgen/APKBUILD, delete maintainer/contributor
     lines (so they won't be bugged with issues regarding our generated aports),
@@ -96,8 +104,7 @@ def rewrite(args, pkgname, path_original="", fields={}, replace_pkgname=None,
         skip_in_func = False
         for line in handle.readlines():
             # Skip maintainer/contributor
-            if line.startswith("# Maintainer") or line.startswith(
-                    "# Contributor"):
+            if line.startswith("# Maintainer") or line.startswith("# Contributor"):
                 continue
 
             # Replace functions
@@ -110,8 +117,7 @@ def rewrite(args, pkgname, path_original="", fields={}, replace_pkgname=None,
                     if line.startswith(func + "() {"):
                         skip_in_func = True
                         if body:
-                            lines_new += format_function(
-                                func, body, remove_indent=remove_indent)
+                            lines_new += format_function(func, body, remove_indent=remove_indent)
                         break
                 if skip_in_func:
                     continue
@@ -169,28 +175,26 @@ def get_upstream_aport(args, pkgname, arch=None):
     channel_cfg = pmb.config.pmaports.read_config_channel(args)
     branch = channel_cfg["branch_aports"]
     logging.info(f"Checkout aports.git branch: {branch}")
-    if pmb.helpers.run.user(args, ["git", "checkout", branch],
-                            aports_upstream_path, check=False):
+    if pmb.helpers.run.user(args, ["git", "checkout", branch], aports_upstream_path, check=False):
         logging.info("NOTE: run 'pmbootstrap pull' and try again")
-        logging.info("NOTE: if it still fails, your aports.git was cloned with"
-                     " an older version of pmbootstrap, as shallow clone."
-                     " Unshallow it, or remove it and let pmbootstrap clone it"
-                     f" again: {aports_upstream_path}")
+        logging.info(
+            "NOTE: if it still fails, your aports.git was cloned with"
+            " an older version of pmbootstrap, as shallow clone."
+            " Unshallow it, or remove it and let pmbootstrap clone it"
+            f" again: {aports_upstream_path}"
+        )
         raise RuntimeError("Branch checkout failed.")
 
     # Search package
     paths = glob.glob(aports_upstream_path + "/*/" + pkgname)
     if len(paths) > 1:
-        raise RuntimeError("Package " + pkgname + " found in multiple"
-                           " aports subfolders.")
+        raise RuntimeError("Package " + pkgname + " found in multiple" " aports subfolders.")
     elif len(paths) == 0:
-        raise RuntimeError("Package " + pkgname + " not found in alpine"
-                           " aports repository.")
+        raise RuntimeError("Package " + pkgname + " not found in alpine" " aports repository.")
     aport_path = paths[0]
 
     # Parse APKBUILD
-    apkbuild = pmb.parse.apkbuild(f"{aport_path}/APKBUILD",
-                                  check_pkgname=False)
+    apkbuild = pmb.parse.apkbuild(f"{aport_path}/APKBUILD", check_pkgname=False)
     apkbuild_version = apkbuild["pkgver"] + "-r" + apkbuild["pkgrel"]
 
     # Binary package
@@ -205,17 +209,23 @@ def get_upstream_aport(args, pkgname, arch=None):
 
     # APKBUILD > binary: this is fine
     if compare == 1:
-        logging.info(f"NOTE: {pkgname} {arch} binary package has a lower"
-                     f" version {package['version']} than the APKBUILD"
-                     f" {apkbuild_version}")
+        logging.info(
+            f"NOTE: {pkgname} {arch} binary package has a lower"
+            f" version {package['version']} than the APKBUILD"
+            f" {apkbuild_version}"
+        )
         return aport_path
 
     # APKBUILD < binary: aports.git is outdated
     if compare == -1:
-        logging.warning("WARNING: Package '" + pkgname + "' has a lower version in"
-                  " local checkout of Alpine's aports (" + apkbuild_version +
-                  ") compared to Alpine's binary package (" +
-                  package["version"] + ")!")
+        logging.warning(
+            "WARNING: Package '" + pkgname + "' has a lower version in"
+            " local checkout of Alpine's aports ("
+            + apkbuild_version
+            + ") compared to Alpine's binary package ("
+            + package["version"]
+            + ")!"
+        )
         logging.info("NOTE: You can update your local checkout with: 'pmbootstrap pull'")
 
     return aport_path

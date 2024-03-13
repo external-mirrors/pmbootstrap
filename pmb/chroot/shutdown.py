@@ -40,12 +40,13 @@ def shutdown_cryptsetup_device(args, name):
     if not os.path.exists(args.work + "/chroot_native/dev/mapper/" + name):
         return
     pmb.chroot.apk.install(args, ["cryptsetup"])
-    status = pmb.chroot.root(args, ["cryptsetup", "status", name],
-                             output_return=True, check=False)
+    status = pmb.chroot.root(args, ["cryptsetup", "status", name], output_return=True, check=False)
     if not status:
-        logging.warning("WARNING: Failed to run cryptsetup to get the status"
-                        " for " + name + ", assuming it is not mounted"
-                        " (shutdown fails later if it is)!")
+        logging.warning(
+            "WARNING: Failed to run cryptsetup to get the status"
+            " for " + name + ", assuming it is not mounted"
+            " (shutdown fails later if it is)!"
+        )
         return
 
     if status.startswith("/dev/mapper/" + name + " is active."):
@@ -64,8 +65,7 @@ def shutdown(args, only_install_related=False):
     kill_sccache(args)
 
     # Umount installation-related paths (order is important!)
-    pmb.helpers.mount.umount_all(args, args.work +
-                                 "/chroot_native/mnt/install")
+    pmb.helpers.mount.umount_all(args, args.work + "/chroot_native/mnt/install")
     shutdown_cryptsetup_device(args, "pm_crypt")
 
     # Umount all losetup mounted images
@@ -73,7 +73,7 @@ def shutdown(args, only_install_related=False):
     if pmb.helpers.mount.ismount(chroot + "/dev/loop-control"):
         pattern = chroot + "/home/pmos/rootfs/*.img"
         for path_outside in glob.glob(pattern):
-            path = path_outside[len(chroot):]
+            path = path_outside[len(chroot) :]
             pmb.install.losetup.umount(args, path, auto_init=False)
 
     # Umount device rootfs and installer chroots

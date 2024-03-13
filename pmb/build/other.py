@@ -19,8 +19,7 @@ def copy_to_buildpath(args, package, suffix="native"):
     # Sanity check
     aport = pmb.helpers.pmaports.find(args, package)
     if not os.path.exists(aport + "/APKBUILD"):
-        raise ValueError("Path does not contain an APKBUILD file:" +
-                         aport)
+        raise ValueError("Path does not contain an APKBUILD file:" + aport)
 
     # Clean up folder
     build = args.work + "/chroot_" + suffix + "/home/pmos/build"
@@ -38,8 +37,7 @@ def copy_to_buildpath(args, package, suffix="native"):
             continue
         pmb.helpers.run.root(args, ["cp", "-rL", f"{aport}/{entry}", f"{build}/{entry}"])
 
-    pmb.chroot.root(args, ["chown", "-R", "pmos:pmos",
-                           "/home/pmos/build"], suffix)
+    pmb.chroot.root(args, ["chown", "-R", "pmos:pmos", "/home/pmos/build"], suffix)
 
 
 def is_necessary(args, arch, apkbuild, indexes=None):
@@ -58,34 +56,37 @@ def is_necessary(args, arch, apkbuild, indexes=None):
     msg = "Build is necessary for package '" + package + "': "
 
     # Get old version from APKINDEX
-    index_data = pmb.parse.apkindex.package(args, package, arch, False,
-                                            indexes)
+    index_data = pmb.parse.apkindex.package(args, package, arch, False, indexes)
     if not index_data:
         logging.debug(msg + "No binary package available")
         return True
 
     # Can't build pmaport for arch: use Alpine's package (#1897)
     if arch and not pmb.helpers.pmaports.check_arches(apkbuild["arch"], arch):
-        logging.verbose(f"{package}: build is not necessary, because pmaport"
-                        " can't be built for {arch}. Using Alpine's binary"
-                        " package.")
+        logging.verbose(
+            f"{package}: build is not necessary, because pmaport"
+            " can't be built for {arch}. Using Alpine's binary"
+            " package."
+        )
         return False
 
     # a) Binary repo has a newer version
     version_old = index_data["version"]
     if pmb.parse.version.compare(version_old, version_new) == 1:
-        logging.warning("WARNING: package {}: aport version {} is lower than"
-                        " {} from the binary repository. {} will be used when"
-                        " installing {}. See also:"
-                        " <https://postmarketos.org/warning-repo2>"
-                        "".format(package, version_new, version_old,
-                                  version_old, package))
+        logging.warning(
+            "WARNING: package {}: aport version {} is lower than"
+            " {} from the binary repository. {} will be used when"
+            " installing {}. See also:"
+            " <https://postmarketos.org/warning-repo2>"
+            "".format(package, version_new, version_old, version_old, package)
+        )
         return False
 
     # b) Aports folder has a newer version
     if version_new != version_old:
-        logging.debug(f"{msg}Binary package out of date (binary: "
-                      f"{version_old}, aport: {version_new})")
+        logging.debug(
+            f"{msg}Binary package out of date (binary: " f"{version_old}, aport: {version_new})"
+        )
         return True
 
     # Aports and binary repo have the same version.
@@ -116,11 +117,15 @@ def index_repo(args, arch=None):
             description = str(datetime.datetime.now())
             commands = [
                 # Wrap the index command with sh so we can use '*.apk'
-                ["sh", "-c", "apk -q index --output APKINDEX.tar.gz_"
-                 " --description " + shlex.quote(description) + ""
-                 " --rewrite-arch " + shlex.quote(path_arch) + " *.apk"],
+                [
+                    "sh",
+                    "-c",
+                    "apk -q index --output APKINDEX.tar.gz_"
+                    " --description " + shlex.quote(description) + ""
+                    " --rewrite-arch " + shlex.quote(path_arch) + " *.apk",
+                ],
                 ["abuild-sign", "APKINDEX.tar.gz_"],
-                ["mv", "APKINDEX.tar.gz_", "APKINDEX.tar.gz"]
+                ["mv", "APKINDEX.tar.gz_", "APKINDEX.tar.gz"],
             ]
             for command in commands:
                 pmb.chroot.user(args, command, working_dir=path_repo_chroot)
@@ -143,13 +148,16 @@ def configure_abuild(args, suffix, verify=False):
                 continue
             if line != (prefix + args.jobs + "\n"):
                 if verify:
-                    raise RuntimeError(f"Failed to configure abuild: {path}"
-                                       "\nTry to delete the file"
-                                       "(or zap the chroot).")
-                pmb.chroot.root(args, ["sed", "-i", "-e",
-                                       f"s/^{prefix}.*/{prefix}{args.jobs}/",
-                                       "/etc/abuild.conf"],
-                                suffix)
+                    raise RuntimeError(
+                        f"Failed to configure abuild: {path}"
+                        "\nTry to delete the file"
+                        "(or zap the chroot)."
+                    )
+                pmb.chroot.root(
+                    args,
+                    ["sed", "-i", "-e", f"s/^{prefix}.*/{prefix}{args.jobs}/", "/etc/abuild.conf"],
+                    suffix,
+                )
                 configure_abuild(args, suffix, True)
             return
     pmb.chroot.root(args, ["sed", "-i", f"$ a\\{prefix}{args.jobs}", "/etc/abuild.conf"], suffix)
@@ -170,10 +178,11 @@ def configure_ccache(args, suffix="native", verify=False):
                 if line == ("max_size = " + args.ccache_size + "\n"):
                     return
     if verify:
-        raise RuntimeError("Failed to configure ccache: " + path + "\nTry to"
-                           " delete the file (or zap the chroot).")
+        raise RuntimeError(
+            "Failed to configure ccache: " + path + "\nTry to"
+            " delete the file (or zap the chroot)."
+        )
 
     # Set the size and verify
-    pmb.chroot.user(args, ["ccache", "--max-size", args.ccache_size],
-                    suffix)
+    pmb.chroot.user(args, ["ccache", "--max-size", args.ccache_size], suffix)
     configure_ccache(args, suffix, True)

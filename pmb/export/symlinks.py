@@ -25,8 +25,9 @@ def symlinks(args, flavor, folder):
 
     # File descriptions
     info = {
-        f"boot.img{suffix}": ("Fastboot compatible boot.img file,"
-                              " contains initramfs and kernel"),
+        f"boot.img{suffix}": (
+            "Fastboot compatible boot.img file," " contains initramfs and kernel"
+        ),
         "dtbo.img": "Fastboot compatible dtbo image",
         f"initramfs{suffix}": "Initramfs",
         f"initramfs{suffix}-extra": "Extra initramfs files in /boot",
@@ -44,18 +45,20 @@ def symlinks(args, flavor, folder):
     path_native = args.work + "/chroot_native"
     path_boot = args.work + "/chroot_rootfs_" + args.device + "/boot"
     path_buildroot = args.work + "/chroot_buildroot_" + args.deviceinfo["arch"]
-    patterns = [f"{path_boot}/boot.img{suffix}",
-                f"{path_boot}/initramfs{suffix}*",
-                f"{path_boot}/uInitrd{suffix}",
-                f"{path_boot}/uImage{suffix}",
-                f"{path_boot}/vmlinuz{suffix}",
-                f"{path_boot}/dtbo.img",
-                f"{path_native}/home/pmos/rootfs/{args.device}.img",
-                f"{path_native}/home/pmos/rootfs/{args.device}-boot.img",
-                f"{path_native}/home/pmos/rootfs/{args.device}-root.img",
-                f"{path_buildroot}/var/lib/postmarketos-android-recovery-" +
-                f"installer/pmos-{args.device}.zip",
-                f"{path_boot}/lk2nd.img"]
+    patterns = [
+        f"{path_boot}/boot.img{suffix}",
+        f"{path_boot}/initramfs{suffix}*",
+        f"{path_boot}/uInitrd{suffix}",
+        f"{path_boot}/uImage{suffix}",
+        f"{path_boot}/vmlinuz{suffix}",
+        f"{path_boot}/dtbo.img",
+        f"{path_native}/home/pmos/rootfs/{args.device}.img",
+        f"{path_native}/home/pmos/rootfs/{args.device}-boot.img",
+        f"{path_native}/home/pmos/rootfs/{args.device}-root.img",
+        f"{path_buildroot}/var/lib/postmarketos-android-recovery-"
+        + f"installer/pmos-{args.device}.zip",
+        f"{path_boot}/lk2nd.img",
+    ]
 
     # Generate a list of files from the patterns
     files = []

@@ -5,8 +5,17 @@ import pmb.helpers.run
 import pmb.helpers.run_core
 
 
-def user(args, cmd, suffix="native", working_dir="/", output="log",
-         output_return=False, check=None, env={}, auto_init=True):
+def user(
+    args,
+    cmd,
+    suffix="native",
+    working_dir="/",
+    output="log",
+    output_return=False,
+    check=None,
+    env={},
+    auto_init=True,
+):
     """
     Run a command inside a chroot as "user". We always use the BusyBox
     implementation of 'su', because other implementations may override the PATH
@@ -27,9 +36,18 @@ def user(args, cmd, suffix="native", working_dir="/", output="log",
 
     flat_cmd = pmb.helpers.run_core.flat_cmd(cmd, env=env)
     cmd = ["busybox", "su", "pmos", "-c", flat_cmd]
-    return pmb.chroot.root(args, cmd, suffix, working_dir, output,
-                           output_return, check, {}, auto_init,
-                           add_proxy_env_vars=False)
+    return pmb.chroot.root(
+        args,
+        cmd,
+        suffix,
+        working_dir,
+        output,
+        output_return,
+        check,
+        {},
+        auto_init,
+        add_proxy_env_vars=False,
+    )
 
 
 def exists(args, username, suffix="native"):
@@ -39,6 +57,7 @@ def exists(args, username, suffix="native"):
     :param username: User name
     :returns: bool
     """
-    output = pmb.chroot.root(args, ["getent", "passwd", username],
-                             suffix, output_return=True, check=False)
+    output = pmb.chroot.root(
+        args, ["getent", "passwd", username], suffix, output_return=True, check=False
+    )
     return len(output) > 0

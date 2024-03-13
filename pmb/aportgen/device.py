@@ -15,14 +15,17 @@ def ask_for_architecture():
     if "armhf" in architectures:
         architectures.remove("armhf")
     while True:
-        ret = pmb.helpers.cli.ask("Device architecture", architectures,
-                                  "aarch64", complete=architectures)
+        ret = pmb.helpers.cli.ask(
+            "Device architecture", architectures, "aarch64", complete=architectures
+        )
         if ret in architectures:
             return ret
-        logging.fatal("ERROR: Invalid architecture specified. If you want to"
-                      " add a new architecture, edit"
-                      " build_device_architectures in"
-                      " pmb/config/__init__.py.")
+        logging.fatal(
+            "ERROR: Invalid architecture specified. If you want to"
+            " add a new architecture, edit"
+            " build_device_architectures in"
+            " pmb/config/__init__.py."
+        )
 
 
 def ask_for_manufacturer():
@@ -35,8 +38,7 @@ def ask_for_name(manufacturer):
     ret = pmb.helpers.cli.ask("Name", None, None, False)
 
     # Always add the manufacturer
-    if not ret.startswith(manufacturer) and \
-            not ret.startswith("Google"):
+    if not ret.startswith(manufacturer) and not ret.startswith("Google"):
         ret = manufacturer + " " + ret
     return ret
 
@@ -44,8 +46,7 @@ def ask_for_name(manufacturer):
 def ask_for_year():
     # Regex from https://stackoverflow.com/a/12240826
     logging.info("In what year was the device released (e.g. 2012)?")
-    return pmb.helpers.cli.ask("Year", None, None, False,
-                               validation_regex=r'^[1-9]\d{3,}$')
+    return pmb.helpers.cli.ask("Year", None, None, False, validation_regex=r"^[1-9]\d{3,}$")
 
 
 def ask_for_chassis():
@@ -53,58 +54,60 @@ def ask_for_chassis():
 
     logging.info("What type of device is it?")
     logging.info("Valid types are: " + ", ".join(types))
-    return pmb.helpers.cli.ask("Chassis", None, None, True,
-                               validation_regex='|'.join(types),
-                               complete=types)
+    return pmb.helpers.cli.ask(
+        "Chassis", None, None, True, validation_regex="|".join(types), complete=types
+    )
 
 
 def ask_for_keyboard(args):
-    return pmb.helpers.cli.confirm(args, "Does the device have a hardware"
-                                   " keyboard?")
+    return pmb.helpers.cli.confirm(args, "Does the device have a hardware" " keyboard?")
 
 
 def ask_for_external_storage(args):
-    return pmb.helpers.cli.confirm(args, "Does the device have a sdcard or"
-                                   " other external storage medium?")
+    return pmb.helpers.cli.confirm(
+        args, "Does the device have a sdcard or" " other external storage medium?"
+    )
 
 
 def ask_for_flash_method():
     while True:
         logging.info("Which flash method does the device support?")
-        method = pmb.helpers.cli.ask("Flash method",
-                                     pmb.config.flash_methods,
-                                     "none",
-                                     complete=pmb.config.flash_methods)
+        method = pmb.helpers.cli.ask(
+            "Flash method", pmb.config.flash_methods, "none", complete=pmb.config.flash_methods
+        )
 
         if method in pmb.config.flash_methods:
             if method == "heimdall":
                 heimdall_types = ["isorec", "bootimg"]
                 while True:
-                    logging.info("Does the device use the \"isolated"
-                                 " recovery\" or boot.img?")
-                    logging.info("<https://wiki.postmarketos.org/wiki"
-                                 "/Deviceinfo_flash_methods#Isorec_or_bootimg"
-                                 ".3F>")
-                    heimdall_type = pmb.helpers.cli.ask("Type",
-                                                        heimdall_types,
-                                                        heimdall_types[0])
+                    logging.info('Does the device use the "isolated' ' recovery" or boot.img?')
+                    logging.info(
+                        "<https://wiki.postmarketos.org/wiki"
+                        "/Deviceinfo_flash_methods#Isorec_or_bootimg"
+                        ".3F>"
+                    )
+                    heimdall_type = pmb.helpers.cli.ask("Type", heimdall_types, heimdall_types[0])
                     if heimdall_type in heimdall_types:
                         method += "-" + heimdall_type
                         break
                     logging.fatal("ERROR: Invalid type specified.")
             return method
 
-        logging.fatal("ERROR: Invalid flash method specified. If you want to"
-                      " add a new flash method, edit flash_methods in"
-                      " pmb/config/__init__.py.")
+        logging.fatal(
+            "ERROR: Invalid flash method specified. If you want to"
+            " add a new flash method, edit flash_methods in"
+            " pmb/config/__init__.py."
+        )
 
 
 def ask_for_bootimg(args):
-    logging.info("You can analyze a known working boot.img file to"
-                 " automatically fill out the flasher information for your"
-                 " deviceinfo file. Either specify the path to an image or"
-                 " press return to skip this step (you can do it later with"
-                 " 'pmbootstrap bootimg_analyze').")
+    logging.info(
+        "You can analyze a known working boot.img file to"
+        " automatically fill out the flasher information for your"
+        " deviceinfo file. Either specify the path to an image or"
+        " press return to skip this step (you can do it later with"
+        " 'pmbootstrap bootimg_analyze')."
+    )
 
     while True:
         response = pmb.helpers.cli.ask("Path", None, "", False)
@@ -119,17 +122,19 @@ def ask_for_bootimg(args):
 
 def generate_deviceinfo_fastboot_content(bootimg=None):
     if bootimg is None:
-        bootimg = {"cmdline": "",
-                   "qcdt": "false",
-                   "dtb_second": "false",
-                   "base": "",
-                   "kernel_offset": "",
-                   "ramdisk_offset": "",
-                   "second_offset": "",
-                   "tags_offset": "",
-                   "pagesize": "2048",
-                   "mtk_label_kernel": "",
-                   "mtk_label_ramdisk": ""}
+        bootimg = {
+            "cmdline": "",
+            "qcdt": "false",
+            "dtb_second": "false",
+            "base": "",
+            "kernel_offset": "",
+            "ramdisk_offset": "",
+            "second_offset": "",
+            "tags_offset": "",
+            "pagesize": "2048",
+            "mtk_label_kernel": "",
+            "mtk_label_ramdisk": "",
+        }
 
     content = f"""\
         deviceinfo_kernel_cmdline="{bootimg["cmdline"]}"
@@ -171,9 +176,19 @@ def generate_deviceinfo_fastboot_content(bootimg=None):
     return content
 
 
-def generate_deviceinfo(args, pkgname, name, manufacturer, year, arch,
-                        chassis, has_keyboard, has_external_storage,
-                        flash_method, bootimg=None):
+def generate_deviceinfo(
+    args,
+    pkgname,
+    name,
+    manufacturer,
+    year,
+    arch,
+    chassis,
+    has_keyboard,
+    has_external_storage,
+    flash_method,
+    bootimg=None,
+):
     codename = "-".join(pkgname.split("-")[1:])
     external_storage = "true" if has_external_storage else "false"
     # Note: New variables must be added to pmb/config/__init__.py as well
@@ -261,8 +276,7 @@ def generate_modules_initfs(args):
 
 def generate_apkbuild(args, pkgname, name, arch, flash_method):
     # Dependencies
-    depends = ["postmarketos-base",
-               "linux-" + "-".join(pkgname.split("-")[1:])]
+    depends = ["postmarketos-base", "linux-" + "-".join(pkgname.split("-")[1:])]
     if flash_method in ["fastboot", "heimdall-bootimg"]:
         depends.append("mkbootimg")
     if flash_method == "0xffff":
@@ -322,8 +336,18 @@ def generate(args, pkgname):
     if flash_method in ["fastboot", "heimdall-bootimg"]:
         bootimg = ask_for_bootimg(args)
 
-    generate_deviceinfo(args, pkgname, name, manufacturer, year, arch,
-                        chassis, has_keyboard, has_external_storage,
-                        flash_method, bootimg)
+    generate_deviceinfo(
+        args,
+        pkgname,
+        name,
+        manufacturer,
+        year,
+        arch,
+        chassis,
+        has_keyboard,
+        has_external_storage,
+        flash_method,
+        bootimg,
+    )
     generate_modules_initfs(args)
     generate_apkbuild(args, pkgname, name, arch, flash_method)

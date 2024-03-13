@@ -5,8 +5,16 @@ from argparse import Namespace
 from typing import Any, Dict, List, Optional
 
 
-def user(args: Namespace, cmd: List[str], working_dir: Optional[str]=None, output: str="log", output_return: bool=False,
-         check: Optional[bool]=None, env: Dict[Any, Any]={}, sudo: bool=False) -> str:
+def user(
+    args: Namespace,
+    cmd: List[str],
+    working_dir: Optional[str] = None,
+    output: str = "log",
+    output_return: bool = False,
+    check: Optional[bool] = None,
+    env: Dict[Any, Any] = {},
+    sudo: bool = False,
+) -> str:
     """
     Run a command on the host system as user.
 
@@ -29,12 +37,12 @@ def user(args: Namespace, cmd: List[str], working_dir: Optional[str]=None, outpu
     pmb.helpers.run_core.add_proxy_env_vars(env)
     if env:
         cmd = ["sh", "-c", pmb.helpers.run_core.flat_cmd(cmd, env=env)]
-    return pmb.helpers.run_core.core(args, msg, cmd, working_dir, output,
-                                     output_return, check, sudo)
+    return pmb.helpers.run_core.core(
+        args, msg, cmd, working_dir, output, output_return, check, sudo
+    )
 
 
-def root(args, cmd, working_dir=None, output="log", output_return=False,
-         check=None, env={}):
+def root(args, cmd, working_dir=None, output="log", output_return=False, check=None, env={}):
     """
     Run a command on the host system as root, with sudo or doas.
 
@@ -51,5 +59,4 @@ def root(args, cmd, working_dir=None, output="log", output_return=False,
         cmd = ["sh", "-c", pmb.helpers.run_core.flat_cmd(cmd, env=env)]
     cmd = pmb.config.sudo(cmd)
 
-    return user(args, cmd, working_dir, output, output_return, check, env,
-                True)
+    return user(args, cmd, working_dir, output, output_return, check, env, True)

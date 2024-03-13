@@ -17,8 +17,7 @@ def init(args):
     for loopdevice in glob.glob("/dev/loop*"):
         if os.path.isdir(loopdevice):
             continue
-        pmb.helpers.mount.bind_file(args, loopdevice,
-                                    args.work + "/chroot_native/" + loopdevice)
+        pmb.helpers.mount.bind_file(args, loopdevice, args.work + "/chroot_native/" + loopdevice)
 
 
 def mount(args, img_path):
@@ -31,8 +30,7 @@ def mount(args, img_path):
     for i in range(0, 5):
         # Retry
         if i > 0:
-            logging.debug("loop module might not be initialized yet, retry in"
-                          " one second...")
+            logging.debug("loop module might not be initialized yet, retry in" " one second...")
             time.sleep(1)
 
         # Mount and return on success
@@ -57,8 +55,9 @@ def device_by_back_file(args, back_file, auto_init=True):
     """
 
     # Get list from losetup
-    losetup_output = pmb.chroot.root(args, ["losetup", "--json", "--list"],
-                                     output_return=True, auto_init=auto_init)
+    losetup_output = pmb.chroot.root(
+        args, ["losetup", "--json", "--list"], output_return=True, auto_init=auto_init
+    )
     if not losetup_output:
         return None
 

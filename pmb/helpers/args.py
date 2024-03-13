@@ -44,21 +44,20 @@ import pmb.helpers.git
 
 
 def fix_mirrors_postmarketos(args):
-    """ Fix args.mirrors_postmarketos when it is supposed to be empty or the
-        default value.
+    """Fix args.mirrors_postmarketos when it is supposed to be empty or the
+    default value.
 
-        In pmb/parse/arguments.py, we set the -mp/--mirror-pmOS argument to
-        action="append" and start off with an empty list. That way, users can
-        specify multiple custom mirrors by specifying -mp multiple times on the
-        command line. Here we fix the default and no mirrors case.
+    In pmb/parse/arguments.py, we set the -mp/--mirror-pmOS argument to
+    action="append" and start off with an empty list. That way, users can
+    specify multiple custom mirrors by specifying -mp multiple times on the
+    command line. Here we fix the default and no mirrors case.
 
-        NOTE: we don't use nargs="+", because it does not play nicely with
-        subparsers: <https://bugs.python.org/issue9338> """
+    NOTE: we don't use nargs="+", because it does not play nicely with
+    subparsers: <https://bugs.python.org/issue9338>"""
     # -mp not specified: use default mirrors
     if not args.mirrors_postmarketos:
         cfg = pmb.config.load(args)
-        args.mirrors_postmarketos = \
-            cfg["pmbootstrap"]["mirrors_postmarketos"].split(",")
+        args.mirrors_postmarketos = cfg["pmbootstrap"]["mirrors_postmarketos"].split(",")
 
     # -mp="": use no postmarketOS mirrors (build everything locally)
     if args.mirrors_postmarketos == [""]:
@@ -66,18 +65,19 @@ def fix_mirrors_postmarketos(args):
 
 
 def check_pmaports_path(args):
-    """ Make sure that args.aports exists when it was overridden by --aports.
-        Without this check, 'pmbootstrap init' would start cloning the
-        pmaports into the default folder when args.aports does not exist. """
+    """Make sure that args.aports exists when it was overridden by --aports.
+    Without this check, 'pmbootstrap init' would start cloning the
+    pmaports into the default folder when args.aports does not exist."""
     if args.from_argparse.aports and not os.path.exists(args.aports):
-        raise ValueError("pmaports path (specified with --aports) does"
-                         " not exist: " + args.aports)
+        raise ValueError(
+            "pmaports path (specified with --aports) does" " not exist: " + args.aports
+        )
 
 
 def replace_placeholders(args):
-    """ Replace $WORK and ~ (for path variables) in variables from any config
-        (user's config file, default config settings or config parameters
-        specified on commandline) """
+    """Replace $WORK and ~ (for path variables) in variables from any config
+    (user's config file, default config settings or config parameters
+    specified on commandline)"""
 
     # Replace $WORK
     for key, value in pmb.config.defaults.items():
@@ -94,14 +94,15 @@ def replace_placeholders(args):
 
 
 def add_deviceinfo(args):
-    """ Add and verify the deviceinfo (only after initialization) """
+    """Add and verify the deviceinfo (only after initialization)"""
     setattr(args, "deviceinfo", pmb.parse.deviceinfo(args))
     arch = args.deviceinfo["arch"]
-    if (arch != pmb.config.arch_native and
-            arch not in pmb.config.build_device_architectures):
-        raise ValueError("Arch '" + arch + "' is not available in"
-                         " postmarketOS. If you would like to add it, see:"
-                         " <https://postmarketos.org/newarch>")
+    if arch != pmb.config.arch_native and arch not in pmb.config.build_device_architectures:
+        raise ValueError(
+            "Arch '" + arch + "' is not available in"
+            " postmarketOS. If you would like to add it, see:"
+            " <https://postmarketos.org/newarch>"
+        )
 
 
 def init(args):
@@ -116,8 +117,16 @@ def init(args):
 
     # Initialization code which may raise errors
     check_pmaports_path(args)
-    if args.action not in ["init", "checksum", "config", "bootimg_analyze", "log",
-                           "pull", "shutdown", "zap"]:
+    if args.action not in [
+        "init",
+        "checksum",
+        "config",
+        "bootimg_analyze",
+        "log",
+        "pull",
+        "shutdown",
+        "zap",
+    ]:
         pmb.config.pmaports.read_config(args)
         add_deviceinfo(args)
         pmb.helpers.git.parse_channels_cfg(args)
@@ -126,7 +135,7 @@ def init(args):
 
 
 def update_work(args, work):
-    """ Update the work path in args.work and wherever $WORK was used. """
+    """Update the work path in args.work and wherever $WORK was used."""
     # Start with the unmodified args from argparse
     args_new = copy.deepcopy(args.from_argparse)
 

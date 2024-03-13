@@ -19,8 +19,7 @@ def folder_size(args, path):
 
     :returns: folder size in kilobytes
     """
-    output = pmb.helpers.run.root(args, ["du", "-ks",
-                                         path], output_return=True)
+    output = pmb.helpers.run.root(args, ["du", "-ks", path], output_return=True)
 
     # Only look at last line to filter out sudo garbage (#1766)
     last_line = output.split("\n")[-2]
@@ -39,8 +38,9 @@ def check_grsec():
     if not os.path.exists(path):
         return
 
-    raise RuntimeError("You're running a kernel based on the grsec"
-                       " patchset. This is not supported.")
+    raise RuntimeError(
+        "You're running a kernel based on the grsec" " patchset. This is not supported."
+    )
 
 
 def check_binfmt_misc(args):
@@ -58,8 +58,9 @@ def check_binfmt_misc(args):
     pmb.helpers.run.root(args, ["modprobe", "binfmt_misc"], check=False)
 
     # check=False: we check it below and print a more helpful message on error
-    pmb.helpers.run.root(args, ["mount", "-t", "binfmt_misc", "none",
-                                "/proc/sys/fs/binfmt_misc"], check=False)
+    pmb.helpers.run.root(
+        args, ["mount", "-t", "binfmt_misc", "none", "/proc/sys/fs/binfmt_misc"], check=False
+    )
 
     if not os.path.exists(path):
         link = "https://postmarketos.org/binfmt_misc"
@@ -84,9 +85,10 @@ def migrate_work_folder(args):
     required = pmb.config.work_version
     if current == required:
         return
-    logging.info("WARNING: Your work folder version needs to be migrated"
-                 " (from version " + str(current) + " to " + str(required) +
-                 ")!")
+    logging.info(
+        "WARNING: Your work folder version needs to be migrated"
+        " (from version " + str(current) + " to " + str(required) + ")!"
+    )
 
     # 0 => 1
     if current == 0:
@@ -103,8 +105,7 @@ def migrate_work_folder(args):
         pmb.chroot.zap(args, False)
         conf = args.work + "/config_abuild/abuild.conf"
         if os.path.exists(conf):
-            pmb.helpers.run.root(args, ["sed", "-i",
-                                        "s./home/user/./home/pmos/.g", conf])
+            pmb.helpers.run.root(args, ["sed", "-i", "s./home/user/./home/pmos/.g", conf])
         # Update version file
         migrate_success(args, 1)
         current = 1
@@ -115,16 +116,17 @@ def migrate_work_folder(args):
         logging.info("Changelog:")
         logging.info("* Fix: cache_distfiles was writable for everyone")
         logging.info("Migration will do the following:")
-        logging.info("* Fix permissions of '" + args.work +
-                     "/cache_distfiles'")
+        logging.info("* Fix permissions of '" + args.work + "/cache_distfiles'")
         if not pmb.helpers.cli.confirm(args):
             raise RuntimeError("Aborted.")
 
         # Fix permissions
         dir = "/var/cache/distfiles"
-        for cmd in [["chown", "-R", "root:abuild", dir],
-                    ["chmod", "-R", "664", dir],
-                    ["chmod", "a+X", dir]]:
+        for cmd in [
+            ["chown", "-R", "root:abuild", dir],
+            ["chmod", "-R", "664", dir],
+            ["chmod", "a+X", dir],
+        ]:
             pmb.chroot.root(args, cmd)
         migrate_success(args, 2)
         current = 2
@@ -190,13 +192,14 @@ def migrate_work_folder(args):
             new_path = f"{edge_path}/{arch}"
             if os.path.exists(old_path):
                 if os.path.exists(new_path):
-                    raise RuntimeError(f"Won't move '{old_path}' to"
-                                       f" '{new_path}', destination already"
-                                       " exists! Consider 'pmbootstrap zap -p'"
-                                       f" to delete '{args.work}/packages'.")
+                    raise RuntimeError(
+                        f"Won't move '{old_path}' to"
+                        f" '{new_path}', destination already"
+                        " exists! Consider 'pmbootstrap zap -p'"
+                        f" to delete '{args.work}/packages'."
+                    )
                 pmb.helpers.run.root(args, ["mv", old_path, new_path])
-        pmb.helpers.run.root(args, ["chown", pmb.config.chroot_uid_user,
-                                    edge_path])
+        pmb.helpers.run.root(args, ["chown", pmb.config.chroot_uid_user, edge_path])
 
         # Update version file
         migrate_success(args, 5)
@@ -232,12 +235,15 @@ def migrate_work_folder(args):
 
     # Can't migrate, user must delete it
     if current != required:
-        raise RuntimeError("Sorry, we can't migrate that automatically. Please"
-                           " run 'pmbootstrap shutdown', then delete your"
-                           " current work folder manually ('sudo rm -rf " +
-                           args.work + "') and start over with 'pmbootstrap"
-                           " init'. All your binary packages and caches will"
-                           " be lost.")
+        raise RuntimeError(
+            "Sorry, we can't migrate that automatically. Please"
+            " run 'pmbootstrap shutdown', then delete your"
+            " current work folder manually ('sudo rm -rf "
+            + args.work
+            + "') and start over with 'pmbootstrap"
+            " init'. All your binary packages and caches will"
+            " be lost."
+        )
 
 
 def check_old_devices(args):
@@ -250,10 +256,11 @@ def check_old_devices(args):
     if not g:
         return
 
-    raise RuntimeError("Found device ports outside device/testing/... "
-                       "Please run 'pmbootstrap pull' and/or move the "
-                       "following device ports to device/testing:\n - " +
-                       '\n - '.join(g))
+    raise RuntimeError(
+        "Found device ports outside device/testing/... "
+        "Please run 'pmbootstrap pull' and/or move the "
+        "following device ports to device/testing:\n - " + "\n - ".join(g)
+    )
 
 
 def validate_hostname(hostname):
@@ -268,14 +275,15 @@ def validate_hostname(hostname):
 
     # Check that it only contains valid chars
     if not re.match(r"^[0-9a-z-\.]*$", hostname):
-        logging.fatal("ERROR: Hostname must only contain letters (a-z),"
-                      " digits (0-9), minus signs (-), or periods (.)")
+        logging.fatal(
+            "ERROR: Hostname must only contain letters (a-z),"
+            " digits (0-9), minus signs (-), or periods (.)"
+        )
         return False
 
     # Check that doesn't begin or end with a minus sign or period
     if re.search(r"^-|^\.|-$|\.$", hostname):
-        logging.fatal("ERROR: Hostname must not begin or end with a minus"
-                      " sign or period")
+        logging.fatal("ERROR: Hostname must not begin or end with a minus" " sign or period")
         return False
 
     return True
@@ -302,14 +310,16 @@ def init_cache():
     """ Add a caching dict (caches parsing of files etc. for the current
         session) """
     repo_update = {"404": [], "offline_msg_shown": False}
-    cache = {"apkindex": {},
-             "apkbuild": {},
-             "apk_min_version_checked": [],
-             "apk_repository_list_updated": [],
-             "built": {},
-             "find_aport": {},
-             "pmb.helpers.package.depends_recurse": {},
-             "pmb.helpers.package.get": {},
-             "pmb.helpers.repo.update": repo_update,
-             "pmb.helpers.git.parse_channels_cfg": {},
-             "pmb.config.pmaports.read_config": None}
+    cache = {
+        "apkindex": {},
+        "apkbuild": {},
+        "apk_min_version_checked": [],
+        "apk_repository_list_updated": [],
+        "built": {},
+        "find_aport": {},
+        "pmb.helpers.package.depends_recurse": {},
+        "pmb.helpers.package.get": {},
+        "pmb.helpers.repo.update": repo_update,
+        "pmb.helpers.git.parse_channels_cfg": {},
+        "pmb.config.pmaports.read_config": None,
+    }

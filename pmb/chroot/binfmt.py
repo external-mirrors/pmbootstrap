@@ -45,14 +45,12 @@ def register(args, arch):
     mask = info["mask"]
     interpreter = "/usr/bin/qemu-" + arch_qemu + "-static"
     flags = "C"
-    code = ":".join(["", name, type, offset, magic, mask, interpreter,
-                     flags])
+    code = ":".join(["", name, type, offset, magic, mask, interpreter, flags])
 
     # Register in binfmt_misc
     logging.info("Register qemu binfmt (" + arch_qemu + ")")
     register = "/proc/sys/fs/binfmt_misc/register"
-    pmb.helpers.run.root(
-        args, ["sh", "-c", 'echo "' + code + '" > ' + register])
+    pmb.helpers.run.root(args, ["sh", "-c", 'echo "' + code + '" > ' + register])
 
 
 def unregister(args, arch):

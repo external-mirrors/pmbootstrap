@@ -5,6 +5,7 @@ Functions that work with binary package repos. See also:
 - pmb/helpers/pmaports.py (work with pmaports)
 - pmb/helpers/package.py (work with both)
 """
+
 import os
 import hashlib
 import logging
@@ -34,8 +35,8 @@ def hash(url, length=8):
 
     ret = ""
     for i in range(csum_bytes):
-        ret += xd[(binary[i] >> 4) & 0xf]
-        ret += xd[binary[i] & 0xf]
+        ret += xd[(binary[i] >> 4) & 0xF]
+        ret += xd[binary[i] & 0xF]
 
     return ret
 
@@ -68,10 +69,12 @@ def urls(args, user_repository=True, postmarketos_mirror=True, alpine=True):
             # (build.postmarketos.org#63) and to give potential other users of
             # this flag a heads up.
             if mirror.endswith("/master"):
-                logging.warning("WARNING: 'master' at the end of"
-                                " --mirror-pmOS is deprecated, the branch gets"
-                                " added automatically now!")
-                mirror = mirror[:-1 * len("master")]
+                logging.warning(
+                    "WARNING: 'master' at the end of"
+                    " --mirror-pmOS is deprecated, the branch gets"
+                    " added automatically now!"
+                )
+                mirror = mirror[: -1 * len("master")]
             ret.append(f"{mirror}{mirrordir_pmos}")
 
     # Upstream Alpine Linux repositories
@@ -84,8 +87,7 @@ def urls(args, user_repository=True, postmarketos_mirror=True, alpine=True):
     return ret
 
 
-def apkindex_files(args, arch=None, user_repository=True, pmos=True,
-                   alpine=True):
+def apkindex_files(args, arch=None, user_repository=True, pmos=True, alpine=True):
     """
     Get a list of outside paths to all resolved APKINDEX.tar.gz files for a
     specific arch.
@@ -106,8 +108,7 @@ def apkindex_files(args, arch=None, user_repository=True, pmos=True,
 
     # Resolve the APKINDEX.$HASH.tar.gz files
     for url in urls(args, False, pmos, alpine):
-        ret.append(args.work + "/cache_apk_" + arch + "/APKINDEX." +
-                   hash(url) + ".tar.gz")
+        ret.append(args.work + "/cache_apk_" + arch + "/APKINDEX." + hash(url) + ".tar.gz")
 
     return ret
 
@@ -175,14 +176,18 @@ def update(args, arch=None, force=False, existing_only=False):
     # Bail out or show log message
     if not len(outdated):
         return False
-    logging.info("Update package index for " + ", ".join(outdated_arches) +
-                 " (" + str(len(outdated)) + " file(s))")
+    logging.info(
+        "Update package index for "
+        + ", ".join(outdated_arches)
+        + " ("
+        + str(len(outdated))
+        + " file(s))"
+    )
 
     # Download and move to right location
-    for (i, (url, target)) in enumerate(outdated.items()):
+    for i, (url, target) in enumerate(outdated.items()):
         pmb.helpers.cli.progress_print(args, i / len(outdated))
-        temp = pmb.helpers.http.download(args, url, "APKINDEX", False,
-                                         logging.DEBUG, True)
+        temp = pmb.helpers.http.download(args, url, "APKINDEX", False, logging.DEBUG, True)
         if not temp:
             pmb.helpers.other.cache[cache_key]["404"].append(url)
             continue

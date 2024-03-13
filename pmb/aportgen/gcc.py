@@ -19,8 +19,7 @@ def generate(args, pkgname):
         upstream = f"{args.aports}/main/gcc6"
         based_on = "main/gcc6 (from postmarketOS)"
     else:
-        raise ValueError(f"Invalid prefix '{prefix}', expected gcc, gcc4 or"
-                         " gcc6.")
+        raise ValueError(f"Invalid prefix '{prefix}', expected gcc, gcc4 or" " gcc6.")
     pmb.helpers.run.user(args, ["cp", "-r", upstream, f"{args.work}/aportgen"])
 
     # Rewrite APKBUILD
@@ -30,15 +29,13 @@ def generate(args, pkgname):
         "arch": pmb.aportgen.get_cross_package_arches(pkgname),
         "depends": f"binutils-{arch} mpc1",
         "makedepends_build": "gcc g++ bison flex texinfo gawk zip"
-                             " gmp-dev mpfr-dev mpc1-dev zlib-dev",
+        " gmp-dev mpfr-dev mpc1-dev zlib-dev",
         "makedepends_host": "linux-headers gmp-dev mpfr-dev mpc1-dev isl-dev"
-                            f" zlib-dev musl-dev-{arch} binutils-{arch}",
+        f" zlib-dev musl-dev-{arch} binutils-{arch}",
         "subpackages": "",
-
         # gcc6: options is already there, so we need to replace it and not only
         # set it below the header like done below.
         "options": "!strip",
-
         "LIBGOMP": "false",
         "LIBGCC": "false",
         "LIBATOMIC": "false",
@@ -47,10 +44,12 @@ def generate(args, pkgname):
 
     # Latest gcc only, not gcc4 and gcc6
     if prefix == "gcc":
-        fields["subpackages"] = f"g++-{arch}:gpp" \
-                                f" libstdc++-dev-{arch}:libcxx_dev"
+        fields["subpackages"] = f"g++-{arch}:gpp" f" libstdc++-dev-{arch}:libcxx_dev"
 
-    below_header = "CTARGET_ARCH=" + arch + """
+    below_header = (
+        "CTARGET_ARCH="
+        + arch
+        + """
         CTARGET="$(arch_to_hostspec ${CTARGET_ARCH})"
         LANG_D=false
         LANG_OBJC=false
@@ -71,22 +70,21 @@ def generate(args, pkgname):
 
         _cross_configure="--disable-bootstrap --with-sysroot=/usr/$CTARGET"
     """
+    )
 
     replace_simple = {
         # Do not package libstdc++, do not add "g++-$ARCH" here (already
         # did that explicitly in the subpackages variable above, so
         # pmbootstrap picks it up properly).
         '*subpackages="$subpackages libstdc++:libcxx:*': None,
-
         # We set the cross_configure variable at the beginning, so it does not
         # use CBUILDROOT as sysroot. In the original APKBUILD this is a local
         # variable, but we make it a global one.
-        '*_cross_configure=*': None,
-
+        "*_cross_configure=*": None,
         # Do not build foreign arch libgcc, we use the one from Alpine (#2168)
-        '_libgcc=true*': '_libgcc=false',
+        "_libgcc=true*": "_libgcc=false",
     }
 
-    pmb.aportgen.core.rewrite(args, pkgname, based_on, fields,
-                              replace_simple=replace_simple,
-                              below_header=below_header)
+    pmb.aportgen.core.rewrite(
+        args, pkgname, based_on, fields, replace_simple=replace_simple, below_header=below_header
+    )

@@ -27,14 +27,18 @@ def get_arch(apkbuild):
 
     # Disabled package (arch="")
     if not apkbuild["arch"]:
-        raise RuntimeError(f"'{pkgname}' is disabled (arch=\"\"). Please use"
-                           " '--arch' to specify the desired architecture.")
+        raise RuntimeError(
+            f"'{pkgname}' is disabled (arch=\"\"). Please use"
+            " '--arch' to specify the desired architecture."
+        )
 
     # Multiple architectures
     if len(apkbuild["arch"]) > 1:
-        raise RuntimeError(f"'{pkgname}' supports multiple architectures"
-                           f" ({', '.join(apkbuild['arch'])}). Please use"
-                           " '--arch' to specify the desired architecture.")
+        raise RuntimeError(
+            f"'{pkgname}' supports multiple architectures"
+            f" ({', '.join(apkbuild['arch'])}). Please use"
+            " '--arch' to specify the desired architecture."
+        )
 
     return apkbuild["arch"][0]
 
@@ -50,18 +54,20 @@ def get_outputdir(args, pkgname, apkbuild):
     chroot = args.work + "/chroot_native"
     if os.path.exists(chroot + ret + "/.config"):
         logging.warning("*****")
-        logging.warning("NOTE: The code in this linux APKBUILD is pretty old."
-                        " Consider making a backup and migrating to a modern"
-                        " version with: pmbootstrap aportgen " + pkgname)
+        logging.warning(
+            "NOTE: The code in this linux APKBUILD is pretty old."
+            " Consider making a backup and migrating to a modern"
+            " version with: pmbootstrap aportgen " + pkgname
+        )
         logging.warning("*****")
 
         return ret
 
     # New style ($builddir)
     cmd = "srcdir=/home/pmos/build/src source APKBUILD; echo $builddir"
-    ret = pmb.chroot.user(args, ["sh", "-c", cmd],
-                          "native", "/home/pmos/build",
-                          output_return=True).rstrip()
+    ret = pmb.chroot.user(
+        args, ["sh", "-c", cmd], "native", "/home/pmos/build", output_return=True
+    ).rstrip()
     if os.path.exists(chroot + ret + "/.config"):
         return ret
     # Some Mediatek kernels use a 'kernel' subdirectory
@@ -73,9 +79,11 @@ def get_outputdir(args, pkgname, apkbuild):
         return os.path.join(ret, apkbuild["_outdir"])
 
     # Not found
-    raise RuntimeError("Could not find the kernel config. Consider making a"
-                       " backup of your APKBUILD and recreating it from the"
-                       " template with: pmbootstrap aportgen " + pkgname)
+    raise RuntimeError(
+        "Could not find the kernel config. Consider making a"
+        " backup of your APKBUILD and recreating it from the"
+        " template with: pmbootstrap aportgen " + pkgname
+    )
 
 
 def extract_and_patch_sources(args, pkgname, arch):
@@ -83,9 +91,14 @@ def extract_and_patch_sources(args, pkgname, arch):
     logging.info("(native) extract kernel source")
     pmb.chroot.user(args, ["abuild", "unpack"], "native", "/home/pmos/build")
     logging.info("(native) apply patches")
-    pmb.chroot.user(args, ["abuild", "prepare"], "native",
-                    "/home/pmos/build", output="interactive",
-                    env={"CARCH": arch})
+    pmb.chroot.user(
+        args,
+        ["abuild", "prepare"],
+        "native",
+        "/home/pmos/build",
+        output="interactive",
+        env={"CARCH": arch},
+    )
 
 
 def menuconfig(args, pkgname, use_oldconfig):
@@ -137,16 +150,17 @@ def menuconfig(args, pkgname, use_oldconfig):
     # Run make menuconfig
     outputdir = get_outputdir(args, pkgname, apkbuild)
     logging.info("(native) make " + kopt)
-    env = {"ARCH": pmb.parse.arch.alpine_to_kernel(arch),
-           "DISPLAY": os.environ.get("DISPLAY"),
-           "XAUTHORITY": "/home/pmos/.Xauthority"}
+    env = {
+        "ARCH": pmb.parse.arch.alpine_to_kernel(arch),
+        "DISPLAY": os.environ.get("DISPLAY"),
+        "XAUTHORITY": "/home/pmos/.Xauthority",
+    }
     if cross:
         env["CROSS_COMPILE"] = f"{hostspec}-"
         env["CC"] = f"{hostspec}-gcc"
     if color:
         env["MENUCONFIG_COLOR"] = color
-    pmb.chroot.user(args, ["make", kopt], "native",
-                    outputdir, output="tui", env=env)
+    pmb.chroot.user(args, ["make", kopt], "native", outputdir, output="tui", env=env)
 
     # Find the updated config
     source = args.work + "/chroot_native" + outputdir + "/.config"

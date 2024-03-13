@@ -27,9 +27,9 @@ def merge_with_args(args):
             if key in pmb.config.defaults:
                 default = pmb.config.defaults[key]
                 if isinstance(default, bool):
-                    value = (value.lower() == "true")
+                    value = value.lower() == "true"
             setattr(args, key, value)
-    setattr(args, 'selected_providers', cfg['providers'])
+    setattr(args, "selected_providers", cfg["providers"])
 
     # Use defaults from pmb.config.defaults
     for key, value in pmb.config.defaults.items():

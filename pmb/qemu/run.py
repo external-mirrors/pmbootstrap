@@ -27,8 +27,9 @@ def system_image(args):
     path = f"{args.work}/chroot_native/home/pmos/rootfs/{args.device}.img"
     if not os.path.exists(path):
         logging.debug("Could not find rootfs: " + path)
-        raise RuntimeError("The rootfs has not been generated yet, please "
-                           "run 'pmbootstrap install' first.")
+        raise RuntimeError(
+            "The rootfs has not been generated yet, please " "run 'pmbootstrap install' first."
+        )
     return path
 
 
@@ -52,9 +53,11 @@ def which_qemu(arch):
     if shutil.which(executable):
         return executable
     else:
-        raise RuntimeError("Could not find the '" + executable + "' executable"
-                           " in your PATH. Please install it in order to"
-                           " run qemu.")
+        raise RuntimeError(
+            "Could not find the '" + executable + "' executable"
+            " in your PATH. Please install it in order to"
+            " run qemu."
+        )
 
 
 def create_gdk_loader_cache(args):
@@ -73,9 +76,13 @@ def create_gdk_loader_cache(args):
         raise RuntimeError("gdk pixbuf cache file not found: " + cache_path)
 
     pmb.chroot.root(args, ["cp", cache_path, custom_cache_path])
-    cmd = ["sed", "-i", "-e",
-           f"s@\"{gdk_cache_dir}@\"{rootfs_native}{gdk_cache_dir}@",
-           custom_cache_path]
+    cmd = [
+        "sed",
+        "-i",
+        "-e",
+        f's@"{gdk_cache_dir}@"{rootfs_native}{gdk_cache_dir}@',
+        custom_cache_path,
+    ]
     pmb.chroot.root(args, cmd)
     return rootfs_native + custom_cache_path
 
@@ -124,17 +131,24 @@ def command_qemu(args, arch, img_path, img_path_2nd=None):
         command = [qemu_bin]
     else:
         rootfs_native = args.work + "/chroot_native"
-        env = {"QEMU_MODULE_DIR": f"{rootfs_native}/usr/lib/qemu",
-               "GBM_DRIVERS_PATH": f"{rootfs_native}/usr/lib/xorg/modules/dri",
-               "LIBGL_DRIVERS_PATH": f"{rootfs_native}"
-                                     "/usr/lib/xorg/modules/dri"}
+        env = {
+            "QEMU_MODULE_DIR": f"{rootfs_native}/usr/lib/qemu",
+            "GBM_DRIVERS_PATH": f"{rootfs_native}/usr/lib/xorg/modules/dri",
+            "LIBGL_DRIVERS_PATH": f"{rootfs_native}" "/usr/lib/xorg/modules/dri",
+        }
 
         if "gtk" in args.qemu_display:
             gdk_cache = create_gdk_loader_cache(args)
-            env.update({"GTK_THEME": "Default",
-                        "GDK_PIXBUF_MODULE_FILE": gdk_cache,
-                        "XDG_DATA_DIRS": rootfs_native + "/usr/local/share:" +
-                        rootfs_native + "/usr/share"})
+            env.update(
+                {
+                    "GTK_THEME": "Default",
+                    "GDK_PIXBUF_MODULE_FILE": gdk_cache,
+                    "XDG_DATA_DIRS": rootfs_native
+                    + "/usr/local/share:"
+                    + rootfs_native
+                    + "/usr/share",
+                }
+            )
 
         command = []
         if pmb.config.arch_native in ["aarch64", "armv7"]:
@@ -145,18 +159,24 @@ def command_qemu(args, arch, img_path, img_path_2nd=None):
             ncpus_bl = pmb.parse.cpuinfo.arm_big_little_first_group_ncpus()
             if ncpus_bl:
                 ncpus = ncpus_bl
-                logging.info("QEMU will run on big/little architecture on the"
-                             f" first {ncpus} cores (from /proc/cpuinfo)")
-                command += [rootfs_native + "/lib/ld-musl-" +
-                            pmb.config.arch_native + ".so.1"]
+                logging.info(
+                    "QEMU will run on big/little architecture on the"
+                    f" first {ncpus} cores (from /proc/cpuinfo)"
+                )
+                command += [rootfs_native + "/lib/ld-musl-" + pmb.config.arch_native + ".so.1"]
                 command += [rootfs_native + "/usr/bin/taskset"]
                 command += ["-c", "0-" + str(ncpus - 1)]
 
-        command += [rootfs_native + "/lib/ld-musl-" +
-                    pmb.config.arch_native + ".so.1"]
-        command += ["--library-path=" + rootfs_native + "/lib:" +
-                    rootfs_native + "/usr/lib:" +
-                    rootfs_native + "/usr/lib/pulseaudio"]
+        command += [rootfs_native + "/lib/ld-musl-" + pmb.config.arch_native + ".so.1"]
+        command += [
+            "--library-path="
+            + rootfs_native
+            + "/lib:"
+            + rootfs_native
+            + "/usr/lib:"
+            + rootfs_native
+            + "/usr/lib/pulseaudio"
+        ]
         command += [rootfs_native + "/usr/bin/qemu-system-" + arch]
         command += ["-L", rootfs_native + "/usr/share/qemu/"]
 
@@ -201,12 +221,10 @@ def command_qemu(args, arch, img_path, img_path_2nd=None):
         command += ["-M", "virt"]
         command += ["-device", "virtio-gpu-pci"]
     else:
-        raise RuntimeError(f"Architecture {arch} not supported by this command"
-                           " yet.")
+        raise RuntimeError(f"Architecture {arch} not supported by this command" " yet.")
 
     if args.efi:
-        command += ["-drive",
-                    "if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF.fd"]
+        command += ["-drive", "if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF.fd"]
 
     # Kernel Virtual Machine (KVM) support
     native = pmb.config.arch_native == args.deviceinfo["arch"]
@@ -249,17 +267,16 @@ def resize_image(args, img_size_new, img_path):
     # Make sure we have at least 1 integer followed by either M or G
     pattern = re.compile("^[0-9]+[M|G]$")
     if not pattern.match(img_size_new):
-        raise RuntimeError("IMAGE_SIZE must be in [M]iB or [G]iB, e.g. 2048M"
-                           " or 2G")
+        raise RuntimeError("IMAGE_SIZE must be in [M]iB or [G]iB, e.g. 2048M" " or 2G")
 
     # Remove M or G and convert to bytes
     img_size_new_bytes = int(img_size_new[:-1]) * 1024 * 1024
 
     # Convert further for G
-    if (img_size_new[-1] == "G"):
+    if img_size_new[-1] == "G":
         img_size_new_bytes = img_size_new_bytes * 1024
 
-    if (img_size_new_bytes >= img_size):
+    if img_size_new_bytes >= img_size:
         logging.info(f"Resize image to {img_size_new}: {img_path}")
         pmb.helpers.run.root(args, ["truncate", "-s", img_size_new, img_path])
     else:
@@ -276,8 +293,9 @@ def resize_image(args, img_size_new, img_path):
 
 
 def sigterm_handler(number, frame):
-    raise RuntimeError("pmbootstrap was terminated by another process,"
-                       " and killed the QEMU VM it was running.")
+    raise RuntimeError(
+        "pmbootstrap was terminated by another process," " and killed the QEMU VM it was running."
+    )
 
 
 def install_depends(args, arch):
@@ -322,9 +340,11 @@ def run(args):
     Run a postmarketOS image in qemu
     """
     if not args.device.startswith("qemu-"):
-        raise RuntimeError("'pmbootstrap qemu' can be only used with one of "
-                           "the QEMU device packages. Run 'pmbootstrap init' "
-                           "and select the 'qemu' vendor.")
+        raise RuntimeError(
+            "'pmbootstrap qemu' can be only used with one of "
+            "the QEMU device packages. Run 'pmbootstrap init' "
+            "and select the 'qemu' vendor."
+        )
     arch = pmb.parse.arch.alpine_to_qemu(args.deviceinfo["arch"])
 
     img_path = system_image(args)
@@ -347,8 +367,10 @@ def run(args):
     if args.image_size:
         resize_image(args, args.image_size, img_path)
     else:
-        logging.info("NOTE: Run 'pmbootstrap qemu --image-size 2G' to set"
-                     " the rootfs size when you run out of space!")
+        logging.info(
+            "NOTE: Run 'pmbootstrap qemu --image-size 2G' to set"
+            " the rootfs size when you run out of space!"
+        )
 
     # SSH/serial/network hints
     logging.info("Connect to the VM:")
@@ -356,14 +378,17 @@ def run(args):
     logging.info("* (serial) in this console (stdout/stdin)")
 
     if args.qemu_redir_stdio:
-        logging.info("NOTE: Ctrl+C is redirected to the VM! To disable this, "
-                     "run: pmbootstrap config qemu_redir_stdio False")
-        logging.info("NOTE: To quit QEMU with this option you can use "
-                     "Ctrl-A, X.")
+        logging.info(
+            "NOTE: Ctrl+C is redirected to the VM! To disable this, "
+            "run: pmbootstrap config qemu_redir_stdio False"
+        )
+        logging.info("NOTE: To quit QEMU with this option you can use " "Ctrl-A, X.")
 
     if args.ui == "none":
-        logging.warning("WARNING: With UI=none network doesn't work"
-                        " automatically: https://postmarketos.org/qemu-network")
+        logging.warning(
+            "WARNING: With UI=none network doesn't work"
+            " automatically: https://postmarketos.org/qemu-network"
+        )
 
     # Run QEMU and kill it together with pmbootstrap
     process = None
@@ -374,8 +399,9 @@ def run(args):
         # In addition to not showing a trace when pressing ^C, let user know
         # they can override this behavior:
         logging.info("Quitting because Ctrl+C detected.")
-        logging.info("To override this behavior and have pmbootstrap "
-                     "send Ctrl+C to the VM, run:")
+        logging.info(
+            "To override this behavior and have pmbootstrap " "send Ctrl+C to the VM, run:"
+        )
         logging.info("$ pmbootstrap config qemu_redir_stdio True")
     finally:
         if process:
