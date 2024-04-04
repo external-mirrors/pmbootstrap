@@ -32,7 +32,7 @@ def filter_aport_packages(args: PmbArgs, arch, pkgnames):
         :returns: subset of pkgnames (e.g. ["hello-world"]) """
     ret = []
     for pkgname in pkgnames:
-        if pmb.helpers.pmaports.find(args, pkgname, False):
+        if pmb.helpers.pmaports.find_optional(args, pkgname):
             ret += [pkgname]
     return ret
 

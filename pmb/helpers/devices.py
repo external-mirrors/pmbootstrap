@@ -1,13 +1,13 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-import glob
 from pathlib import Path
+from typing import Optional
 from pmb.core.types import PmbArgs
 import pmb.parse
 
 
-def find_path(args: PmbArgs, codename: str, file='') -> Path:
+def find_path(args: PmbArgs, codename: str, file='') -> Optional[Path]:
     """
     Find path to device APKBUILD under `device/*/device-`.
     :param codename: device codename
@@ -33,8 +33,8 @@ def list_codenames(args: PmbArgs, vendor=None, unmaintained=True):
     :returns: ["first-device", "second-device", ...]
     """
     ret = []
-    for path in glob.glob(args.aports + "/device/*/device-*"):
-        if not unmaintained and '/unmaintained/' in path:
+    for path in args.aports.glob("device/*/device-*"):
+        if not unmaintained and 'unmaintained' in path.parts:
             continue
         device = os.path.basename(path).split("-", 1)[1]
         if (vendor is None) or device.startswith(vendor + '-'):
@@ -60,7 +60,7 @@ def list_apkbuilds(args: PmbArgs):
     """
     ret = {}
     for device in list_codenames(args):
-        apkbuild_path = f"{args.aports}/device/*/device-{device}/APKBUILD"
+        apkbuild_path = next(args.aports.glob(f"device/*/device-{device}/APKBUILD"))
         ret[device] = pmb.parse.apkbuild(apkbuild_path)
     return ret
 

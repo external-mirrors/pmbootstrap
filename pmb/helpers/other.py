@@ -11,6 +11,8 @@ from pmb.core.types import PmbArgs
 import pmb.helpers.pmaports
 import pmb.helpers.run
 
+from typing import Any, Dict
+
 
 def folder_size(args: PmbArgs, path: Path):
     """
@@ -96,7 +98,7 @@ def migrate_work_folder(args: PmbArgs):
         logging.info("* Building chroots have a different username (#709)")
         logging.info("Migration will do the following:")
         logging.info("* Zap your chroots")
-        logging.info("* Adjust '" + pmb.config.work / "config_abuild/abuild.conf'")
+        logging.info(f"* Adjust '{pmb.config.work / 'config_abuild/abuild.conf'}'")
         if not pmb.helpers.cli.confirm(args):
             raise RuntimeError("Aborted.")
 
@@ -116,8 +118,7 @@ def migrate_work_folder(args: PmbArgs):
         logging.info("Changelog:")
         logging.info("* Fix: cache_distfiles was writable for everyone")
         logging.info("Migration will do the following:")
-        logging.info("* Fix permissions of '" + pmb.config.work +
-                     "/cache_distfiles'")
+        logging.info(f"* Fix permissions of '{pmb.config.work / 'cache_distfiles'}'")
         if not pmb.helpers.cli.confirm(args):
             raise RuntimeError("Aborted.")
 
@@ -154,7 +155,7 @@ def migrate_work_folder(args: PmbArgs):
         logging.info("  'git' instead of using it from an Alpine chroot")
         logging.info("Migration will do the following:")
         logging.info("* Check if 'git' is installed")
-        logging.info("* Change ownership to your user: " + path)
+        logging.info(f"* Change ownership to your user: {path}")
         if not pmb.helpers.cli.confirm(args):
             raise RuntimeError("Aborted.")
 
@@ -235,8 +236,8 @@ def migrate_work_folder(args: PmbArgs):
     if current != required:
         raise RuntimeError("Sorry, we can't migrate that automatically. Please"
                            " run 'pmbootstrap shutdown', then delete your"
-                           " current work folder manually ('sudo rm -rf " +
-                           pmb.config.work + "') and start over with 'pmbootstrap"
+                          f" current work folder manually ('sudo rm -rf {pmb.config.work}')"
+                           " and start over with 'pmbootstrap"
                            " init'. All your binary packages and caches will"
                            " be lost.")
 

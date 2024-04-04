@@ -1,5 +1,6 @@
 # Copyright 2023 Robert Yang
 # SPDX-License-Identifier: GPL-3.0-or-later
+from typing import List
 from pmb.helpers import logging
 import os
 from pathlib import Path
@@ -9,7 +10,7 @@ import pmb.aportgen
 import pmb.build
 import pmb.build.autodetect
 import pmb.chroot
-from pmb.core.types import PmbArgs
+from pmb.core.types import PathString, PmbArgs
 import pmb.helpers
 import pmb.helpers.mount
 import pmb.helpers.pmaports
@@ -91,11 +92,11 @@ def find_kbuild_output_dir(function_body):
                        "can't resolve it, please open an issue.")
 
 
-def modify_apkbuild(args: PmbArgs, pkgname, aport):
+def modify_apkbuild(args: PmbArgs, pkgname: str, aport: Path):
     """
     Modify kernel APKBUILD to package build output from envkernel.sh
     """
-    apkbuild_path = aport + "/APKBUILD"
+    apkbuild_path = aport / "APKBUILD"
     apkbuild = pmb.parse.apkbuild(apkbuild_path)
     if os.path.exists(pmb.config.work / "aportgen"):
         pmb.helpers.run.user(args, ["rm", "-r", pmb.config.work / "aportgen"])
@@ -114,7 +115,7 @@ def modify_apkbuild(args: PmbArgs, pkgname, aport):
     pmb.aportgen.core.rewrite(args, pkgname, apkbuild_path, fields=fields)
 
 
-def run_abuild(args: PmbArgs, pkgname, arch, apkbuild_path, kbuild_out):
+def run_abuild(args: PmbArgs, pkgname: str, arch: str, apkbuild_path: Path, kbuild_out):
     """
     Prepare build environment and run abuild.
 
@@ -146,17 +147,16 @@ def run_abuild(args: PmbArgs, pkgname, arch, apkbuild_path, kbuild_out):
     pmb.build.copy_to_buildpath(args, pkgname)
 
     # Create symlink from abuild working directory to envkernel build directory
-    build_output = Path("" if kbuild_out == "" else "/" + kbuild_out)
-    if False or build_output != "":
-        if os.path.islink(chroot / "mnt/linux" / build_output) and \
-                os.path.lexists(chroot / "mnt/linux" / build_output):
-            pmb.chroot.root(args, ["rm", "/mnt/linux" / build_output])
+    if kbuild_out != "":
+        if os.path.islink(chroot / "mnt/linux" / kbuild_out) and \
+                os.path.lexists(chroot / "mnt/linux" / kbuild_out):
+            pmb.chroot.root(args, ["rm", "/mnt/linux" / kbuild_out])
         pmb.chroot.root(args, ["ln", "-s", "/mnt/linux",
                         build_path / "src"])
     pmb.chroot.root(args, ["ln", "-s", kbuild_out_source,
-                    build_path / "src" / build_output])
+                    build_path / "src" / kbuild_out])
 
-    cmd = ["cp", apkbuild_path, chroot / build_path / "APKBUILD"]
+    cmd: List[PathString] = ["cp", apkbuild_path, chroot / build_path / "APKBUILD"]
     pmb.helpers.run.root(args, cmd)
 
     # Create the apk package
@@ -171,10 +171,10 @@ def run_abuild(args: PmbArgs, pkgname, arch, apkbuild_path, kbuild_out):
     pmb.helpers.mount.umount_all(args, chroot / "mnt/linux")
 
     # Clean up symlinks
-    if build_output != "":
-        if os.path.islink(chroot / "mnt/linux" / build_output) and \
-                os.path.lexists(chroot / "mnt/linux" / build_output):
-            pmb.chroot.root(args, ["rm", "/mnt/linux" / build_output])
+    if kbuild_out != "":
+        if os.path.islink(chroot / "mnt/linux" / kbuild_out) and \
+                os.path.lexists(chroot / "mnt/linux" / kbuild_out):
+            pmb.chroot.root(args, ["rm", "/mnt/linux" / kbuild_out])
     pmb.chroot.root(args, ["rm", build_path / "src"])
 
 

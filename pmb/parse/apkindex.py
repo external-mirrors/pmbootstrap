@@ -1,6 +1,7 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import collections
+from typing import Any, Dict, List
 from pmb.helpers import logging
 from pathlib import Path
 import tarfile
@@ -37,7 +38,7 @@ def parse_next_block(path: Path, lines, start):
     """
 
     # Parse until we hit an empty line or end of file
-    ret = {}
+    ret: Dict[str, Any] = {}
     mapping = {
         "A": "arch",
         "D": "depends",
@@ -63,9 +64,8 @@ def parse_next_block(path: Path, lines, start):
         for letter, key in mapping.items():
             if line.startswith(letter + ":"):
                 if key in ret:
-                    raise RuntimeError(
-                        "Key " + key + " (" + letter + ":) specified twice"
-                        " in block: " + str(ret) + ", file: " + path)
+                    raise RuntimeError(f"Key {key} ({letter}:) specified twice"
+                        f" in block: {ret}, file: {path}")
                 ret[key] = line[2:-1]
 
     # Format and return the block
@@ -94,9 +94,9 @@ def parse_next_block(path: Path, lines, start):
 
     # No more blocks
     elif ret != {}:
-        raise RuntimeError("Last block in " + path + " does not end"
-                           " with a new line! Delete the file and"
-                           " try again. Last block: " + str(ret))
+        raise RuntimeError(f"Last block in {path} does not end"
+                            " with a new line! Delete the file and"
+                           f" try again. Last block: {ret}")
     return None
 
 
@@ -173,7 +173,7 @@ def parse(path: Path, multiple_providers=True):
     # Require the file to exist
     if not path.is_file():
         logging.verbose("NOTE: APKINDEX not found, assuming no binary packages"
-                        " exist for that architecture: " + path)
+                       f" exist for that architecture: {path}")
         return {}
 
     # Try to get a cached result first
@@ -190,14 +190,14 @@ def parse(path: Path, multiple_providers=True):
     # Read all lines
     if tarfile.is_tarfile(path):
         with tarfile.open(path, "r:gz") as tar:
-            with tar.extractfile(tar.getmember("APKINDEX")) as handle:
+            with tar.extractfile(tar.getmember("APKINDEX")) as handle: # type:ignore[union-attr]
                 lines = handle.readlines()
     else:
         with path.open("r", encoding="utf-8") as handle:
             lines = handle.readlines()
 
     # Parse the whole APKINDEX file
-    ret = collections.OrderedDict()
+    ret: Dict[str, Any] = collections.OrderedDict()
     start = [0]
     while True:
         block = parse_next_block(path, lines, start)
@@ -206,8 +206,8 @@ def parse(path: Path, multiple_providers=True):
 
         # Skip virtual packages
         if "timestamp" not in block:
-            logging.verbose("Skipped virtual package " + str(block) + " in"
-                            " file: " + path)
+            logging.verbose(f"Skipped virtual package {block} in"
+                            f" file: {path}")
             continue
 
         # Add the next package and all aliases
@@ -237,11 +237,11 @@ def parse_blocks(path: Path):
     """
     # Parse all lines
     with tarfile.open(path, "r:gz") as tar:
-        with tar.extractfile(tar.getmember("APKINDEX")) as handle:
+        with tar.extractfile(tar.getmember("APKINDEX")) as handle: # type:ignore[union-attr]
             lines = handle.readlines()
 
     # Parse lines into blocks
-    ret = []
+    ret: List[str] = []
     start = [0]
     while True:
         block = pmb.parse.apkindex.parse_next_block(path, lines, start)
@@ -256,7 +256,7 @@ def clear_cache(path: Path):
 
     :returns: True on successful deletion, False otherwise
     """
-    logging.verbose("Clear APKINDEX cache for: " + path)
+    logging.verbose(f"Clear APKINDEX cache for: {path}")
     if path in pmb.helpers.other.cache["apkindex"]:
         del pmb.helpers.other.cache["apkindex"][path]
         return True
@@ -287,7 +287,7 @@ def providers(args: PmbArgs, package, arch=None, must_exist=True, indexes=None):
 
     package = pmb.helpers.package.remove_operators(package)
 
-    ret = collections.OrderedDict()
+    ret: Dict[str, Any] = collections.OrderedDict()
     for path in indexes:
         # Skip indexes not providing the package
         index_packages = parse(path)
@@ -301,10 +301,8 @@ def providers(args: PmbArgs, package, arch=None, must_exist=True, indexes=None):
             if provider_pkgname in ret:
                 version_last = ret[provider_pkgname]["version"]
                 if pmb.parse.version.compare(version, version_last) == -1:
-                    logging.verbose(package + ": provided by: " +
-                                    provider_pkgname + "-" + version + " in " +
-                                    path + " (but " + version_last + " is"
-                                    " higher)")
+                    logging.verbose(f"{package}: provided by: {provider_pkgname}-{version}"
+                                    f"in {path} (but {version_last} is higher)")
                     continue
 
             # Add the provider to ret
@@ -312,7 +310,8 @@ def providers(args: PmbArgs, package, arch=None, must_exist=True, indexes=None):
             ret[provider_pkgname] = provider
 
     if ret == {} and must_exist:
-        logging.debug("Searched in APKINDEX files: " + ", ".join(indexes))
+        import os
+        logging.debug(f"Searched in APKINDEX files: {', '.join([os.fspath(x) for x in indexes])}")
         raise RuntimeError("Could not find package '" + package + "'!")
 
     return ret
@@ -326,7 +325,7 @@ def provider_highest_priority(providers, pkgname):
     :param pkgname: the package name we are interested in (for the log message)
     """
     max_priority = 0
-    priority_providers = collections.OrderedDict()
+    priority_providers: collections.OrderedDict[str, str] = collections.OrderedDict()
     for provider_name, provider in providers.items():
         priority = int(provider.get("provider_priority", -1))
         if priority > max_priority:
