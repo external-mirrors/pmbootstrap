@@ -61,3 +61,8 @@ mypy:
   stage: lint
   script:
     - ".ci/mypy.sh"
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura.xml

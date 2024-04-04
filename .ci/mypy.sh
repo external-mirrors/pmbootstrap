@@ -4,10 +4,11 @@
 
 if [ "$(id -u)" = 0 ]; then
 	set -x
-	apk -q add py3-argcomplete py3-mypy
+	apk -q add py3-argcomplete py3-mypy py3-lxml
 	exec su "${TESTUSER:-build}" -c "sh -e $0"
 fi
 
 set -x
 
-mypy pmbootstrap.py
+# FIXME: adopt --check-untyped-defs (and fix the errors)
+mypy --cobertura-xml-report "coverage" pmbootstrap.py
