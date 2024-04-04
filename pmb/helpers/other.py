@@ -279,23 +279,17 @@ def lookup(key):
     pmb.helpers.other.cache["mycache"][key] = ret
     return ret
 """
-cache = None
-
-
-def init_cache():
-    global cache
-    """ Add a caching dict (caches parsing of files etc. for the current
-        session) """
-    repo_update = {"404": [], "offline_msg_shown": False}
-    cache = {"apkindex": {},
-             "apkbuild": {},
-             "apk_min_version_checked": [],
-             "apk_repository_list_updated": [],
-             "built": {},
-             "find_aport": {},
-             "pmb.helpers.package.depends_recurse": {},
-             "pmb.helpers.package.get": {},
-             "pmb.helpers.repo.update": repo_update,
-             "pmb.helpers.git.parse_channels_cfg": {},
-             "pmb.config.pmaports.read_config": None,
-             "pmb.config.pmaports.read_config_repos": None}
+cache: Dict[str, Any] = {
+    "apkindex": {},
+    "apkbuild": {},
+    "apk_min_version_checked": [],
+    "apk_repository_list_updated": [],
+    "built": {},
+    "find_aport": {},
+    "pmb.helpers.package.depends_recurse": {},
+    "pmb.helpers.package.get": {},
+    "pmb.helpers.repo.update": {"404": [], "offline_msg_shown": False},
+    "pmb.helpers.git.parse_channels_cfg": {},
+    "pmb.config.pmaports.read_config": None,
+    "pmb.config.pmaports.read_config_repos": None,
+}
