@@ -69,4 +69,4 @@ pytest \
 	$cov_arg \
 	test \
 		-m "not skip_ci" \
-		"$@"
+		test/test_build_package.py

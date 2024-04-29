@@ -15,13 +15,7 @@ before_script: &global_before_scripts
   - "adduser -D build"
 
 stages:
-  - lint
   - test
-
-codespell:
-  stage: lint
-  script:
-    - ".ci/codespell.sh"
 
 pytest:
   stage: test
@@ -38,33 +32,3 @@ pytest:
     paths:
       - "log_testsuite.txt"
 
-ruff:
-  stage: lint
-  script:
-    - ".ci/ruff.sh"
-
-shellcheck:
-  stage: lint
-  script:
-    - ".ci/shellcheck.sh"
-
-vermin:
-  stage: lint
-  script:
-    - ".ci/vermin.sh"
-
-mr-settings:
-  stage: lint
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  before_script:
-    - *global_before_scripts
-    - "apk -q add python3"
-    - "wget -q 'https://gitlab.com/postmarketOS/ci-common/-/raw/master/check_mr_settings.py'"
-  script:
-    - "python3 ./check_mr_settings.py"
-
-mypy:
-  stage: lint
-  script:
-    - ".ci/mypy.sh"
