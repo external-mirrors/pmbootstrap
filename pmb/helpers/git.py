@@ -152,7 +152,7 @@ def parse_channels_cfg(args):
     ret = {"channels": {}}
     ret["meta"] = {"recommended": cfg.get("channels.cfg", "recommended")}
 
-    aport_branch_keys = [f"branch_{aport}" for aport in pkgrepo_names()]
+    aport_branch_keys = [f"branch_{aport}" for aport in pkgrepo_names(ignore_extras=True)]
     if "branch_aports_upstream" in aport_branch_keys:
         aport_branch_keys.remove("branch_aports_upstream")
 
@@ -167,6 +167,7 @@ def parse_channels_cfg(args):
         # XXX: handle upstream aports too!
         for key in ["description", "branch_aports",
                     "mirrordir_alpine"] + aport_branch_keys:
+            logging.verbose(f"Reading {channel_new} {key}")
             value = cfg.get(channel, key)
             ret["channels"][channel_new][key] = value
 

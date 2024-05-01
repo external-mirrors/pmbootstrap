@@ -73,6 +73,11 @@ def urls(args, user_repository=True, postmarketos_mirror=True, alpine=True):
                                 " added automatically now!")
                 mirror = mirror[:-1 * len("master")]
             ret.append(f"{mirror}{mirrordir_pmos}")
+        # Yeah we're gonna have to break the pmbootstrap config format to handle this properly
+        # cuz right now it just let's you put anything in there
+        if pmb.config.is_systemd_selected(args):
+            # Insert the systemd staging mirror before the first mirror
+            ret.insert(0, f"http://mirror.postmarketos.org/postmarketos/staging/systemd/{mirrordir_pmos}")
 
     # Upstream Alpine Linux repositories
     if alpine:

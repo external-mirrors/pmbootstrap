@@ -336,14 +336,14 @@ def override_source(args, apkbuild, pkgver, src, suffix="native"):
     pmb.chroot.user(args, ["mv", append_path + "_", apkbuild_path], suffix)
 
 
-def mount_pmaports(args, destination, suffix="native"):
+def mount_pmaports(args, destination, which: str, suffix="native"):
     """
     Mount pmaports.git in chroot.
 
     :param destination: mount point inside the chroot
     """
     outside_destination = args.work + "/chroot_" + suffix + destination
-    pmb.helpers.mount.bind(args, pkgrepo_path(args.aports), outside_destination, umount=True)
+    pmb.helpers.mount.bind(args, pkgrepo_path(which), outside_destination, umount=True)
 
 
 def link_to_git_dir(args, aports, suffix):

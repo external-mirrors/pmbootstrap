@@ -1,5 +1,6 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+import glob
 import multiprocessing
 import os
 import pmb.parse.arch
@@ -22,6 +23,7 @@ from pmb.config.other import is_systemd_selected
 pmb_src = os.path.normpath(os.path.realpath(__file__) + "/../../..")
 apk_keys_path = pmb_src + "/pmb/data/keys"
 arch_native = pmb.parse.arch.alpine_native()
+aports: List[str]
 
 # apk-tools minimum version
 # https://pkgs.alpinelinux.org/packages?name=apk-tools&branch=edge
@@ -61,6 +63,26 @@ required_programs = [
     "ps",
     "tar",
 ]
+
+def set_aports(aports_: str) -> None:
+    global aports
+    if 'aports' in globals():
+        raise RuntimeError("aports already set")
+
+    aports = [x.strip() for x in aports_.split(",")]
+    
+    for p in aports:
+        # add extra-repos as their own aports. They override packages
+        # in pmaports
+        # HELP: we should only add the system repo here if
+        # is_systemd_selected() is true. But we can't call that function
+        # because it wants to check if the selected UI has "pmb:systemd-never"
+        # in it's options, which of course involves reading the APKBUILDS
+        # but for that we need to know which repos to look in... which we can't
+        # do until we assign aports, which is what we're doing here.
+        extras = list(glob.iglob(os.path.join(p, "extra-repos/*")))
+        if extras:
+            aports = extras + aports
 
 
 def sudo(cmd: List[str]) -> List[str]:

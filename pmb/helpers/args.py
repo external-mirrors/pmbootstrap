@@ -110,6 +110,7 @@ def init(args):
     # Basic initialization
     fix_mirrors_postmarketos(args)
     pmb.config.merge_with_args(args)
+    pmb.config.set_aports(args.aports)
     replace_placeholders(args)
     pmb.helpers.other.init_cache()
 
