@@ -197,7 +197,6 @@ def command_qemu(args, arch, img_path, img_path_2nd=None):
         command += ["-device", "virtio-vga-gl"]
     elif arch == "aarch64":
         command += ["-M", "virt"]
-        command += ["-cpu", "cortex-a57"]
         command += ["-device", "virtio-gpu-gl"]
     elif arch == "riscv64":
         command += ["-M", "virt"]
