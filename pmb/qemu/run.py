@@ -198,7 +198,7 @@ def command_qemu(args, arch, img_path, img_path_2nd=None):
     elif arch == "aarch64":
         command += ["-M", "virt"]
         command += ["-cpu", "cortex-a57"]
-        command += ["-device", "virtio-gpu-pci"]
+        command += ["-device", "virtio-gpu-gl"]
     elif arch == "riscv64":
         command += ["-M", "virt"]
         command += ["-device", "virtio-gpu-pci"]
@@ -303,6 +303,7 @@ def install_depends(args, arch):
         "qemu-hw-display-virtio-gpu",
         "qemu-hw-display-virtio-gpu-gl",
         "qemu-hw-display-virtio-gpu-pci",
+        "qemu-hw-display-virtio-gpu-pci-gl", # needed for virgl on arm
         "qemu-hw-display-virtio-vga",
         "qemu-hw-display-virtio-vga-gl",
         "qemu-system-" + arch,
