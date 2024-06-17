@@ -197,12 +197,15 @@ def run_abuild(context: Context, apkbuild, channel, arch: Arch, strict=False, fo
                      "/home/pmos/packages/pmos"]], suffix)
 
     # Environment variables
-    env = {"CARCH": arch,
+    env = {"CARCH": arch, "CBUILD": arch, "CHOST": Arch.native() if cross else suffix.arch,
            "SUDO_APK": "abuild-apk --no-progress"}
-    if cross == "native":
+    if cross:
         hostspec = arch.alpine_triple()
         env["CROSS_COMPILE"] = hostspec + "-"
         env["CC"] = hostspec + "-gcc"
+        #env["PYTHONPATH"] = "/native/usr/lib/python3.12:/native/usr/lib/python3.12/lib-dynload:/native/usr/lib/python3.12/site-packages"
+        env["PYTHONUNBUFFERED"] = "1"
+        env["FAKEROOT"] = "" #"/native/usr/bin/fakeroot"
     if cross == "crossdirect":
         env["PATH"] = ":".join([f"/native/usr/lib/crossdirect/{arch}",
                                 pmb.config.chroot_path])
@@ -244,6 +247,7 @@ def run_abuild(context: Context, apkbuild, channel, arch: Arch, strict=False, fo
         # building.
         cmd += ["-K"]
 
+    #cmd += ["-v"]
     # Copy the aport to the chroot and build it
     pmb.build.copy_to_buildpath(apkbuild["pkgname"], suffix, no_override=strict)
     if src and strict:

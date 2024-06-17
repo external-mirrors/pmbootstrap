@@ -115,7 +115,7 @@ def init(chroot: Chroot=Chroot.native()) -> bool:
 
 def init_compiler(context: Context, depends, cross, arch: Arch):
     arch_str = str(arch)
-    cross_pkgs = ["ccache-cross-symlinks", "abuild"]
+    cross_pkgs = ["ccache-cross-symlinks", "abuild", "fakeroot", "python3"]
     if "gcc4" in depends:
         cross_pkgs += ["gcc4-" + arch_str]
     elif "gcc6" in depends:

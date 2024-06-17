@@ -1,5 +1,6 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+import shlex
 from pmb.core.chroot import ChrootType
 from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.helpers import logging
@@ -144,15 +145,31 @@ def mount(chroot: Chroot):
 
 def mount_native_into_foreign(chroot: Chroot):
     source = Chroot.native().path
+    source_arch = Chroot.native().arch
     target = chroot / "native"
     pmb.helpers.mount.bind(source, target)
 
+    lib_path = "/native/lib:/native/usr/lib:/native/usr/local/lib"
+
     musl = next(source.glob("lib/ld-musl-*.so.1")).name
     musl_link = (chroot / "lib" / musl)
-    if not musl_link.is_symlink():
-        pmb.helpers.run.root(["ln", "-s", "/native/lib/" + musl,
-                                    musl_link])
-        # pmb.helpers.run.root(["ln", "-sf", "/native/usr/bin/pigz", "/usr/local/bin/pigz"])
+
+    pmb.helpers.mount.bind_file(source / "bin/busybox", chroot / "bin/busybox")
+    # pmb.helpers.mount.bind_file((source / "bin/python3").resolve(), (chroot / "bin/python3").resolve())
+    # pmb.helpers.mount.bind_file(source / "/usr/lib/libpython3.12.so.1.0", chroot / "usr/lib/libpython3.12.so.1.0")
+    # pmb.helpers.mount.bind_file(source / "/usr/lib/libpython3.so", chroot / "usr/lib/libpython3.so")
+    # pmb.helpers.mount.bind_file(source / "bin/fakeroot", chroot / "bin/fakeroot")
+    # pmb.helpers.mount.bind_file(source / "usr/lib/libfakeroot-0.so", chroot / "usr/lib/libfakeroot-0.so")
+
+    # Already set up
+    if musl_link.is_symlink():
+        return
+
+    pmb.helpers.run.root(["sh", "-c", "echo " + shlex.quote(lib_path) + f"> {chroot.path}/etc/ld-musl-{source_arch}.path"])
+    pmb.helpers.run.root(["ln", "-s", "/native/lib/" + musl,
+                                musl_link])
+    pmb.helpers.run.root(["rm", "-f", f"{chroot.path}/usr/sbin/arch"])
+    pmb.helpers.run.root(["sh", "-c", "echo -e " + shlex.quote(f"#!/bin/sh\\necho {chroot.arch}") + f"> {chroot.path}/usr/bin/arch"])
 
 def remove_mnt_pmbootstrap(chroot: Chroot):
     """ Safely remove /mnt/pmbootstrap directories from the chroot, without

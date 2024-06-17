@@ -58,4 +58,6 @@ verify() {
 	return 0
 }
 
+FAKEROOT=""
+
 # END PMBOOTSTRAP OVERRIDES
