@@ -169,7 +169,7 @@ def mount_native_into_foreign(chroot: Chroot):
     pmb.helpers.run.root(["ln", "-s", "/native/lib/" + musl,
                                 musl_link])
     pmb.helpers.run.root(["rm", "-f", f"{chroot.path}/usr/sbin/arch"])
-    pmb.helpers.run.root(["sh", "-c", "echo -e " + shlex.quote(f"#!/bin/sh\\necho {chroot.arch}") + f"> {chroot.path}/usr/bin/arch"])
+    #pmb.helpers.run.root(["sh", "-c", "echo -e " + shlex.quote(f"#!/bin/sh\\necho {chroot.arch}") + f"> {chroot.path}/usr/bin/arch"])
 
 def remove_mnt_pmbootstrap(chroot: Chroot):
     """ Safely remove /mnt/pmbootstrap directories from the chroot, without
