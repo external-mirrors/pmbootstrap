@@ -90,6 +90,11 @@ def auto_apkindex_package(args, arch, aport, apk, dry=False):
             # against) and packages for which no aport exists.
             if (depend.startswith("so:") or
                     not pmb.helpers.pmaports.find(args, depend, False)):
+                if depend.endswith("-service"):
+                    logging.info(f"NOTE: {pkgname}: ignoring missing"
+                                 f" dependency {depend} (pmb#2773: split repo"
+                                 " for systemd not implemented yet)")
+                    continue
                 missing.append(depend)
 
     # Increase pkgrel
