@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0" />
+  <requires lib="libadwaita" version="1.0" />
+  <template class="MainWindow" parent="AdwApplicationWindow">
+    <property name="title" translatable="no">Pmbootstrap</property>
+    <property name="height-request">600</property>
+    <property name="width-request">1024</property>
+    <property name="default-height">600</property>
+    <child>
+      <object class="AdwBreakpoint" id="sidebar_break">
+        <condition>max-width: 400sp</condition>
+        <setter object="split_view" property="collapsed">True</setter>
+      </object>
+    </child>
+    <property name="content">
+      <object class="AdwNavigationSplitView" id="split_view">
+        <property name="sidebar">
+          <object class="AdwNavigationPage">
+            <property name="title" translatable="yes">Sidebar</property>
+            <property name="child">
+              <!-- ... -->
+            </property>
+          </object>
+        </property>
+        <property name="content">
+          <object class="AdwNavigationPage" id="main_content">
+            <property name="title" translatable="yes">Content</property>
+            <property name="child">
+              <!-- ... -->
+            </property>
+          </object>
+        </property>
+      </object>
+    </property>
+    <style>
+      <class name="devel" />
+    </style>
+  </template>
+</interface>

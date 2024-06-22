@@ -604,6 +604,15 @@ def arguments_ci(subparser):
     return ret
 
 
+def arguments_gui(subparser):
+    ret = subparser.add_parser("gui", help="run the pmbootstrap GUI")
+    script_args = ret.add_mutually_exclusive_group()
+    script_args.add_argument("--installer", action="store_true",
+                             help="run the semi-automated on device installer",
+                             dest="gui_installer")
+    return ret
+
+
 def package_completer(prefix, action, parser=None, parsed_args=None):
     packages = set(
         package for package in pmb.helpers.pmaports.get_list()
@@ -739,6 +748,7 @@ def get_parser():
     arguments_test(sub)
     arguments_status(sub)
     arguments_ci(sub)
+    arguments_gui(sub)
 
     # Action: log
     log = sub.add_parser("log", help="follow the pmbootstrap logfile")
