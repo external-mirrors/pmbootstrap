@@ -964,6 +964,9 @@ def get_parser():
     arguments_test(sub)
     arguments_status(sub)
     arguments_ci(sub)
+    
+    # Action: du
+    sub.add_parser("du", help="Show space used by pmbootstrap")
 
     # Action: log
     log = sub.add_parser("log", help="follow the pmbootstrap logfile")

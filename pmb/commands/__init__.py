@@ -9,6 +9,7 @@ from pmb.types import PmbArgs
 from pmb.helpers import frontend
 
 from .base import Command
+from .du import Du
 from .log import Log
 from .index import Index
 from .repo_bootstrap import RepoBootstrap
@@ -74,6 +75,8 @@ def run_command(args: PmbArgs):
         command = Test(args.action_test)
     elif args.action == "pull":
         command = Pull()
+    elif args.action == "du":
+        command = Du()
     else:
         raise NotImplementedError(f"Command '{args.action}' is not implemented.")
 
