@@ -147,9 +147,9 @@ def packages_get_locally_built_apks(packages, arch: Arch) -> list[Path]:
         # this will have weird behaviour if you build gnome-shell for edge and
         # then checkout out the systemd branch... But there isn't
         for channel in channels:
-            apk_path = get_context().config.work / "packages" / channel / arch / apk_file
-            if apk_path.exists():
-                local.append(apk_path)
+            apk_path = Path("packages") / channel / arch / apk_file
+            if (get_context().config.work / apk_path).exists():
+                local.append(Path("/mnt/pmbootstrap") / apk_path)
                 break
 
         # Record all the packages we have visited so far
@@ -178,7 +178,6 @@ def install_run_apk(to_add: list[str], to_add_local: list[Path], to_del: list[st
     :param chroot: the chroot suffix, e.g. "native" or "rootfs_qemu-amd64"
     """
     context = get_context()
-    work = context.config.work
     # Sanitize packages: don't allow '--allow-untrusted' and other options
     # to be passed to apk!
     local_add = [os.fspath(p) for p in to_add_local]
@@ -199,9 +198,6 @@ def install_run_apk(to_add: list[str], to_add_local: list[Path], to_del: list[st
     if to_del:
         commands += [["del"] + to_del]
 
-    channel = pmb.config.pmaports.read_config()["channel"]
-    user_repo = work / "packages" / channel
-
     # There are still some edgecases where we manage to get here while the chroot is not
     # initialized. To not break the build, we initialize it here but print a big warning
     # and a stack trace so hopefully folks report it.
@@ -215,10 +211,6 @@ def install_run_apk(to_add: list[str], to_add_local: list[Path], to_del: list[st
         # --no-interactive is a parameter to `add`, so it must be appended or apk
         # gets confused
         command += ["--no-interactive"]
-        command = [
-            "--repository",
-            user_repo,
-        ] + command
 
         # Ignore missing repos before initial build (bpo#137)
         if os.getenv("PMB_APK_FORCE_MISSING_REPOSITORIES") == "1":
