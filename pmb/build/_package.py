@@ -299,7 +299,9 @@ def process_package(
             deps = get_depends(context, apkbuild)
             # Preserve the old behaviour where we don't build second order dependencies by default
             # unless they are NEW packages, in which case we
-            if base_build_status.necessary() or bstatus == BuildStatus.NEW:
+            # Note: allow abuild, it's required for building everything so make
+            # sure it is always included if it is outdated
+            if base_build_status.necessary() or bstatus == BuildStatus.NEW or dep == "abuild":
                 logging.debug(
                     f"BUILDQUEUE: queue {dep} (dependency of {parent}) for build, reason: {bstatus}"
                 )
@@ -420,6 +422,14 @@ def packages(
     # We built the queue by pushing each package before it's dependencies. Now we
     # need to go backwards through the queue and build the dependencies first.
     build_queue.reverse()
+
+    # Always build abuild first if it is in the queue, so that all other
+    # packages are built with the latest version
+    for item in build_queue:
+        if item["name"] == "abuild":
+            build_queue.remove(item)
+            build_queue.insert(0, item)
+            break
 
     qlen = len(build_queue)
     logging.info(f"Building @BLUE@{qlen}@END@ package{'s' if qlen > 1 else ''}")
