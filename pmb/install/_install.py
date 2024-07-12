@@ -17,6 +17,7 @@ import pmb.chroot.other
 import pmb.chroot.initfs
 import pmb.config
 import pmb.config.pmaports
+from pmb.helpers.locale import get_keyboard_config
 from pmb.parse.deviceinfo import Deviceinfo
 from pmb.core import Config
 from pmb.types import PartitionLayout, PmbArgs
@@ -985,7 +986,7 @@ def print_flash_info(device: str, deviceinfo: Deviceinfo, split: bool, have_disk
     # if current flasher supports vbmeta and partition is explicitly specified
     # in deviceinfo
     if "flash_vbmeta" in flasher_actions and (
-        deviceinfo.flash_fastboot_partition_vbmeta or deviceinfo.flash_heimdall_partition_vbmeta
+            deviceinfo.flash_fastboot_partition_vbmeta or deviceinfo.flash_heimdall_partition_vbmeta
     ):
         logging.info("* pmbootstrap flasher flash_vbmeta")
         logging.info("  Flashes vbmeta image with verification disabled flag.")
@@ -1324,6 +1325,18 @@ def create_device_rootfs(args: PmbArgs, step, steps):
         pmb.chroot.root(
             ["sh", "-c", f"echo {shlex.quote(line)}" " > /etc/profile.d/10locale-pmos.sh"], chroot
         )
+        # add keyboard layout related to locale and layout switcher
+        if (chroot / "etc/X11").exists():
+            kb_config = get_keyboard_config(config.locale)
+            if kb_config:
+                config_name = "99-keyboard.conf"
+                config_tmp_path = f"/tmp/{config_name}"
+                config_path = f"/etc/X11/xorg.conf.d/{config_name}"
+                pmb.chroot.root(["mkdir", "-p", "/etc/X11/xorg.conf.d"], chroot)
+                with open(config_tmp_path, "w") as f:
+                    f.write(kb_config)
+                f.close()
+                pmb.chroot.root(["mv", config_tmp_path, config_path], chroot)
 
     # Set the hostname as the device name
     setup_hostname(device, config.hostname)
