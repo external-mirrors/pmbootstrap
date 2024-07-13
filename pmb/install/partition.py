@@ -9,6 +9,7 @@ import pmb.chroot
 import pmb.config
 import pmb.install.losetup
 from pmb.core import Chroot
+from pmb.types import PartitionLayout
 
 
 # FIXME (#2324): this function drops disk to a string because it's easier
@@ -50,18 +51,24 @@ def partitions_mount(device: str, layout, disk: Optional[Path]):
             f"expected it to be at {partition_prefix}1!"
         )
 
-    partitions = [layout["boot"], layout["root"]]
-
-    if layout["kernel"]:
-        partitions += [layout["kernel"]]
-
-    for i in partitions:
+    for i in range(1, len(layout) + 1):
         source = Path(f"{partition_prefix}{i}")
-        target = Chroot.native() / "dev" / f"installp{i}"
+        target = Chroot.native() / f"dev/installp{i}"
         pmb.helpers.mount.bind_file(source, target)
 
+    # partitions = [layout["boot"], layout["root"]]
 
-def partition(layout, size_boot, size_reserve):
+    # if "kernel" in layout:
+    #     partitions += [layout["kernel"]]
+
+    # for i in partitions:
+    #     source = Path(f"{partition_prefix}{i}")
+    #     target = Chroot.native() / f"dev/installp{i}"
+    #     pmb.helpers.mount.bind_file(source, target)
+
+
+# FIXME: Actually PartitionLayout but the NotRequired type hint does whacky stuff
+def partition(layout: dict[str, int]):
     """
     Partition /dev/install and create /dev/install{p1,p2,p3}:
     * /dev/installp1: boot
@@ -75,14 +82,13 @@ def partition(layout, size_boot, size_reserve):
     :param size_boot: size of the boot partition in MiB
     :param size_reserve: empty partition between root and boot in MiB (pma#463)
     """
-    # Convert to MB and print info
-    mb_boot = f"{round(size_boot)}M"
-    mb_reserved = f"{round(size_reserve)}M"
-    mb_root_start = f"{round(size_boot) + round(size_reserve)}M"
-    logging.info(
-        f"(native) partition /dev/install (boot: {mb_boot},"
-        f" reserved: {mb_reserved}, root: the rest)"
-    )
+    msg = f"(native) partition /dev/install (boot: {layout['boot']}," + \
+          f" reserved: {layout.get('reserved', 0)}, root: "
+    if "home" in layout:
+        msg += f"{layout['root']}, var: {layout['var']}, home: the rest)"
+    else:
+        msg += "root: the rest)"
+    logging.info(msg)
 
     filesystem = pmb.parse.deviceinfo().boot_filesystem or "ext2"
 
@@ -94,17 +100,42 @@ def partition(layout, size_boot, size_reserve):
 
     partition_type = pmb.parse.deviceinfo().partition_type or "msdos"
 
+    if partition_type != "gpt" and len(layout.keys()) > 4:
+        logging.error(
+            "ERROR: Too many partitions for msdos partition table. "
+            "Using GPT partition table instead."
+        )
+        partition_type = "gpt"
+
     commands = [
         ["mktable", partition_type],
-        ["mkpart", "primary", filesystem, boot_part_start + "s", mb_boot],
     ]
 
-    if size_reserve:
-        mb_reserved_end = f"{round(size_reserve + size_boot)}M"
-        commands += [["mkpart", "primary", mb_boot, mb_reserved_end]]
+    running_size = 0
+    for k, i in layout.items():
+        size_end = f"{round(running_size + i)}M"
+        size_start = f"{round(running_size)}M"
+        match k:
+            case "boot":
+                commands.append(
+                    ["mkpart", "primary", filesystem, boot_part_start + "s", size_end],
+                )
+            case "reserve":
+                commands.append(
+                    ["mkpart", "primary", size_start, size_end],
+                )
+            case "root" | "root_b" | "var":
+                commands.append(
+                    ["mkpart", "primary", size_start, size_end],
+                )
+            case "home":
+                commands.append(
+                    ["mkpart", "primary", size_start, "100%"],
+                )
+
+        running_size += i
 
     commands += [
-        ["mkpart", "primary", mb_root_start, "100%"],
         ["set", str(layout["boot"]), "boot", "on"],
     ]
 

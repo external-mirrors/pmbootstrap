@@ -143,9 +143,9 @@ def prepare_btrfs_subvolumes(args: PmbArgs, device, mountpoint):
     pmb.chroot.root(["chattr", "+C", f"{mountpoint}/var"])
 
 
-def format_and_mount_root(args: PmbArgs, device, root_label, disk):
+def format_and_mount_part(args: PmbArgs, device, part, part_label, disk):
     """
-    :param device: root partition on install block device (e.g. /dev/installp2)
+    :param device: root or other partition on install block device (e.g. /dev/installp2)
     :param root_label: label of the root partition (e.g. "pmOS_root")
     :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
     """
@@ -157,26 +157,28 @@ def format_and_mount_root(args: PmbArgs, device, root_label, disk):
             # Some downstream kernels don't support metadata_csum (#1364).
             # When changing the options of mkfs.ext4, also change them in the
             # recovery zip code (see 'grep -r mkfs\.ext4')!
-            mkfs_root_args = ["mkfs.ext4", "-O", "^metadata_csum", "-F", "-q", "-L", root_label]
+            mkfs_root_args = ["mkfs.ext4", "-O", "^metadata_csum", "-F", "-q", "-L", part_label]
             # When we don't know the file system size before hand like
             # with non-block devices, we need to explicitly set a number of
             # inodes. See #1717 and #1845 for details
             if not disk:
                 mkfs_root_args = mkfs_root_args + ["-N", "100000"]
         elif filesystem == "f2fs":
-            mkfs_root_args = ["mkfs.f2fs", "-f", "-l", root_label]
+            mkfs_root_args = ["mkfs.f2fs", "-f", "-l", part_label]
         elif filesystem == "btrfs":
-            mkfs_root_args = ["mkfs.btrfs", "-f", "-L", root_label]
+            mkfs_root_args = ["mkfs.btrfs", "-f", "-L", part_label]
         else:
             raise RuntimeError(f"Don't know how to format {filesystem}!")
 
         install_fsprogs(filesystem)
-        logging.info(f"(native) format {device} (root, {filesystem})")
+        logging.info(f"(native) format {device} ({part}, {filesystem})")
         pmb.chroot.root(mkfs_root_args + [device])
 
     # Mount
     mountpoint = "/mnt/install"
-    logging.info("(native) mount " + device + " to " + mountpoint)
+    if part != "root":
+        mountpoint = f"{mountpoint}/{part}"
+    logging.info(f"(native) mount {device} to {mountpoint}")
     pmb.chroot.root(["mkdir", "-p", mountpoint])
     pmb.chroot.root(["mount", device, mountpoint])
 
@@ -192,12 +194,22 @@ def format(args: PmbArgs, layout, boot_label, root_label, disk):
     :param root_label: label of the root partition (e.g. "pmOS_root")
     :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
     """
-    root_dev = f"/dev/installp{layout['root']}"
-    boot_dev = f"/dev/installp{layout['boot']}"
 
-    if args.full_disk_encryption:
-        format_luks_root(args, root_dev)
-        root_dev = "/dev/mapper/pm_crypt"
-
-    format_and_mount_root(args, root_dev, root_label, disk)
-    format_and_mount_boot(args, boot_dev, boot_label)
+    # List the partitions but with root first, since the order we mount them matters
+    keys = list(enumerate(layout.keys()))
+    list.sort(keys, key=lambda x: x[1] != "root")
+    for partnum, part in keys:
+        part_dev = f"/dev/installp{partnum + 1}"
+        match part:
+            case "root":
+                if args.full_disk_encryption:
+                    format_luks_root(args, part_dev)
+                    part_dev = "/dev/mapper/pm_crypt"
+                format_and_mount_part(args, part_dev, part, root_label, disk)
+            case "boot":
+                format_and_mount_boot(args, part_dev, boot_label)
+            # Ignore partitions we don't need to mount
+            case "reserve" | "kernel" | "root_b":
+                pass
+            case _:
+                format_and_mount_part(args, part_dev, part, part, disk)

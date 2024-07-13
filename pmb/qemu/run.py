@@ -297,7 +297,10 @@ def resize_image(img_size_new, img_path):
     if img_size_new[-1] == "G":
         img_size_new_bytes = img_size_new_bytes * 1024
 
+    img_size_new_bytes += img_size
+
     if img_size_new_bytes >= img_size:
+        img_size_new = f"{round(img_size_new_bytes / 1024 / 1024)}M"
         logging.info(f"Resize image to {img_size_new}: {img_path}")
         pmb.helpers.run.root(["truncate", "-s", img_size_new, img_path])
     else:

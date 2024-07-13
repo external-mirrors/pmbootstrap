@@ -117,7 +117,8 @@ def init(args: PmbArgs) -> PmbArgs:
     # Remove attributes from args so they don't get used by mistake
     delattr(args, "timeout")
     delattr(args, "details_to_stdout")
-    delattr(args, "log")
+    if hasattr(args, "log"):
+        delattr(args, "log")
     delattr(args, "quiet")
     delattr(args, "offline")
     if hasattr(args, "force"):

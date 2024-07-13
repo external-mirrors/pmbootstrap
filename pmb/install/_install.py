@@ -1,5 +1,6 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+from math import ceil
 from pmb.core.arch import Arch
 from pmb.helpers import logging
 import os
@@ -154,6 +155,9 @@ def copy_files_from_chroot(args: PmbArgs, chroot: Chroot):
         pmb.chroot.root(["rm", "-rf", "/mnt/install/home"])
     else:
         pmb.chroot.root(["cp", "-a"] + folders + ["/mnt/install/"], working_dir=mountpoint)
+        # Copy .offload parts for immutable
+        if args.immutable:
+            pmb.chroot.root(["cp", "-a", "home/.offload", "/mnt/install/home/"], working_dir=mountpoint)
 
 
 def create_home_from_skel(filesystem: str, user: str):
@@ -163,7 +167,7 @@ def create_home_from_skel(filesystem: str, user: str):
     rootfs = Chroot.native() / "mnt/install"
     # In btrfs, home subvol & home dir is created in format.py
     if filesystem != "btrfs":
-        pmb.helpers.run.root(["mkdir", rootfs / "home"])
+        pmb.helpers.run.root(["mkdir", "-p", rootfs / "home"])
 
     home = rootfs / "home" / user
     if (rootfs / "etc/skel").exists():
@@ -716,33 +720,37 @@ def sanity_check_ondev_version(args: PmbArgs):
         )
 
 
-def get_partition_layout(reserve, kernel):
+def get_partition_layout(size_boot: int, size_reserve: int, size_root: int,
+                         size_kernel: int, immutable: bool) -> PartitionLayout:
     """
     :param reserve: create an empty partition between root and boot (pma#463)
     :param kernel: create a separate kernel partition before all other
                    partitions, e.g. for the ChromeOS devices with cgpt
-    :returns: the partition layout, e.g. without reserve and kernel:
-              {"kernel": None, "boot": 1, "reserve": None, "root": 2}
+    :returns: dictionary of partition sizes in MiB
     """
     ret: PartitionLayout = {
-        "kernel": None,
-        "boot": 1,
-        "reserve": None,
-        "root": 2,
+        "boot": size_boot,
+        "root": size_root,
     }
 
-    if kernel:
-        ret["kernel"] = 1
-        ret["boot"] += 1
-        ret["root"] += 1
+    # Exclusive to CGPT / ChromeOS devices
+    if size_kernel:
+        ret["kernel"] = size_kernel
 
-    if reserve:
-        ret["reserve"] = ret["root"]
-        ret["root"] += 1
+    if size_reserve:
+        ret["reserve"] = size_reserve
+
+    if immutable:
+        ret["root_b"] = ret["root"]
+        # FIXME: eh, what's a good size for /var ?
+        ret["var"] = max(round(ret["root"] / 2), 800)
+        # Will be 100% of the remaining space
+        ret["home"] = 100
+
     return ret
 
 
-def get_uuid(args: PmbArgs, partition: Path):
+def get_uuid(partition: Path):
     """
     Get UUID of a partition
 
@@ -758,6 +766,7 @@ def get_uuid(args: PmbArgs, partition: Path):
             partition,
         ],
         output_return=True,
+        check=False
     ).rstrip()
 
 
@@ -769,7 +778,7 @@ def create_crypttab(args: PmbArgs, layout, chroot: Chroot):
     :param suffix: of the chroot, which crypttab will be created to
     """
 
-    luks_uuid = get_uuid(args, Path("/dev") / f"installp{layout['root']}")
+    luks_uuid = get_uuid(Path("/dev") / f"installp{list(layout.keys()).index('root') + 1}")
 
     crypttab = f"root UUID={luks_uuid} none luks\n"
 
@@ -777,7 +786,7 @@ def create_crypttab(args: PmbArgs, layout, chroot: Chroot):
     pmb.chroot.root(["mv", "/tmp/crypttab", "/etc/crypttab"], chroot)
 
 
-def create_fstab(args: PmbArgs, layout, chroot: Chroot):
+def create_fstab(args: PmbArgs, layout: dict[str, int], chroot: Chroot):
     """
     Create /etc/fstab config
 
@@ -790,22 +799,67 @@ def create_fstab(args: PmbArgs, layout, chroot: Chroot):
     if args.on_device_installer and chroot.type == ChrootType.ROOTFS:
         return
 
-    boot_dev = Path(f"/dev/installp{layout['boot']}")
-    root_dev = Path(f"/dev/installp{layout['root']}")
-
-    boot_mount_point = f"UUID={get_uuid(args, boot_dev)}"
-    root_mount_point = (
-        "/dev/mapper/root" if args.full_disk_encryption else f"UUID={get_uuid(args, root_dev)}"
-    )
+    keys = list(enumerate(layout.keys()))
+    list.sort(keys, key=lambda x: x[1] != "root")
 
     boot_options = "nodev,nosuid,noexec"
     boot_filesystem = pmb.parse.deviceinfo().boot_filesystem or "ext2"
-    if boot_filesystem in ("fat16", "fat32"):
-        boot_filesystem = "vfat"
-        boot_options += ",umask=0077,nosymfollow,codepage=437,iocharset=ascii"
     root_filesystem = pmb.install.get_root_filesystem(args)
 
+    fstab = "# <file system> <mount point> <type> <options> <dump> <pass>\n"
+
+    for i, part in keys:
+        part_dev = Path(f"/dev/installp{i + 1}")
+        device = f"UUID={get_uuid(part_dev)}"
+        mountpoint = "/"
+        options = "defaults"
+        filesystem = root_filesystem
+
+        match part:
+            case "reserve" | "kernel" | "root_b":
+                continue
+            case "root":
+                if args.full_disk_encryption:
+                    device = "/dev/mapper/root"
+                if args.immutable:
+                    options = "ro"
+            case "boot":
+                mountpoint = "/boot"
+                options = boot_options
+                if boot_filesystem in ("fat16", "fat32"):
+                    filesystem = "vfat"
+                    options += ",umask=0077,nosymfollow,codepage=437,iocharset=ascii"
+            case _:
+                mountpoint = f"/{part}"
+
+        if device.strip() == "UUID=":
+            raise RuntimeError(f"Failed to get device for {part_dev} (partition {part})")
+
+        fstab += f"{device} {mountpoint} {filesystem} {options} 0 0\n"
+
+    if args.immutable:
+        # /tmp has to be tmpfs for immutable
+        fstab += "tmpfs /tmp tmpfs nosuid,nodev,noatime 0 0\n"
+        # Also set up /mnt as a tmpfs
+        fstab += "tmpfs /mnt tmpfs nosuid,nodev,noatime 0 0\n"
+        # overlayfs on /etc
+        fstab += "overlay /etc overlay x-systemd.requires=/home,lowerdir=/etc,upperdir=/home/.offload/etc/upper,workdir=/home/.offload/etc/work 0 0\n"
+
     if root_filesystem == "btrfs":
+        boot_dev = Path(f"/dev/installp{list(layout.keys()).index('boot') + 1}")
+        root_dev = Path(f"/dev/installp{list(layout.keys()).index('root') + 1}")
+
+        boot_mount_point = f"UUID={get_uuid(boot_dev)}"
+        root_mount_point = (
+            "/dev/mapper/root" if args.full_disk_encryption else f"UUID={get_uuid(root_dev)}"
+        )
+
+        boot_options = "nodev,nosuid,noexec"
+        boot_filesystem = pmb.parse.deviceinfo().boot_filesystem or "ext2"
+        if boot_filesystem in ("fat16", "fat32"):
+            boot_filesystem = "vfat"
+            boot_options += ",umask=0077,nosymfollow,codepage=437,iocharset=ascii"
+
         # btrfs gets separate subvolumes for root, var and home
         fstab = f"""
 # <file system> <mount point> <type> <options> <dump> <pass>
@@ -819,13 +873,6 @@ def create_fstab(args: PmbArgs, layout, chroot: Chroot):
 {boot_mount_point} /boot {boot_filesystem} {boot_options} 0 0
 """.lstrip()
 
-    else:
-        fstab = f"""
-# <file system> <mount point> <type> <options> <dump> <pass>
-{root_mount_point} / {root_filesystem} defaults 0 0
-{boot_mount_point} /boot {boot_filesystem} {boot_options} 0 0
-""".lstrip()
-
     with (chroot / "tmp/fstab").open("w") as f:
         f.write(fstab)
     pmb.chroot.root(["mv", "/tmp/fstab", "/etc/fstab"], chroot)
@@ -833,7 +880,7 @@ def create_fstab(args: PmbArgs, layout, chroot: Chroot):
 
 def install_system_image(
     args: PmbArgs,
-    size_reserve,
+    size_reserve: int,
     chroot: Chroot,
     step,
     steps,
@@ -859,16 +906,21 @@ def install_system_image(
     logging.info(f"*** ({step}/{steps}) PREPARE INSTALL BLOCKDEVICE ***")
     pmb.helpers.mount.umount_all(chroot.path)
     (size_boot, size_root) = get_subpartitions_size(chroot)
+    if args.immutable:
+        # FIXME: Round to nearest GiB with at least 800MiB of free space
+        size_root = ceil((size_root + 800) / 1024) * 1024
     layout = get_partition_layout(
-        size_reserve, pmb.parse.deviceinfo().cgpt_kpart and args.install_cgpt
+        size_boot, size_reserve, size_root,
+        args.install_cgpt and int(pmb.parse.deviceinfo().cgpt_kpart_size or "0"),
+        args.immutable
     )
     if not args.rsync:
-        pmb.install.blockdevice.create(args, size_boot, size_root, size_reserve, split, disk)
+        pmb.install.blockdevice.create(layout, split, disk) # type: ignore
         if not split:
             if pmb.parse.deviceinfo().cgpt_kpart and args.install_cgpt:
                 pmb.install.partition_cgpt(layout, size_boot, size_reserve)
             else:
-                pmb.install.partition(layout, size_boot, size_reserve)
+                pmb.install.partition(layout) # type: ignore
     if not split:
         pmb.install.partitions_mount(device, layout, disk)
 
@@ -879,7 +931,7 @@ def install_system_image(
 
     # Create /etc/fstab and /etc/crypttab
     logging.info("(native) create /etc/fstab")
-    create_fstab(args, layout, chroot)
+    create_fstab(args, layout, chroot) # type: ignore
     if args.full_disk_encryption:
         logging.info("(native) create /etc/crypttab")
         create_crypttab(args, layout, chroot)
@@ -1239,6 +1291,32 @@ def create_device_rootfs(args: PmbArgs, step, steps):
 
     chroot = Chroot(ChrootType.ROOTFS, device)
     pmb.chroot.init(chroot)
+
+    # Immutable moves some stuff out of /var and into /home
+    if args.immutable:
+        # pmb.helpers.run.root(["mv", chroot / "etc", chroot / "var/etc"])
+        # pmb.helpers.run.root(["ln", "-sf", "var/etc", chroot / "etc"])
+
+        # overlayfs for /etc
+        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/etc/upper"])
+        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/etc/work"])
+
+        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/cache"])
+        pmb.helpers.run.root(["ln", "-sf", "../home/.offload/cache", chroot / "var/cache"])
+
+        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/log"])
+        pmb.helpers.run.root(["ln", "-sf", "../home/.offload/log", chroot / "var/log"])
+
+        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/flatpak"])
+        pmb.helpers.run.root(["ln", "-sf", "../../home/.offload/flatpak", chroot / "var/lib/flatpak"])
+
+        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/opt"])
+        pmb.helpers.run.root(["ln", "-sf", "home/.offload/opt", chroot / "opt"])
+
+        # FIXME: complete /usr merge migration, move this from /etc
+        # Make sure the initramfs detects the rootfs
+        pmb.helpers.run.root(["touch", chroot / "usr/lib/os-release"])
+
     # Create user before installing packages, so post-install scripts of
     # pmaports can figure out the username (legacy reasons: pmaports#820)
     set_user(context.config)
@@ -1342,6 +1420,8 @@ def install(args: PmbArgs):
         sanity_check_disk_size(args)
     if args.on_device_installer:
         sanity_check_ondev_version(args)
+    if args.immutable and pmb.install.get_root_filesystem(args) == "btrfs":
+        raise RuntimeError("Btrfs does not support immutable rootfs.")
 
     # Number of steps for the different installation methods.
     if args.no_image:

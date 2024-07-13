@@ -62,7 +62,7 @@ def mount_disk(path: Path):
             raise RuntimeError("Aborted.")
 
 
-def create_and_mount_image(args: PmbArgs, size_boot, size_root, size_reserve, split=False):
+def create_and_mount_image(layout: dict[str, int], split=False):
     """
     Create a new image file, and mount it as /dev/install.
 
@@ -71,6 +71,9 @@ def create_and_mount_image(args: PmbArgs, size_boot, size_root, size_reserve, sp
     :param size_reserve: empty partition between root and boot in MiB (pma#463)
     :param split: create separate images for boot and root partitions
     """
+
+    if split and "home" in layout:
+        raise RuntimeError("Cannot split image with --immutable")
 
     # Short variables for paths
     chroot = Chroot.native()
@@ -89,7 +92,7 @@ def create_and_mount_image(args: PmbArgs, size_boot, size_root, size_reserve, sp
             pmb.chroot.root(["rm", img_path])
 
     # Make sure there is enough free space
-    size_mb = round(size_boot + size_reserve + size_root)
+    size_mb = sum(layout.values())
     disk_data = os.statvfs(get_context().config.work)
     free = round((disk_data.f_bsize * disk_data.f_bavail) / (1024**2))
     if size_mb > free:
@@ -100,15 +103,15 @@ def create_and_mount_image(args: PmbArgs, size_boot, size_root, size_reserve, sp
 
     # Create empty image files
     pmb.chroot.user(["mkdir", "-p", "/home/pmos/rootfs"])
-    size_mb_full = str(size_mb) + "M"
-    size_mb_boot = str(round(size_boot)) + "M"
-    size_mb_root = str(round(size_root)) + "M"
+    size_mb_full = str(round(size_mb)) + "M"
+    size_mb_boot = str(round(layout["boot"])) + "M"
+    size_mb_root = str(round(layout["root"])) + "M"
     images = {img_path_full: size_mb_full}
     if split:
         images = {img_path_boot: size_mb_boot, img_path_root: size_mb_root}
-    for img_path, size_mb in images.items():
-        logging.info(f"(native) create {img_path.name} " f"({size_mb})")
-        pmb.chroot.root(["truncate", "-s", size_mb, img_path])
+    for img_path, part_size_mb in images.items():
+        logging.info(f"(native) create {img_path.name} " f"({part_size_mb})")
+        pmb.chroot.root(["truncate", "-s", part_size_mb, img_path])
 
     # Mount to /dev/install
     mount_image_paths = {img_path_full: "/dev/install"}
@@ -122,7 +125,8 @@ def create_and_mount_image(args: PmbArgs, size_boot, size_root, size_reserve, sp
         pmb.helpers.mount.bind_file(device, Chroot.native() / mount_point)
 
 
-def create(args: PmbArgs, size_boot, size_root, size_reserve, split, disk: Optional[Path]):
+# FIXME: layout is actually PartitionLayout but the NotRequired type hint does whacky stuff
+def create(layout: dict[str, int], split, disk: Optional[Path]):
     """
     Create /dev/install (the "install blockdevice").
 
@@ -136,4 +140,4 @@ def create(args: PmbArgs, size_boot, size_root, size_reserve, split, disk: Optio
     if disk:
         mount_disk(disk)
     else:
-        create_and_mount_image(args, size_boot, size_root, size_reserve, split)
+        create_and_mount_image(layout, split)

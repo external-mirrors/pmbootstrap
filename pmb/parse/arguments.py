@@ -87,6 +87,9 @@ def arguments_install(subparser):
         "--no-firewall", action="store_true", help="do not enable the firewall by default"
     )
     ret.add_argument(
+        "--immutable", action="store_true", help="make the rootfs immutable"
+    )
+    ret.add_argument(
         "--password",
         help="dummy password for automating the"
         " installation - will be handled in PLAIN TEXT during"

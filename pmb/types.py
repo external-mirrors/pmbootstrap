@@ -3,7 +3,7 @@
 
 from argparse import Namespace
 from pathlib import Path
-from typing import Literal, Optional, TypedDict, Union
+from typing import Literal, NotRequired, Optional, TypedDict, Union
 
 from pmb.core.arch import Arch
 
@@ -17,10 +17,13 @@ Env = dict[str, PathString]
 
 
 class PartitionLayout(TypedDict):
-    kernel: Optional[int]
+    kernel: NotRequired[int]
     boot: int
-    reserve: Optional[int]
+    reserve: NotRequired[int]
     root: int
+    root_b: NotRequired[int]
+    var: NotRequired[int]
+    home: NotRequired[int]
 
 
 class AportGenEntry(TypedDict):
@@ -82,9 +85,10 @@ class PmbArgs(Namespace):
     host_qemu: str
     image_size: str
     image: bool
+    immutable: bool
     install_base: str
     install_blockdev: str
-    install_cgpt: str
+    install_cgpt: bool
     install_key: bool
     install_local_pkgs: str
     install_recommends: str
