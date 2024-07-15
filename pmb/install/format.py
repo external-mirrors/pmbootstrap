@@ -187,7 +187,7 @@ def format_and_mount_part(args: PmbArgs, device, part, part_label, disk):
         prepare_btrfs_subvolumes(args, device, mountpoint)
 
 
-def format(args: PmbArgs, layout, boot_label, root_label, disk):
+def format(args: PmbArgs, layout, boot_label, root_label, disk, split: bool):
     """
     :param layout: partition layout from get_partition_layout()
     :param boot_label: label of the boot partition (e.g. "pmOS_boot")
@@ -209,7 +209,9 @@ def format(args: PmbArgs, layout, boot_label, root_label, disk):
             case "boot":
                 format_and_mount_boot(args, part_dev, boot_label)
             # Ignore partitions we don't need to mount
-            case "reserve" | "kernel" | "root_b":
+            case "reserve" | "kernel" | "root_b" | "var_b" | "verity_a" | "verity_b":
                 pass
             case _:
-                format_and_mount_part(args, part_dev, part, part, disk)
+                # with --split we only care about root and boot
+                if not split:
+                    format_and_mount_part(args, part_dev, part, part, disk)

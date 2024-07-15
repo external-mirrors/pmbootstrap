@@ -112,7 +112,7 @@ def get_kernel_package(config: Config):
     return ["device-" + config.device + "-kernel-" + config.kernel]
 
 
-def copy_files_from_chroot(args: PmbArgs, chroot: Chroot):
+def copy_files_from_chroot(args: PmbArgs, chroot: Chroot, split: bool):
     """
     Copy all files from the rootfs chroot to /mnt/install, except
     for the home folder (because /home will contain some empty
@@ -141,6 +141,8 @@ def copy_files_from_chroot(args: PmbArgs, chroot: Chroot):
     for path in mountpoint_outside.glob("*"):
         if path.name == "home":
             continue
+        if args.immutable and path.name in ("var", "srv"):
+            continue
         folders.append(path.name)
 
     # Update or copy all files
@@ -156,8 +158,10 @@ def copy_files_from_chroot(args: PmbArgs, chroot: Chroot):
     else:
         pmb.chroot.root(["cp", "-a"] + folders + ["/mnt/install/"], working_dir=mountpoint)
         # Copy .offload parts for immutable
-        if args.immutable:
+        if args.immutable and not split:
             pmb.chroot.root(["cp", "-a", "home/.offload", "/mnt/install/home/"], working_dir=mountpoint)
+        if args.immutable and split:
+            pmb.chroot.root(["mkdir", "-p", "/mnt/install/var"])
 
 
 def create_home_from_skel(filesystem: str, user: str):
@@ -195,12 +199,14 @@ def configure_apk(args: PmbArgs):
     for key in keys_dir.glob("*.pub"):
         pmb.helpers.run.root(["cp", key, rootfs / "etc/apk/keys/"])
 
-    # Copy over the corresponding APKINDEX files from cache
-    index_files = pmb.helpers.repo.apkindex_files(
-        arch=pmb.parse.deviceinfo().arch, user_repository=False
-    )
-    for f in index_files:
-        pmb.helpers.run.root(["cp", f, rootfs / "var/cache/apk/"])
+    # When building an OTA we don't include /var
+    if (rootfs / "var/cache/apk/").resolve().exists():
+        # Copy over the corresponding APKINDEX files from cache
+        index_files = pmb.helpers.repo.apkindex_files(
+            arch=pmb.parse.deviceinfo().arch, user_repository=False
+        )
+        for f in index_files:
+            pmb.helpers.run.root(["cp", f, rootfs / "var/cache/apk/"])
 
     # Disable pmbootstrap repository
     pmb.helpers.run.root(
@@ -299,7 +305,7 @@ def setup_login(args: PmbArgs, config: Config, chroot: Chroot):
         pmb.chroot.root(["passwd", "-l", "root"], chroot)
 
 
-def copy_ssh_keys(config: Config):
+def copy_ssh_keys(config: Config, immutable: bool):
     """
     If requested, copy user's SSH public keys to the device if they exist
     """
@@ -324,12 +330,18 @@ def copy_ssh_keys(config: Config):
         outfile.write(f"{key}")
     outfile.close()
 
-    target = Chroot.native() / "mnt/install/home/" / config.user / ".ssh"
-    pmb.helpers.run.root(["mkdir", target])
+    # On immutable we don't have a home partition on first boot, so put the
+    # SSH keys in /tmp, the initramfs will copy them over.
+    if immutable:
+        target = Chroot.native() / "mnt/install/tmp"
+    else:
+        target = Chroot.native() / "mnt/install/home/" / config.user / ".ssh"
+    pmb.helpers.run.root(["mkdir", "-p", target])
     pmb.helpers.run.root(["chmod", "700", target])
     pmb.helpers.run.root(["cp", authorized_keys, target / "authorized_keys"])
     pmb.helpers.run.root(["rm", authorized_keys])
-    pmb.helpers.run.root(["chown", "-R", "10000:10000", target])
+    if not immutable:
+        pmb.helpers.run.root(["chown", "-R", "10000:10000", target])
 
 
 def setup_keymap(config: Config):
@@ -742,10 +754,8 @@ def get_partition_layout(size_boot: int, size_reserve: int, size_root: int,
 
     if immutable:
         ret["root_b"] = ret["root"]
-        # FIXME: eh, what's a good size for /var ?
-        ret["var"] = max(round(ret["root"] / 2), 800)
-        # Will be 100% of the remaining space
-        ret["home"] = 100
+        ret["verity_a"] = 256
+        ret["verity_b"] = 256
 
     return ret
 
@@ -786,7 +796,7 @@ def create_crypttab(args: PmbArgs, layout, chroot: Chroot):
     pmb.chroot.root(["mv", "/tmp/crypttab", "/etc/crypttab"], chroot)
 
 
-def create_fstab(args: PmbArgs, layout: dict[str, int], chroot: Chroot):
+def create_fstab(args: PmbArgs, layout: dict[str, int], chroot: Chroot, split: bool):
     """
     Create /etc/fstab config
 
@@ -830,6 +840,8 @@ def create_fstab(args: PmbArgs, layout: dict[str, int], chroot: Chroot):
                     filesystem = "vfat"
                     options += ",umask=0077,nosymfollow,codepage=437,iocharset=ascii"
             case _:
+                if split:
+                    continue
                 mountpoint = f"/{part}"
 
         if device.strip() == "UUID=":
@@ -924,14 +936,14 @@ def install_system_image(
     if not split:
         pmb.install.partitions_mount(device, layout, disk)
 
-    pmb.install.format(args, layout, boot_label, root_label, disk)
+    pmb.install.format(args, layout, boot_label, root_label, disk, split)
 
     # Since we shut down the chroot we need to mount it again
     pmb.chroot.mount(chroot)
 
     # Create /etc/fstab and /etc/crypttab
     logging.info("(native) create /etc/fstab")
-    create_fstab(args, layout, chroot) # type: ignore
+    create_fstab(args, layout, chroot, split) # type: ignore
     if args.full_disk_encryption:
         logging.info("(native) create /etc/crypttab")
         create_crypttab(args, layout, chroot)
@@ -945,12 +957,40 @@ def install_system_image(
     pmb.helpers.run.root(["rm", chroot / "in-pmbootstrap"])
     pmb.chroot.remove_mnt_pmbootstrap(chroot)
 
+    # Immutable moves some stuff out of /var and into /home. We have to do this now
+    # to avoid dealing with /var/cache being bind-mounted during install
+    if args.immutable:
+        # overlayfs for /etc
+        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/etc/upper"])
+        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/etc/work"])
+
+        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload"])
+        for d in ("var/cache", "var/log", "opt", "var/lib/flatpak"):
+            if (chroot / d).is_symlink():
+                continue
+
+            if (chroot / d).exists():
+                pmb.helpers.run.root(["mv", chroot / d, chroot / "home/.offload/"])
+            else:
+                pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload" / Path(d).name])
+
+            pmb.helpers.run.root(["ln", "-sf", "../" * d.count("/") + f"home/.offload/{Path(d).name}",
+                                  chroot / d])
+
+        # FIXME: complete /usr merge migration, move this from /etc
+        # Make sure the initramfs detects the rootfs
+        pmb.helpers.run.root(["touch", chroot / "usr/lib/os-release"])
+
     # Just copy all the files
     logging.info(f"*** ({step + 1}/{steps}) FILL INSTALL BLOCKDEVICE ***")
-    copy_files_from_chroot(args, chroot)
-    create_home_from_skel(args.filesystem, config.user)
+    copy_files_from_chroot(args, chroot, split)
+    # With immutable split we skip home
+    if not args.immutable:
+        create_home_from_skel(args.filesystem, config.user)
+    else:
+        pmb.helpers.run.root(["mkdir", "-p", chroot.native() / "mnt/install/home"])
+    copy_ssh_keys(config, args.immutable)
     configure_apk(args)
-    copy_ssh_keys(config)
 
     # Don't try to embed firmware and cgpt on split images since there's no
     # place to put it and it will end up in /dev of the chroot instead
@@ -1291,31 +1331,6 @@ def create_device_rootfs(args: PmbArgs, step, steps):
 
     chroot = Chroot(ChrootType.ROOTFS, device)
     pmb.chroot.init(chroot)
-
-    # Immutable moves some stuff out of /var and into /home
-    if args.immutable:
-        # pmb.helpers.run.root(["mv", chroot / "etc", chroot / "var/etc"])
-        # pmb.helpers.run.root(["ln", "-sf", "var/etc", chroot / "etc"])
-
-        # overlayfs for /etc
-        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/etc/upper"])
-        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/etc/work"])
-
-        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/cache"])
-        pmb.helpers.run.root(["ln", "-sf", "../home/.offload/cache", chroot / "var/cache"])
-
-        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/log"])
-        pmb.helpers.run.root(["ln", "-sf", "../home/.offload/log", chroot / "var/log"])
-
-        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/flatpak"])
-        pmb.helpers.run.root(["ln", "-sf", "../../home/.offload/flatpak", chroot / "var/lib/flatpak"])
-
-        pmb.helpers.run.root(["mkdir", "-p", chroot / "home/.offload/opt"])
-        pmb.helpers.run.root(["ln", "-sf", "home/.offload/opt", chroot / "opt"])
-
-        # FIXME: complete /usr merge migration, move this from /etc
-        # Make sure the initramfs detects the rootfs
-        pmb.helpers.run.root(["touch", chroot / "usr/lib/os-release"])
 
     # Create user before installing packages, so post-install scripts of
     # pmaports can figure out the username (legacy reasons: pmaports#820)

@@ -72,9 +72,6 @@ def create_and_mount_image(layout: dict[str, int], split=False):
     :param split: create separate images for boot and root partitions
     """
 
-    if split and "home" in layout:
-        raise RuntimeError("Cannot split image with --immutable")
-
     # Short variables for paths
     chroot = Chroot.native()
     config = get_context().config

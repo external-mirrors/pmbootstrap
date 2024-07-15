@@ -20,10 +20,12 @@ class PartitionLayout(TypedDict):
     kernel: NotRequired[int]
     boot: int
     reserve: NotRequired[int]
-    root: int
+    verity_a: NotRequired[int]
+    verity_b: NotRequired[int]
+    root: int # for compat, will become root_a when immutable
     root_b: NotRequired[int]
-    var: NotRequired[int]
-    home: NotRequired[int]
+    # /var and /home partitions are created by
+    # systemd-repart on first boot
 
 
 class AportGenEntry(TypedDict):
