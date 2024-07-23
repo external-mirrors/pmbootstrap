@@ -197,9 +197,13 @@ def foreground_pipe(
     """
     context = pmb.core.context.get_context()
     # Start process in background (stdout and stderr combined)
-    process = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=working_dir, stdin=stdin
-    )
+    try:
+        process = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=working_dir, stdin=stdin
+        )
+    except PermissionError:
+        logging.error(f"Failed to execute {cmd}, please ensure filesystem is not mounted with noexec flag.")
+        raise
 
     # Make process.stdout non-blocking
     stdout = process.stdout or None
