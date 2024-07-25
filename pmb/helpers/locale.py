@@ -1,56 +1,62 @@
 from pmb.helpers import logging
 
 
-def get_keyboard_config(locale: str) -> str | None:
-    xkb_layout = get_xkb_layout(locale)
-    layout = None
-    options = None
-    if (xkb_layout is None
-            or (xkb_layout.layout == "us" and xkb_layout.variant is None)):
-        return None
-    if xkb_layout.layout == "gb":
-        layout = "gb"
-    else:
-        layout = f"us,{xkb_layout.layout}"
-        options = "grp:alt_shift_toggle"
-    variant = xkb_layout.variant if xkb_layout else None
-    template = \
-        f"""Section "InputClass"
-\tIdentifier "keyboard"
-\tMatchIsKeyboard "on"
-\tOption "XkbLayout" "{layout}"
-""" if layout else ""
-    template += f"\tOption \"XkbVariants\" \",{variant}\"\n" if variant else ""
-    template += f"\tOption \"XkbOptions\" \"{options}\"\n" if options else ""
-    template += "EndSection"
-    return template
-
-
 class XkbLayout:
-    def __init__(self,
-                 layout: str | None = None,
-                 variant: str | None = None):
+    def __init__(self, layout: str = "us", variant: str | None = None):
         self.layout = layout
         self.variant = variant
+        self.layout_list = f"us,{layout}" if layout != "gb" else "gb"
+        self.variant_list = f",{variant}" if variant else None
+        self.options = "grp:alt_shift_toggle" if layout != "gb" else None
+
+    def is_default(self) -> bool:
+        return self.layout == "us" and self.variant is None
+
+    def get_profile_vars(self) -> str | None:
+        if self.is_default():
+            return None
+        template = "XKB_DEFAULT_LAYOUT=" + self.layout_list
+        if self.variant_list:
+            template += "\nXKB_DEFAULT_VARIANT=" + self.variant_list
+        if self.options:
+            template += "\nXKB_DEFAULT_OPTIONS=grp:alt_shift_toggle"
+        return template
+
+    def get_keyboard_config(self) -> str | None:
+        if self.is_default():
+            return None
+        template = (
+            f"""Section "InputClass"
+\tIdentifier "keyboard"
+\tMatchIsKeyboard "on"
+\tOption "XkbLayout" "{self.layout_list}"\n"""
+            if self.layout_list
+            else ""
+        )
+        template += f'\tOption "XkbVariants" "{self.variant_list}"\n' if self.variant_list else ""
+        template += f'\tOption "XkbOptions" "{self.options}"\n' if self.options else ""
+        template += "EndSection"
+        return template
 
 
-def get_xkb_layout(locale: str) -> XkbLayout | None:
+
+def get_xkb_layout(locale: str) -> XkbLayout:
     """
     Get Xkb layout for the given locale.
 
     :param locale: Locale to get Xkblayout for.
     :type locale: str
     :return: Xkblayout for the given locale.
-    :return: None if no Xkblayout found.
-    :rtype: XkbLayout | None
+    :rtype: XkbLayout
     """
     try:
         (language, territory) = locale.split("_")
     except ValueError:
-        return None
+        return XkbLayout()
 
-    lang_layouts = ["az", "bg", "csb", "cv", "dsb", "fi", "fo", "hr", "hu", "id", "is", "it", "lt", "lv", "mk", "mn",
-                    "mt", "nl", "pl", "ro", "ru", "sk", "tg", "th", "tr", "uk", "uz"]
+    lang_layouts = ["az", "bg", "csb", "cv", "dsb", "fi", "fo", "hr", "hu", "id", "is", "it",
+                    "lt", "lv", "mk", "mn", "mt", "nl", "pl", "ro", "ru", "sk", "tg", "th",
+                    "tr", "uk", "uz"]
 
     if language in lang_layouts:
         return XkbLayout(language)
@@ -115,9 +121,11 @@ def get_xkb_layout(locale: str) -> XkbLayout | None:
         else:
             return XkbLayout("us")
     elif language == "es":
+        # fmt : off
         if territory in [
                 "AR", "BO", "CL", "CO", "CR", "CU", "DO", "EC", "GT", "HN",
                 "MX", "NI", "PA", "PE", "PR", "PY", "SV", "UY", "VE"]:
+            # fmt : on
             return XkbLayout("latam")
         else:  # "ES", "US"
             return XkbLayout("es")
@@ -218,8 +226,8 @@ def get_xkb_layout(locale: str) -> XkbLayout | None:
     elif language == "yo":
         return XkbLayout("ng", "yoruba")
     elif language not in locales_without_layout:
-        logging.warning(f"Language \"{language}\" not found in language list")
-    return None
+        logging.warning(f'Language "{language}" not found in language list')
+    return XkbLayout()  # return default layout if no layout was found
 
 
 lang_to_layout = {
@@ -270,7 +278,7 @@ lang_to_layout = {
     "wo": "sn",
     "yi": "il",
     "yue": "cn",
-    "zh": "cn"
+    "zh": "cn",
 }
 locales_without_layout = [
     "aa",  # Afar
