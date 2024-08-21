@@ -1,12 +1,7 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import fcntl
-from pmb.core.context import get_context
-from pmb.core.arch import Arch
-from pmb.types import PathString, Env
-from pmb.helpers import logging
 import os
-from pathlib import Path
 import selectors
 import shlex
 import subprocess
@@ -14,7 +9,13 @@ import sys
 import threading
 import time
 from collections.abc import Sequence
+from pathlib import Path
+
 import pmb.helpers.run
+from pmb.core.arch import Arch
+from pmb.core.context import get_context
+from pmb.helpers import logging
+from pmb.types import Env, PathString
 
 """For a detailed description of all output modes, read the description of
    core() at the bottom. All other functions in this file get (indirectly)

@@ -1,8 +1,8 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.helpers import logging
 import pmb.chroot
 from pmb.core import Chroot
+from pmb.helpers import logging
 from pmb.types import PmbArgs
 
 

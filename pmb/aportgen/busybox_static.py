@@ -1,6 +1,7 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
+
 import pmb.aportgen.core
 import pmb.build
 import pmb.chroot.apk

@@ -1,14 +1,15 @@
 # Copyright 2023 Nick Reitemeyer, Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
+
 import pmb.aportgen.core
 import pmb.build
 import pmb.chroot.apk
 import pmb.chroot.apk_static
-from pmb.core.arch import Arch
 import pmb.helpers.run
 import pmb.parse.apkindex
 from pmb.core import Chroot
+from pmb.core.arch import Arch
 from pmb.core.context import get_context
 
 

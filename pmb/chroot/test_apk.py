@@ -1,10 +1,10 @@
 import pytest
 
+import pmb.config.pmaports
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 
 from .apk import packages_get_locally_built_apks
-import pmb.config.pmaports
 
 
 @pytest.fixture

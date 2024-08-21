@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pmb.chroot
 import pmb.config.pmaports
-from pmb.core.arch import Arch
-from pmb.core.chroot import Chroot
-from pmb.types import PathString
 import pmb.helpers.cli
 import pmb.helpers.run
 import pmb.helpers.run_core
 import pmb.parse.version
+from pmb.core.arch import Arch
+from pmb.core.chroot import Chroot
 from pmb.core.context import get_context
+from pmb.types import PathString
 
 
 def _run(command, chroot: Chroot | None, output="log"):

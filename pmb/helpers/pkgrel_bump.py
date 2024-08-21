@@ -1,14 +1,13 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.core.arch import Arch
-from pmb.helpers import logging
-
-from pmb.types import PmbArgs
 import pmb.helpers.file
 import pmb.helpers.pmaports
 import pmb.helpers.repo
 import pmb.parse
 import pmb.parse.apkindex
+from pmb.core.arch import Arch
+from pmb.helpers import logging
+from pmb.types import PmbArgs
 
 
 def package(args: PmbArgs, pkgname, reason="", dry=False):

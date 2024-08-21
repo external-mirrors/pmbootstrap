@@ -1,15 +1,16 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.helpers import logging
 from pathlib import Path
+
+import pmb.chroot.apk
 import pmb.chroot.initfs_hooks
 import pmb.chroot.other
-import pmb.chroot.apk
 import pmb.config.pmaports
-from pmb.types import PmbArgs
 import pmb.helpers.cli
 from pmb.core import Chroot
 from pmb.core.context import get_context
+from pmb.helpers import logging
+from pmb.types import PmbArgs
 
 
 def build(flavor, chroot: Chroot):

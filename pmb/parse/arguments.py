@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
-from pmb.core.arch import Arch
 from pmb.core import Config
-from pmb.types import PmbArgs
+from pmb.core.arch import Arch
 from pmb.helpers.exceptions import NonBugError
+from pmb.types import PmbArgs
 
 try:
     import argcomplete  # type:ignore[import-untyped]

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
 from pathlib import Path
+
 from pmb.core.pkgrepo import pkgrepo_glob_one, pkgrepo_iglob
 
 

@@ -2,13 +2,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
+
+import logging
+
+import pmb.config
+import pmb.helpers.git
+import pmb.parse.kconfig
 from pmb import commands
 from pmb.core.context import get_context
 from pmb.helpers.exceptions import NonBugError
-import pmb.parse.kconfig
-import pmb.helpers.git
-import pmb.config
-import logging
 
 
 class KConfigCheck(commands.Command):

@@ -1,13 +1,14 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pathlib import Path
-from pmb.helpers import logging
 import os
 import time
+from pathlib import Path
+
 import pmb.chroot
 import pmb.config
 import pmb.install.losetup
 from pmb.core import Chroot
+from pmb.helpers import logging
 
 
 # FIXME (#2324): this function drops disk to a string because it's easier

@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import hashlib
 import json
-from pmb.helpers import logging
 import os
-from pathlib import Path
 import shutil
 import urllib.request
+from pathlib import Path
 
-from pmb.core.context import get_context
 import pmb.helpers.run
+from pmb.core.context import get_context
+from pmb.helpers import logging
 
 
 def cache_file(prefix: str, url: str) -> Path:

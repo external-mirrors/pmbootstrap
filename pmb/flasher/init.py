@@ -3,10 +3,10 @@
 import pmb.chroot.apk
 import pmb.config
 import pmb.config.pmaports
-import pmb.helpers.mount
 import pmb.helpers.args
-from pmb.helpers.mount import mount_device_rootfs
+import pmb.helpers.mount
 from pmb.core import Chroot, ChrootType
+from pmb.helpers.mount import mount_device_rootfs
 
 
 def install_depends(method: str) -> None:

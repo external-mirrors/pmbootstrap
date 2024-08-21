@@ -7,16 +7,16 @@ See also:
 - pmb/helpers/package.py (work with both)
 """
 
-from pmb.core.context import get_context
-from pmb.core.arch import Arch
-from pmb.core.pkgrepo import pkgrepo_iter_package_dirs
-from pmb.helpers import logging
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
-from collections.abc import Sequence
 
-from pmb.meta import Cache
 import pmb.parse
+from pmb.core.arch import Arch
+from pmb.core.context import get_context
+from pmb.core.pkgrepo import pkgrepo_iter_package_dirs
+from pmb.helpers import logging
+from pmb.meta import Cache
 
 
 def _find_apkbuilds(skip_extra_repos=False) -> dict[str, Path]:

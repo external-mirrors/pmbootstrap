@@ -1,17 +1,18 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.core.context import get_context
-from pmb.core.arch import Arch
-from pmb.helpers import logging
 import os
-from pathlib import Path
 import re
+from pathlib import Path
+from typing import Any
+
 import pmb.chroot
 import pmb.config
 import pmb.config.init
 import pmb.helpers.pmaports
 import pmb.helpers.run
-from typing import Any
+from pmb.core.arch import Arch
+from pmb.core.context import get_context
+from pmb.helpers import logging
 
 
 def folder_size(path: Path):

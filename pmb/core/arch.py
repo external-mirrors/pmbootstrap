@@ -1,8 +1,8 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import enum
-from pathlib import Path, PosixPath, PurePosixPath
 import platform
+from pathlib import Path, PosixPath, PurePosixPath
 
 # Initialised at the bottom
 _cached_native_arch: "Arch"

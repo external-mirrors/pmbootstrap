@@ -1,20 +1,19 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.core.context import get_context
-from pmb.helpers import logging
-
-import pmb.config
-from pmb.parse.deviceinfo import Deviceinfo
-from pmb.types import PmbArgs
-import pmb.flasher
-import pmb.install
 import pmb.chroot.apk
 import pmb.chroot.initfs
 import pmb.chroot.other
+import pmb.config
+import pmb.flasher
 import pmb.helpers.frontend
 import pmb.helpers.mount
+import pmb.install
 import pmb.parse.kconfig
 from pmb.core import Chroot, ChrootType
+from pmb.core.context import get_context
+from pmb.helpers import logging
+from pmb.parse.deviceinfo import Deviceinfo
+from pmb.types import PmbArgs
 
 
 def kernel(deviceinfo: Deviceinfo, method: str, boot: bool = False, autoinstall: bool = False):

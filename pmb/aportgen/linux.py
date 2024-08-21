@@ -1,10 +1,10 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+import pmb.aportgen.core
+import pmb.helpers.run
+import pmb.parse.apkindex
 from pmb.core.context import get_context
 from pmb.parse.deviceinfo import Deviceinfo
-import pmb.helpers.run
-import pmb.aportgen.core
-import pmb.parse.apkindex
 
 
 def generate_apkbuild(pkgname: str, deviceinfo: Deviceinfo, patches: list[str]):

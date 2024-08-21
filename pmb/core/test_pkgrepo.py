@@ -2,7 +2,7 @@ import pytest
 
 import pmb.helpers.git
 import pmb.helpers.run
-from pmb.core.pkgrepo import pkgrepo_paths, pkgrepo_default_path
+from pmb.core.pkgrepo import pkgrepo_default_path, pkgrepo_paths
 
 
 @pytest.mark.parametrize("config_file", ["no-repos"], indirect=True)

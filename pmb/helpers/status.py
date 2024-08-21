@@ -5,8 +5,8 @@ import pmb.config.other
 import pmb.config.workdir
 import pmb.helpers.git
 from pmb.core import Config
-from pmb.types import PmbArgs
 from pmb.core.context import get_context
+from pmb.types import PmbArgs
 
 
 def print_status_line(key: str, value: str):

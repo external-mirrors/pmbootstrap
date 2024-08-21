@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import collections
 import glob
-from pmb.helpers import logging
 import os
 from pathlib import Path
+
 import pmb.chroot
-from pmb.types import PmbArgs
 import pmb.helpers.cli
 from pmb.core import Chroot
+from pmb.helpers import logging
+from pmb.types import PmbArgs
 
 
 def get_ci_scripts(topdir):

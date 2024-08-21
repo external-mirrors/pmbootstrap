@@ -1,17 +1,17 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import configparser
-from pathlib import Path
-from pmb.core.pkgrepo import pkgrepo_default_path, pkgrepo_paths, pkgrepo_relative_path
-from pmb.helpers import logging
 import os
 import sys
+from pathlib import Path
 
 import pmb.config
-from pmb.meta import Cache
 import pmb.helpers.git
 import pmb.helpers.pmaports
 import pmb.parse.version
+from pmb.core.pkgrepo import pkgrepo_default_path, pkgrepo_paths, pkgrepo_relative_path
+from pmb.helpers import logging
+from pmb.meta import Cache
 
 
 def clone():

@@ -1,17 +1,17 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 # mypy: disable-error-code="attr-defined"
-from pmb.core.context import get_context
-from pmb.helpers import logging
 import os
-from pathlib import Path
 import re
 from collections import OrderedDict
+from pathlib import Path
 
 import pmb.config
-from pmb.meta import Cache
 import pmb.helpers.devices
 import pmb.parse.version
+from pmb.core.context import get_context
+from pmb.helpers import logging
+from pmb.meta import Cache
 
 # sh variable name regex: https://stackoverflow.com/a/2821201/3527128
 

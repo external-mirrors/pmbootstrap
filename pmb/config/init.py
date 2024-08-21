@@ -1,11 +1,5 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.core.context import get_context
-from pmb.core.chroot import Chroot
-from pmb.core.config import SystemdConfig
-from pmb.core.context import Context
-from pmb.core.pkgrepo import pkgrepo_default_path
-from pmb.helpers import logging
 import glob
 import json
 import os
@@ -13,10 +7,9 @@ import shutil
 from typing import Any
 
 import pmb.aportgen
+import pmb.chroot.zap
 import pmb.config
 import pmb.config.pmaports
-from pmb.core import Config
-from pmb.types import PmbArgs
 import pmb.helpers.cli
 import pmb.helpers.devices
 import pmb.helpers.git
@@ -26,10 +19,16 @@ import pmb.helpers.other
 import pmb.helpers.pmaports
 import pmb.helpers.run
 import pmb.helpers.ui
-import pmb.chroot.zap
-import pmb.parse.deviceinfo
-from pmb.parse.deviceinfo import Deviceinfo
 import pmb.parse._apkbuild
+import pmb.parse.deviceinfo
+from pmb.core import Config
+from pmb.core.chroot import Chroot
+from pmb.core.config import SystemdConfig
+from pmb.core.context import Context, get_context
+from pmb.core.pkgrepo import pkgrepo_default_path
+from pmb.helpers import logging
+from pmb.parse.deviceinfo import Deviceinfo
+from pmb.types import PmbArgs
 
 
 def require_programs():

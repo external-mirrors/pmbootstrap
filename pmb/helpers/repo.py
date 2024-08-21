@@ -8,19 +8,19 @@ See also:
 - pmb/helpers/package.py (work with both)
 """
 
-import os
 import hashlib
-from pmb.core.context import get_context
-from pmb.core.arch import Arch
-from pmb.core.pkgrepo import pkgrepo_names
-from pmb.helpers import logging
+import os
 from pathlib import Path
 
 import pmb.config.pmaports
-from pmb.meta import Cache
 import pmb.helpers.http
-import pmb.helpers.run
 import pmb.helpers.other
+import pmb.helpers.run
+from pmb.core.arch import Arch
+from pmb.core.context import get_context
+from pmb.core.pkgrepo import pkgrepo_names
+from pmb.helpers import logging
+from pmb.meta import Cache
 
 
 def apkindex_hash(url: str, length: int = 8) -> Path:

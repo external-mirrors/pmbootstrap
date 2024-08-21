@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import copy
-from typing import Generic, Optional, TypeVar, overload
-from collections.abc import Callable
-
 import inspect
+from collections.abc import Callable
+from typing import Generic, Optional, TypeVar, overload
 
 FuncArgs = TypeVar("FuncArgs")
 FuncReturn = TypeVar("FuncReturn")

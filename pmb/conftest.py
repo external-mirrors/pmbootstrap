@@ -1,12 +1,13 @@
 import os
-from pathlib import Path
-import pytest
 import shutil
+from pathlib import Path
+
+import pytest
 
 import pmb.core
 from pmb.core.context import get_context
-from pmb.types import PmbArgs
 from pmb.helpers.args import init as init_args
+from pmb.types import PmbArgs
 
 _testdir = Path(__file__).parent / "data/tests"
 

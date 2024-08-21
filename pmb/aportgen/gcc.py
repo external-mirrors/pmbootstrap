@@ -1,10 +1,10 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import pmb.aportgen.core
-from pmb.core.context import get_context
-from pmb.core.pkgrepo import pkgrepo_default_path
 import pmb.helpers.git
 import pmb.helpers.run
+from pmb.core.context import get_context
+from pmb.core.pkgrepo import pkgrepo_default_path
 
 
 def generate(pkgname: str):

@@ -1,15 +1,15 @@
 # Copyright 2023 Attila Szollosi
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pathlib import Path
-from pmb.helpers import logging
-import re
 import os
+import re
+from pathlib import Path
 
 import pmb.build
 import pmb.config
-import pmb.parse
 import pmb.helpers.pmaports
+import pmb.parse
 import pmb.parse.kconfigcheck
+from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
 
 

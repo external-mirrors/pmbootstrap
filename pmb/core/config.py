@@ -1,9 +1,9 @@
-from copy import deepcopy
 import enum
 import multiprocessing
-from typing import Any, TypedDict
-from pathlib import Path
 import os
+from copy import deepcopy
+from pathlib import Path
+from typing import Any, TypedDict
 
 
 class Mirrors(TypedDict):

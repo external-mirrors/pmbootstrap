@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
 from pathlib import Path, PurePath
+
 import pmb.helpers
-from pmb.core import Chroot
 import pmb.helpers.run
+from pmb.core import Chroot
 
 
 def ismount(folder: Path):

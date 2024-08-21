@@ -1,8 +1,8 @@
 import pytest
 
 from .arch import Arch
-from .context import get_context
 from .chroot import Chroot, ChrootType
+from .context import get_context
 
 
 def test_valid_chroots(pmb_args, mock_devices_find_path):

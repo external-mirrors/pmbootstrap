@@ -1,11 +1,12 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-from pathlib import Path
 import subprocess
-from pmb.core.arch import Arch
-import pmb.helpers.run_core
 from collections.abc import Sequence
+from pathlib import Path
+
+import pmb.helpers.run_core
+from pmb.core.arch import Arch
 from pmb.types import Env, PathString
 
 

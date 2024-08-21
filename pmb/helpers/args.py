@@ -1,12 +1,12 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import pmb.config
+import pmb.helpers.args
+import pmb.helpers.git
 from pmb.core.context import Context
 from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.helpers import logging
 from pmb.types import PmbArgs
-import pmb.helpers.git
-import pmb.helpers.args
 
 __args: PmbArgs = PmbArgs()
 

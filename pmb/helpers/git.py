@@ -1,18 +1,18 @@
 # Copyright 2024 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import configparser
-from pathlib import Path
-from pmb.core.context import get_context
-from pmb.core.pkgrepo import pkgrepo_path
-from pmb.helpers import logging
 import os
 import re
+from pathlib import Path
 
 import pmb.build
 import pmb.chroot.apk
 import pmb.config
 import pmb.helpers.pmaports
 import pmb.helpers.run
+from pmb.core.context import get_context
+from pmb.core.pkgrepo import pkgrepo_path
+from pmb.helpers import logging
 from pmb.meta import Cache
 
 re_branch_aports = re.compile(r"^\d+\.\d\d+-stable$")

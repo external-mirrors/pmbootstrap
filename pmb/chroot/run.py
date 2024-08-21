@@ -1,13 +1,13 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-from pathlib import Path, PurePath
 import shutil
 from collections.abc import Sequence
+from pathlib import Path, PurePath
 
-import pmb.config
 import pmb.chroot
 import pmb.chroot.binfmt
+import pmb.config
 import pmb.helpers.run
 import pmb.helpers.run_core
 from pmb.core import Chroot

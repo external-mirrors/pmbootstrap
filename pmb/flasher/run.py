@@ -1,9 +1,9 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.parse.deviceinfo import Deviceinfo
-import pmb.flasher
 import pmb.chroot.initfs
+import pmb.flasher
 import pmb.helpers.args
+from pmb.parse.deviceinfo import Deviceinfo
 
 
 def check_partition_blacklist(deviceinfo: Deviceinfo, key, value):

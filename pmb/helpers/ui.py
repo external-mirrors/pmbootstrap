@@ -1,10 +1,11 @@
 # Copyright 2023 Clayton Craft
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-from pmb.core.pkgrepo import pkgrepo_iglob
-import pmb.helpers.pmaports
+
 import pmb.helpers.package
+import pmb.helpers.pmaports
 import pmb.parse
+from pmb.core.pkgrepo import pkgrepo_iglob
 
 
 def list_ui(arch):

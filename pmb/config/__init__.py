@@ -1,10 +1,9 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-from pathlib import Path
-from pmb.types import AportGenEntry, PathString
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 #
 # Exported functions
@@ -12,9 +11,9 @@ from collections.abc import Sequence
 # FIXME (#2324): this sucks, we should re-organise this and not rely on "lifting"
 # this functions this way
 from pmb.config.file import load, save, serialize
-from pmb.config.sudo import which_sudo
 from pmb.config.other import is_systemd_selected
-
+from pmb.config.sudo import which_sudo
+from pmb.types import AportGenEntry, PathString
 
 #
 # Exported variables (internal configuration)

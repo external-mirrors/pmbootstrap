@@ -1,10 +1,9 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.helpers import logging
-
 import pmb.build
 import pmb.helpers.package
 import pmb.helpers.pmaports
+from pmb.helpers import logging
 
 
 def filter_missing_packages(arch, pkgnames):

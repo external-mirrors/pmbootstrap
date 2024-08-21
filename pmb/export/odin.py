@@ -1,6 +1,5 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.helpers import logging
 from pathlib import Path
 
 import pmb.build
@@ -9,6 +8,7 @@ import pmb.config
 import pmb.flasher
 import pmb.helpers.file
 from pmb.core import Chroot, ChrootType
+from pmb.helpers import logging
 
 
 def odin(device: str, flavor, folder: Path):

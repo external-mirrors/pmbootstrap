@@ -2,21 +2,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import enum
 import filecmp
-from pmb.meta import Cache
-from pmb.helpers import logging
 import os
 
 import pmb.chroot
-import pmb.chroot.binfmt
 import pmb.chroot.apk
 import pmb.chroot.apk_static
+import pmb.chroot.binfmt
 import pmb.config
 import pmb.config.workdir
+import pmb.helpers.other
 import pmb.helpers.repo
 import pmb.helpers.run
-import pmb.helpers.other
 from pmb.core import Chroot, ChrootType
 from pmb.core.context import get_context
+from pmb.helpers import logging
+from pmb.meta import Cache
 
 
 class UsrMerge(enum.Enum):

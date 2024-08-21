@@ -1,17 +1,18 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import collections
-from typing import Any
-from collections.abc import Sequence
-from pmb.core.arch import Arch
-from pmb.core.context import get_context
-from pmb.helpers import logging
-from pathlib import Path
 import tarfile
+from collections.abc import Sequence
+from pathlib import Path
+from typing import Any
+
 import pmb.chroot.apk
 import pmb.helpers.package
 import pmb.helpers.repo
 import pmb.parse.version
+from pmb.core.arch import Arch
+from pmb.core.context import get_context
+from pmb.helpers import logging
 
 apkindex_map = {
     "A": "arch",

@@ -2,22 +2,24 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
+
 import enum
-from typing import Optional
 from collections.abc import Generator
 from pathlib import Path, PosixPath, PurePosixPath
-from pmb.types import PmbArgs
+from typing import Optional
+
 from pmb.helpers import frontend
+from pmb.types import PmbArgs
 
 from .base import Command
-from .log import Log
 from .index import Index
+from .kconfig_check import KConfigCheck
+from .kconfig_edit import KConfigEdit
+from .log import Log
+from .pull import Pull
 from .repo_bootstrap import RepoBootstrap
 from .shutdown import Shutdown
 from .test import Test
-from .pull import Pull
-from .kconfig_check import KConfigCheck
-from .kconfig_edit import KConfigEdit
 
 """New way to model pmbootstrap subcommands that can be invoked without PmbArgs."""
 

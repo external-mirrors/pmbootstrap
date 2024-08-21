@@ -1,7 +1,6 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import datetime
-from pmb.helpers import logging
 import os
 import re
 import readline
@@ -9,6 +8,7 @@ import sys
 
 import pmb.config
 from pmb.core.context import get_context
+from pmb.helpers import logging
 
 
 class ReadlineTabCompleter:

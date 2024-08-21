@@ -1,9 +1,6 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-from pmb.core.arch import Arch
-from pmb.core.context import get_context
-from pmb.helpers import logging
 from pathlib import Path
 from typing import Any
 
@@ -13,11 +10,14 @@ import pmb.build.checksum
 import pmb.chroot
 import pmb.chroot.apk
 import pmb.chroot.other
-from pmb.types import PmbArgs
 import pmb.helpers.pmaports
 import pmb.helpers.run
 import pmb.parse
 from pmb.core import Chroot
+from pmb.core.arch import Arch
+from pmb.core.context import get_context
+from pmb.helpers import logging
+from pmb.types import PmbArgs
 
 
 def get_arch(apkbuild) -> Arch:

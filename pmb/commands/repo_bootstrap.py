@@ -1,20 +1,18 @@
 # Copyright 2024 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.core.arch import Arch
-from pmb.core.chroot import Chroot, ChrootType
-from pmb.core.context import Context
-from pmb.helpers import logging
 import glob
 
-import pmb.config.pmaports
-import pmb.helpers.repo
 import pmb.build
 import pmb.chroot
 import pmb.chroot.apk
-from pmb.build import BuildQueueItem
-from pmb.core.context import get_context
-
+import pmb.config.pmaports
+import pmb.helpers.repo
 from pmb import commands
+from pmb.build import BuildQueueItem
+from pmb.core.arch import Arch
+from pmb.core.chroot import Chroot, ChrootType
+from pmb.core.context import Context, get_context
+from pmb.helpers import logging
 
 
 class RepoBootstrap(commands.Command):

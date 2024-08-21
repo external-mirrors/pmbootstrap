@@ -1,13 +1,13 @@
 import enum
 from pathlib import Path
 from typing import Any
-from pmb.core.pkgrepo import pkgrepo_paths
-import pmb.helpers.run
-import pmb.chroot
 
+import pmb.chroot
+import pmb.helpers.run
 from pmb.core import Context
 from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
+from pmb.core.pkgrepo import pkgrepo_paths
 from pmb.helpers import logging
 
 

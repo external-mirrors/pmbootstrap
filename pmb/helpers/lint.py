@@ -1,16 +1,16 @@
 # Copyright 2023 Danct12 <danct12@disroot.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
+import os
 from collections.abc import Sequence
+
+import pmb.build
+import pmb.chroot
+import pmb.chroot.apk
+import pmb.helpers.pmaports
+import pmb.helpers.run
 from pmb.core.chroot import Chroot
 from pmb.core.pkgrepo import pkgrepo_iter_package_dirs, pkgrepo_names, pkgrepo_relative_path
 from pmb.helpers import logging
-import os
-
-import pmb.chroot
-import pmb.chroot.apk
-import pmb.build
-import pmb.helpers.run
-import pmb.helpers.pmaports
 
 
 # FIXME: dest_paths[repo], repo expected to be a Literal.

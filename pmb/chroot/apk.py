@@ -1,28 +1,28 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-from pathlib import Path
-import traceback
-import pmb.chroot.apk_static
-from pmb.core.arch import Arch
-from pmb.helpers import logging
 import shlex
+import traceback
 from collections.abc import Sequence
+from pathlib import Path
 
 import pmb.build
 import pmb.chroot
+import pmb.chroot.apk_static
 import pmb.config
 import pmb.helpers.apk
 import pmb.helpers.other
 import pmb.helpers.pmaports
 import pmb.helpers.repo
 import pmb.helpers.run
-from pmb.meta import Cache
 import pmb.parse.apkindex
 import pmb.parse.depends
 import pmb.parse.version
 from pmb.core import Chroot
+from pmb.core.arch import Arch
 from pmb.core.context import get_context
+from pmb.helpers import logging
+from pmb.meta import Cache
 from pmb.types import PathString
 
 

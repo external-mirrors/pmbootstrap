@@ -1,14 +1,15 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
+from pathlib import Path
+
+import pmb.chroot
+import pmb.chroot.apk
+import pmb.chroot.other
+import pmb.helpers.run
+from pmb.core import Chroot
 from pmb.core.context import get_context
 from pmb.helpers import logging
-from pathlib import Path
-import pmb.helpers.run
-import pmb.chroot
-import pmb.chroot.other
-import pmb.chroot.apk
-from pmb.core import Chroot
 
 
 def is_dtb(path) -> bool:

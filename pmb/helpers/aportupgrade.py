@@ -2,15 +2,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import datetime
 import fnmatch
-from pmb.helpers import logging
 import os
 import re
 import urllib.parse
 
-from pmb.types import PmbArgs
 import pmb.helpers.file
 import pmb.helpers.http
 import pmb.helpers.pmaports
+from pmb.helpers import logging
+from pmb.types import PmbArgs
 
 req_headers: dict[str, str] = {}
 req_headers_github: dict[str, str] = {}

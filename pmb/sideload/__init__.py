@@ -1,18 +1,18 @@
 # Copyright 2023 Martijn Braam
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-from typing import Optional
-from pmb.core.arch import Arch
-from pmb.helpers import logging
 import shlex
+from typing import Optional
 
-from pmb.types import PathString, PmbArgs
+import pmb.build
+import pmb.config.pmaports
 import pmb.helpers.run
 import pmb.helpers.run_core
 import pmb.parse.apkindex
-import pmb.config.pmaports
-import pmb.build
+from pmb.core.arch import Arch
 from pmb.core.context import get_context
+from pmb.helpers import logging
+from pmb.types import PathString, PmbArgs
 
 
 def scp_abuild_key(args: PmbArgs, user: str, host: str, port: str) -> None:
