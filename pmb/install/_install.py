@@ -1324,6 +1324,23 @@ def create_device_rootfs(args: PmbArgs, step, steps):
         pmb.chroot.root(
             ["sh", "-c", f"echo {shlex.quote(line)}" " > /etc/profile.d/10locale-pmos.sh"], chroot
         )
+        # Unfortunately gdm does not take the locale from /etc/profile.d, and
+        # instead queries AccountsService and the locale1 dbus API. We don't
+        # have a great way to initialize those to a certain language, more than
+        # setting the file that openrc-settings reads on startup
+        line = "# locale configuration file for openrc-settingsd"
+        pmb.chroot.root(
+            [
+                "sh",
+                "-c",
+                f"echo {shlex.quote(line)}" " > /etc/profile.d/locale.sh",
+            ],
+            chroot,
+        )
+        line = f"LANG={shlex.quote(config.locale)}"
+        pmb.chroot.root(
+            ["sh", "-c", f"echo {shlex.quote(line)}" " >> /etc/profile.d/locale.sh"], chroot
+        )
 
     # Set the hostname as the device name
     setup_hostname(device, config.hostname)
