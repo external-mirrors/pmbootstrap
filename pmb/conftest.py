@@ -136,6 +136,10 @@ def pmb_args(config_file, mock_context, logfile):
     # Sanity check
     assert ".pytest_tmp" in get_context().config.work.parts
 
+@pytest.fixture(autouse=True)
+def run_around_tests():
+    # Disable pkgrepo path caching since the paths change for each test
+    pmb.core.pkgrepo.pkgrepo_paths.cache_disable()
 
 @pytest.fixture
 def foreign_arch():
