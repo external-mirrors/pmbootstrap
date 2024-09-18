@@ -72,6 +72,8 @@ def logfile(tmp_path_factory):
     logfile = tmp_path / "log_testsuite.txt"
     logging.init(logfile, verbose=True)
 
+    print(f"LOGFILE: {logfile}")
+
     return logfile
 
 
@@ -136,10 +138,23 @@ def pmb_args(config_file, mock_context, logfile):
     # Sanity check
     assert ".pytest_tmp" in get_context().config.work.parts
 
+
 @pytest.fixture(autouse=True)
 def run_around_tests():
     # Disable pkgrepo path caching since the paths change for each test
     pmb.core.pkgrepo.pkgrepo_paths.cache_disable()
+
+
+@pytest.fixture()
+def chroot_cleanup():
+    yield
+    from pmb.chroot import shutdown
+
+    shutdown()
+    # Sanity check
+    assert ".pytest_tmp" in get_context().config.work.parts
+    pmb.helpers.run.root(["rm", "-rf", get_context().config.work])
+
 
 @pytest.fixture
 def foreign_arch():
@@ -169,3 +184,10 @@ def pmaports(pmb_args, monkeypatch):
         pmb.helpers.git.clone("pmaports")
 
     assert pmb.helpers.run.user(["git", "checkout", "master"], working_dir=config.aports[0]) == 0
+    assert (
+        pmb.helpers.run.user(
+            ["git", "remote", "set-url", "origin", "https://gitlab.com/postmarketOS/pmaports.git"],
+            working_dir=config.aports[0],
+        )
+        == 0
+    )
