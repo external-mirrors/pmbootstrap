@@ -112,7 +112,7 @@ def get(pkgname, arch, replace_subpkgnames=False, must_exist=True, try_other_arc
         ret["arch"] = [ret["arch"]]
 
     # Replace subpkgnames if desired
-    if replace_subpkgnames:
+    if ret and replace_subpkgnames:
         depends_new = []
         for depend in ret["depends"]:
             depend_data = get(depend, arch, must_exist=False, try_other_arches=try_other_arches)
