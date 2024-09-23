@@ -87,10 +87,15 @@ def get(pkgname, arch, replace_subpkgnames=False, must_exist=True, try_other_arc
         pmb.helpers.repo.update(arch)
         ret_repo = pmb.parse.apkindex.package(pkgname, arch, False)
 
+        # HACK: pmb.parse.apkindex.package()["arch"] currently isn't of type
+        # Arch, meaning the compare below would fail! (pmb#2455)
+        if ret_repo:
+            ret_repo["arch"] = Arch(ret_repo["arch"])
+
         # Save as result if there was no pmaport, or if the pmaport can not be
         # built for the given arch, but there is a binary package for that arch
         # (e.g. temp/mesa can't be built for x86_64, but Alpine has it)
-        if not ret or (ret_repo and ret_repo["arch"] == arch):
+        if ret_repo and ret_repo["arch"] == arch:
             ret = ret_repo
 
     # Find in APKINDEX (other arches)
