@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import configparser
 from pathlib import Path
+from pmb.core.context import get_context
 from pmb.core.pkgrepo import pkgrepo_default_path, pkgrepo_paths, pkgrepo_relative_path
 from pmb.helpers import logging
 import os
@@ -195,13 +196,16 @@ def switch_to_channel_branch(channel_new):
     """
     # Check current pmaports branch channel
     channel_current = read_config()["channel"]
-    if channel_current == channel_new:
-        return False
 
     aports = pkgrepo_default_path()
+    config = get_context().config
     # list current and new branches/channels
     channels_cfg = pmb.helpers.git.parse_channels_cfg(aports)
     branch_new = channels_cfg["channels"][channel_new]["branch_pmaports"]
+    if config.systemd == pmb.core.config.SystemdConfig.ALWAYS:
+        branch_new = "master_staging_systemd"
+    elif channel_current == channel_new:
+        return False
     branch_current = pmb.helpers.git.rev_parse(aports, extra_args=["--abbrev-ref"])
     if (
         branch_current == "master_staging_systemd"

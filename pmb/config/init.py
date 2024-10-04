@@ -207,23 +207,12 @@ def ask_for_ui_extras(config: Config, ui):
     return pmb.helpers.cli.confirm("Enable this package?", default=config.ui_extras)
 
 
-def ask_for_systemd(config: Config, ui):
-    if "systemd" not in pmb.config.pmaports.read_config_repos():
-        return config.systemd
-
-    if pmb.helpers.ui.check_option(ui, "pmb:systemd-never"):
-        logging.info(
-            "Based on your UI selection, OpenRC will be used as init"
-            " system. This UI does not support systemd."
-        )
-        return config.systemd
-
-    default_is_systemd = pmb.helpers.ui.check_option(ui, "pmb:systemd")
-    not_str = " " if default_is_systemd else " not "
+def ask_for_systemd(config: Config):
     logging.info(
-        "Based on your UI selection, 'default' will result" f" in{not_str}installing systemd."
+        "NOTE: Support for systemd in postmarketOS is still experimental! Not recommended unless"
+        " you're actively working on it."
     )
-
+    logging.info("See https://postmarketos.org/systemd for more info.")
     choices = SystemdConfig.choices()
     answer = pmb.helpers.cli.ask(
         "Install systemd?",
@@ -699,6 +688,9 @@ def frontend(args: PmbArgs) -> None:
     # Clone pmaports
     pmb.config.pmaports.init()
 
+    # systemd
+    config.systemd = ask_for_systemd(config)
+
     # Choose release channel, possibly switch pmaports branch
     channel = ask_for_channel(config)
     pmb.config.pmaports.switch_to_channel_branch(channel)
@@ -735,10 +727,14 @@ def frontend(args: PmbArgs) -> None:
     # UI and various build options
     ui = ask_for_ui(deviceinfo)
     config.ui = ui
-    config.ui_extras = ask_for_ui_extras(config, ui)
 
-    # systemd
-    config.systemd = ask_for_systemd(config, ui)
+    if pmb.helpers.ui.check_option(ui, "pmb:systemd-never"):
+        logging.info(
+            "Based on your UI selection, OpenRC will be used as init"
+            " system. This UI does not support systemd."
+        )
+
+    config.ui_extras = ask_for_ui_extras(config, ui)
 
     ask_for_provider_select_pkg(f"postmarketos-ui-{ui}", config.providers)
     ask_for_additional_options(config)
