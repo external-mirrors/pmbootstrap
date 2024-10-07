@@ -1109,7 +1109,7 @@ flashers = {
 #
 git_repos = {
     "aports_upstream": "https://gitlab.alpinelinux.org/alpine/aports.git",
-    "pmaports": "https://gitlab.com/postmarketOS/pmaports.git",
+    "pmaports": "https://gitlab.postmarketos.org/postmarketOS/pmaports.git",
 }
 
 #
