@@ -104,6 +104,15 @@ def get_upstream_remote(args, name_repo):
     for line in lines:
         if url in line:
             return line.split("\t", 1)[0]
+
+    # Fallback to old URLs, in case the migration was not done yet
+    if name_repo == "pmaports":
+        urls_outdated = OUTDATED_GIT_REMOTES_HTTP
+        for line in lines:
+            if any(u in line.lower() for u in urls_outdated):
+                logging.warning("WARNING: pmaports has an outdated remote URL")
+                return line.split("\t", 1)[0]
+
     raise RuntimeError("{}: could not find remote name for URL '{}' in git"
                        " repository: {}".format(name_repo, url, path))
 
