@@ -158,7 +158,7 @@ def init(chroot: Chroot, usr_merge=UsrMerge.AUTO):
 
     # Install alpine-base
     pmb.helpers.repo.update(arch)
-    pkgs = ["alpine-base"]
+    pkgs = ["alpine-base", "losetup"]
     cmd = ["--root", chroot.path, "--cache-dir", apk_cache, "--initdb", "--arch", arch]
     for channel in pmb.config.pmaports.all_channels():
         cmd += ["--repository", config.work / "packages" / channel]
