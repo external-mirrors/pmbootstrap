@@ -105,6 +105,11 @@ def rootm(
             pmb.helpers.run_core.flat_cmd([cmd_chroot], env=env_all),
         ]
     )
+
+    # Make sure chroot exists before running a command in it
+    if not chroot.exists():
+        pmb.chroot.init(chroot)
+
     return pmb.helpers.run_core.core(
         msg, cmd_sudo, None, output, output_return, check, True, disable_timeout
     )
