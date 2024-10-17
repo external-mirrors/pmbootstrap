@@ -116,7 +116,7 @@ def init(logfile: Path, verbose: bool, details_to_stdout: bool = False):
     """Set log format and add the log file descriptor to logfd, add the verbose log level."""
     global logfd
 
-    if "logfs" in globals():
+    if "logfd" in globals():
         warning("Logging already initialized, skipping...")
         return
 
