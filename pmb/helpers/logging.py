@@ -1,5 +1,6 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+import collections
 import logging
 import os
 from pathlib import Path
@@ -7,6 +8,7 @@ import sys
 from typing import Final, TextIO
 import pmb.config
 from pmb.meta import Cache
+from blessed import Terminal
 
 logfd: TextIO
 
@@ -90,6 +92,59 @@ class log_handler(logging.StreamHandler):
             self.handleError(record)
 
 
+class TerminalLogger(logging.StreamHandler):
+
+
+    def __init__(self):
+        super().__init__()
+        self.term = Terminal()
+        self.buffer = collections.deque(maxlen=5000)
+        self.start = 0
+        self.end = 0
+        self.bar_height = 1
+
+        self.reset()
+
+
+    def reset(self):
+        term = self.term
+        print(term.home() + term.on_black() + term.clear())
+        with term.location(0, term.height - self.bar_height):
+            print(term.on_green() +
+                  term.clear_eol() +
+                  term.black_on_green("pmbootstrap v" + pmb.__version__ + " (Python " + sys.version + ")")
+            )
+
+
+    def emit(self, record):
+        try:
+            msg = self.format(record).split("\n")
+            stream = self.stream
+            term = self.term
+
+            # Rotate to the end of the queue
+            self.buffer.rotate(len(self.buffer) - self.end)
+            # Append the message
+            self.buffer.extend(msg)
+            # Rotate back to where we were
+            self.buffer.rotate(self.start)
+
+            # Now draw the buffer at the current scroll position
+            lines_to_draw = min(self.end - self.start, self.term.height - self.bar_height)
+            for i in range(lines_to_draw):
+                term.move(i, 0)
+                term.clear_eol()
+                line = self.buffer.pop()
+                print(term.white_on_black(line))
+                self.buffer.appendleft(line)
+            self.buffer.rotate(-lines_to_draw)
+
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except BaseException:
+            self.handleError(record)
+
+
 def add_verbose_log_level():
     """Add a new log level "verbose", which is below "debug".
 
@@ -112,7 +167,7 @@ def add_verbose_log_level():
     )
 
 
-def init(logfile: Path, verbose: bool, details_to_stdout: bool = False):
+def init(logfile: Path, verbose: bool, details_to_stdout: bool = True):
     """Set log format and add the log file descriptor to logfd, add the verbose log level."""
     global logfd
 
@@ -145,7 +200,8 @@ def init(logfile: Path, verbose: bool, details_to_stdout: bool = False):
     # Add a custom log handler
     handler = log_handler(details_to_stdout=details_to_stdout)
     handler.setFormatter(formatter)
-    root_logger.addHandler(handler)
+    #root_logger.addHandler(handler)
+    root_logger.addHandler(TerminalLogger())
 
     logging.debug(f"Pmbootstrap v{pmb.__version__} (Python {sys.version})")
     if "--password" in sys.argv:
