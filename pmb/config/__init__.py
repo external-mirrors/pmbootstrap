@@ -676,7 +676,7 @@ kconfig_options_community = {
             "UCLAMP_TASK_GROUP": True,  # Scheduler hints
             "UHID": True,  # e.g. Bluetooth input devices
             "USB_STORAGE": True,  # USB mass storage devices
-            "RT_GROUP_SCHED": False, # https://gitlab.com/postmarketOS/pmaports/-/issues/2652
+            "RT_GROUP_SCHED": False, # https://gitlab.postmarketos.org/postmarketOS/pmaports/-/issues/2652
         },
     },
 }
