@@ -21,8 +21,10 @@ import pmb.parse
 def _find_apkbuilds(skip_extra_repos=False) -> dict[str, Path]:
     # Try to get a cached result first (we assume that the aports don't change
     # in one pmbootstrap call)
+    print(f"_find_apkbuilds({skip_extra_repos=})")
     apkbuilds = pmb.helpers.other.cache.get("pmb.helpers.pmaports.apkbuilds")
     if apkbuilds is not None:
+        # print(f"Using cached apkbuilds! {apkbuilds}")
         return apkbuilds
 
     apkbuilds = {}
@@ -200,6 +202,8 @@ def find(package, must_exist=True, subpackages=True, skip_extra_repos=False):
     # Crash when necessary
     if ret is None and must_exist:
         raise RuntimeError("Could not find aport for package: " + package)
+
+    print(f"Found {package} in {ret}")
 
     return ret
 
