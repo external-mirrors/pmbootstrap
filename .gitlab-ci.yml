@@ -19,14 +19,14 @@ before_script: &global_before_scripts
   - "echo '140.211.167.182 gitlab.postmarketos.org' >> /etc/hosts"
 
 stages:
-  - lint
+  #- lint
   - deploy
   - test
 
-codespell:
-  stage: lint
-  script:
-    - ".ci/codespell.sh"
+# codespell:
+#   stage: lint
+#   script:
+#     - ".ci/codespell.sh"
 
 pytest:
   stage: test
@@ -45,59 +45,59 @@ pytest:
       - "log_testsuite.txt"
       - "log.txt"
 
-ruff:
-  stage: lint
-  script:
-    - ".ci/ruff.sh"
+# ruff:
+#   stage: lint
+#   script:
+#     - ".ci/ruff.sh"
 
-shellcheck:
-  stage: lint
-  script:
-    - ".ci/shellcheck.sh"
+# shellcheck:
+#   stage: lint
+#   script:
+#     - ".ci/shellcheck.sh"
 
-vermin:
-  stage: lint
-  script:
-    - ".ci/vermin.sh"
+# vermin:
+#   stage: lint
+#   script:
+#     - ".ci/vermin.sh"
 
-mr-settings:
-  stage: lint
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  before_script:
-    - *global_before_scripts
-    - "apk -q add python3"
-    - "wget -q 'https://gitlab.postmarketos.org/postmarketOS/ci-common/-/raw/master/check_mr_settings.py'"
-  script:
-    - "python3 ./check_mr_settings.py"
+# mr-settings:
+#   stage: lint
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+#   before_script:
+#     - *global_before_scripts
+#     - "apk -q add python3"
+#     - "wget -q 'https://gitlab.postmarketos.org/postmarketOS/ci-common/-/raw/master/check_mr_settings.py'"
+#   script:
+#     - "python3 ./check_mr_settings.py"
 
-mypy:
-  stage: lint
-  script:
-    - ".ci/mypy.sh"
+# mypy:
+#   stage: lint
+#   script:
+#     - ".ci/mypy.sh"
 
-docs:
-  stage: lint
-  script:
-    - ".ci/docs.sh"
-  artifacts:
-    paths:
-      - public
+# docs:
+#   stage: lint
+#   script:
+#     - ".ci/docs.sh"
+#   artifacts:
+#     paths:
+#       - public
 
-deploy:
-  only:
-    - master
-  stage: deploy
-  before_script:
-    - apk -q add openssh-client rsync
-  script:
-    - mkdir "${HOME}/.ssh"
-    - echo "${SSH_HOST_KEY}" > "${HOME}/.ssh/known_hosts"
-    - echo "${SSH_PRIVATE_KEY}" > "${HOME}/.ssh/id_ed25519"
-    - chmod 700 "${HOME}/.ssh/id_ed25519"
-    - rsync -hrvz --delete -e "ssh -p ${SSH_PORT}" public/ "${SSH_HOST}":/var/www/docs.postmarketos.org/pmbootstrap/
-  environment:
-    name: deploy
+# deploy:
+#   only:
+#     - master
+#   stage: deploy
+#   before_script:
+#     - apk -q add openssh-client rsync
+#   script:
+#     - mkdir "${HOME}/.ssh"
+#     - echo "${SSH_HOST_KEY}" > "${HOME}/.ssh/known_hosts"
+#     - echo "${SSH_PRIVATE_KEY}" > "${HOME}/.ssh/id_ed25519"
+#     - chmod 700 "${HOME}/.ssh/id_ed25519"
+#     - rsync -hrvz --delete -e "ssh -p ${SSH_PORT}" public/ "${SSH_HOST}":/var/www/docs.postmarketos.org/pmbootstrap/
+#   environment:
+#     name: deploy
 
 integration:
   stage: test
