@@ -210,6 +210,8 @@ def update(arch: Arch | None = None, force=False, existing_only=False):
     for i, (url, target) in enumerate(outdated.items()):
         pmb.helpers.cli.progress_print(i / len(outdated))
         temp = pmb.helpers.http.download(url, "APKINDEX", False, logging.DEBUG, True)
+        if temp is None:
+            raise RuntimeError(f"Failed to download {url}! Are you connected to the internet?")
         target_folder = os.path.dirname(target)
         if not os.path.exists(target_folder):
             pmb.helpers.run.root(["mkdir", "-p", target_folder])
