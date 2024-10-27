@@ -17,6 +17,7 @@ import pmb.helpers.run
 import pmb.helpers.other
 from pmb.core import Chroot, ChrootType
 from pmb.core.context import get_context
+from pmb.types import PathString
 
 
 class UsrMerge(enum.Enum):
@@ -159,10 +160,18 @@ def init(chroot: Chroot, usr_merge=UsrMerge.AUTO):
     # Install alpine-base
     pmb.helpers.repo.update(arch)
     pkgs = ["alpine-base"]
-    cmd = ["--root", chroot.path, "--cache-dir", apk_cache, "--initdb", "--arch", arch]
+    cmd: list[PathString] = [
+        "--root",
+        chroot.path,
+        "--cache-dir",
+        apk_cache,
+        "--initdb",
+        "--arch",
+        arch,
+    ]
     for channel in pmb.config.pmaports.all_channels():
         cmd += ["--repository", config.work / "packages" / channel]
-    pmb.chroot.apk_static.run(cmd + ["add", *pkgs])
+    pmb.helpers.apk.run(cmd + ["add", *pkgs])
 
     # Merge /usr
     if usr_merge is UsrMerge.AUTO and pmb.config.is_systemd_selected(config):
