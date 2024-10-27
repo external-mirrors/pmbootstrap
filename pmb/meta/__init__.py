@@ -5,6 +5,9 @@ import copy
 from typing import Generic, Optional, TypeVar, overload
 from collections.abc import Callable
 
+# re-export our custom types
+from ._types import *  # noqa: F403
+
 import inspect
 
 FuncArgs = TypeVar("FuncArgs")

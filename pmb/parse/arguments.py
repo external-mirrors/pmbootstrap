@@ -7,7 +7,7 @@ import sys
 
 from pmb.core.arch import Arch
 from pmb.core import Config
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 from pmb.helpers.exceptions import NonBugError
 
 try:

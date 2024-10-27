@@ -21,7 +21,7 @@ import pmb.chroot.initfs
 import pmb.config
 import pmb.config.pmaports
 import pmb.install.losetup
-from pmb.types import PathString, PmbArgs
+from pmb.meta import PathString, PmbArgs
 import pmb.helpers.run
 import pmb.parse.cpuinfo
 from pmb.core import Chroot, ChrootType

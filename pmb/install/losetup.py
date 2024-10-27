@@ -6,7 +6,7 @@ from pmb.core.context import get_context
 from pmb.helpers import logging
 import time
 
-from pmb.types import PathString
+from pmb.meta import PathString
 import pmb.helpers.mount
 import pmb.helpers.run
 import pmb.chroot

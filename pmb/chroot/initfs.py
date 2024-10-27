@@ -6,7 +6,7 @@ import pmb.chroot.initfs_hooks
 import pmb.chroot.other
 import pmb.chroot.apk
 import pmb.config.pmaports
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 import pmb.helpers.cli
 from pmb.core import Chroot
 from pmb.core.context import get_context

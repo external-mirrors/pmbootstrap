@@ -6,7 +6,7 @@ import subprocess
 from pmb.core.arch import Arch
 import pmb.helpers.run_core
 from collections.abc import Sequence
-from pmb.types import Env, PathString
+from pmb.meta import Env, PathString
 
 
 def user(

@@ -12,7 +12,7 @@ import pmb.aportgen.core
 import pmb.build
 import pmb.build.autodetect
 import pmb.chroot
-from pmb.types import PathString, PmbArgs
+from pmb.meta import PathString, PmbArgs
 import pmb.helpers
 import pmb.helpers.mount
 import pmb.helpers.pmaports

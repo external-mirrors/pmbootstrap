@@ -6,7 +6,7 @@ from pmb.helpers import logging
 import os
 from pathlib import Path
 import pmb.chroot
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 import pmb.helpers.cli
 from pmb.core import Chroot
 

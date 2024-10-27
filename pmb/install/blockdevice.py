@@ -3,7 +3,7 @@
 from pmb.helpers import logging
 import os
 from pathlib import Path
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 import pmb.helpers.mount
 import pmb.install.losetup
 import pmb.helpers.cli

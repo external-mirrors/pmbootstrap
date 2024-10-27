@@ -3,7 +3,7 @@
 from pmb.helpers import logging
 import pmb.chroot
 from pmb.core import Chroot
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 
 
 def install_fsprogs(filesystem):

@@ -8,7 +8,7 @@ import pmb.chroot
 import pmb.config.pmaports
 from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
-from pmb.types import PathString
+from pmb.meta import PathString
 import pmb.helpers.cli
 import pmb.helpers.run
 import pmb.helpers.run_core

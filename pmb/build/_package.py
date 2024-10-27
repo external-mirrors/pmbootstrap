@@ -8,7 +8,7 @@ from pmb.core.arch import Arch
 from pmb.core.context import Context
 from pmb.core.pkgrepo import pkgrepo_relative_path
 from pmb.helpers import logging
-from pmb.types import CrossCompileType
+from pmb.meta import CrossCompileType
 from pathlib import Path
 
 import pmb.build

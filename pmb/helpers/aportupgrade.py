@@ -7,7 +7,7 @@ import os
 import re
 import urllib.parse
 
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 import pmb.helpers.file
 import pmb.helpers.http
 import pmb.helpers.pmaports

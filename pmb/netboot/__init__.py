@@ -7,7 +7,7 @@ import socket
 import time
 
 import pmb.chroot
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 import pmb.helpers.run
 from pmb.core import Chroot
 

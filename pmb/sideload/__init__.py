@@ -6,7 +6,7 @@ from pmb.core.arch import Arch
 from pmb.helpers import logging
 import shlex
 
-from pmb.types import PathString, PmbArgs
+from pmb.meta import PathString, PmbArgs
 import pmb.helpers.run
 import pmb.helpers.run_core
 import pmb.parse.apkindex

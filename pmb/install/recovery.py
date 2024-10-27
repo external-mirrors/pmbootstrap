@@ -7,7 +7,7 @@ from pmb.helpers import logging
 import pmb.chroot
 import pmb.chroot.apk
 import pmb.config.pmaports
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 import pmb.flasher
 import pmb.helpers.frontend
 

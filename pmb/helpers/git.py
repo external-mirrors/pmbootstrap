@@ -16,7 +16,7 @@ import pmb.config
 import pmb.helpers.pmaports
 import pmb.helpers.run
 from pmb.meta import Cache
-from pmb.types import PathString
+from pmb.meta import PathString
 
 re_branch_aports = re.compile(r"^\d+\.\d\d+-stable$")
 re_branch_pmaports = re.compile(r"^v\d\d\.\d\d$")

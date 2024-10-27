@@ -19,7 +19,7 @@ import pmb.chroot.other
 import pmb.ci
 import pmb.config
 from pmb.core import Config
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 import pmb.export
 import pmb.flasher
 import pmb.helpers.aportupgrade

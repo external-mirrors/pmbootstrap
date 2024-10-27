@@ -3,7 +3,7 @@
 import fcntl
 from pmb.core.context import get_context
 from pmb.core.arch import Arch
-from pmb.types import PathString, Env
+from pmb.meta import PathString, Env
 from pmb.helpers import logging
 import os
 from pathlib import Path

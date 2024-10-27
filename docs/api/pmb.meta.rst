@@ -1,10 +1,10 @@
-pmb.types package
+pmb.meta package
 =================
 
 Module contents
 ---------------
 
-.. automodule:: pmb.types
+.. automodule:: pmb.meta
    :members:
    :undoc-members:
    :show-inheritance:

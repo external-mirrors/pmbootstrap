@@ -26,7 +26,7 @@ import pmb.parse.depends
 import pmb.parse.version
 from pmb.core import Chroot
 from pmb.core.context import get_context
-from pmb.types import PathString
+from pmb.meta import PathString
 from pmb.helpers.exceptions import NonBugError
 
 

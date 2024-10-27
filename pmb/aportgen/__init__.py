@@ -13,7 +13,7 @@ import pmb.aportgen.linux
 import pmb.aportgen.musl
 import pmb.aportgen.grub_efi
 import pmb.config
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 import pmb.helpers.cli
 
 

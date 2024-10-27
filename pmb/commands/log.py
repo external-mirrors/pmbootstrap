@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 from pmb import commands
-from pmb.types import PathString
+from pmb.meta import PathString
 from pmb.helpers import run
 from pmb.core.context import get_context
 import pmb.config

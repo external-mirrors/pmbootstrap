@@ -11,7 +11,7 @@ import pmb.helpers.pmaports
 from pmb.core import Chroot
 from pmb.core.context import get_context
 from pmb.meta import Cache
-from pmb.types import CrossCompileType
+from pmb.meta import CrossCompileType
 
 
 # FIXME (#2324): type hint Arch

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
 from pathlib import Path
-from pmb.types import AportGenEntry, PathString
+from pmb.meta import AportGenEntry, PathString
 import sys
 from collections.abc import Sequence
 

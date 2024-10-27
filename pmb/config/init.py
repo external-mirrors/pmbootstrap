@@ -18,7 +18,7 @@ import pmb.aportgen
 import pmb.config
 import pmb.config.pmaports
 from pmb.core import Config
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 import pmb.helpers.cli
 import pmb.helpers.devices
 import pmb.helpers.git

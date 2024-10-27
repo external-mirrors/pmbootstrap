@@ -10,7 +10,7 @@ from pathlib import Path
 from pmb.helpers.exceptions import BuildFailedError, NonBugError
 
 if TYPE_CHECKING:
-    from pmb.types import PmbArgs
+    from pmb.meta import PmbArgs
 
 from . import config
 from . import parse

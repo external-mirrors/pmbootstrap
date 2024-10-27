@@ -5,7 +5,7 @@ import shutil
 
 import pmb.core
 from pmb.core.context import get_context
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 from pmb.helpers.args import init as init_args
 
 _testdir = Path(__file__).parent / "data/tests"

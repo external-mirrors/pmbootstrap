@@ -2,7 +2,7 @@ from pmb.core.context import get_context
 from pmb.helpers import logging
 import os
 
-from pmb.types import PmbArgs
+from pmb.meta import PmbArgs
 import pmb.helpers.run
 import pmb.helpers.frontend
 import pmb.chroot.initfs
