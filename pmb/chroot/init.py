@@ -9,9 +9,9 @@ import os
 import pmb.chroot
 import pmb.chroot.binfmt
 import pmb.chroot.apk
-import pmb.chroot.apk_static
 import pmb.config
 import pmb.config.workdir
+import pmb.helpers.apk_static
 import pmb.helpers.repo
 import pmb.helpers.run
 import pmb.helpers.other
@@ -141,8 +141,8 @@ def init(chroot: Chroot, usr_merge=UsrMerge.AUTO):
         warn_if_chroots_outdated()
         return
 
-    # Require apk-tools-static
-    pmb.chroot.apk_static.init()
+    # Fetch apk.static
+    pmb.helpers.apk_static.init()
 
     logging.info(f"({chroot}) Creating chroot")
 
