@@ -8,6 +8,7 @@ from collections.abc import Sequence
 import pmb.config
 import pmb.chroot
 import pmb.chroot.binfmt
+from pmb.core.arch import Arch
 import pmb.helpers.run
 import pmb.helpers.run_core
 from pmb.core import Chroot
@@ -58,7 +59,7 @@ def rootm(
     """
 
     # Convert any Path objects to their string representation
-    cmd_strs = [[os.fspath(x) for x in cmd] for cmd in cmds]
+    cmd_strs = [[str(x) if isinstance(x, Arch) else os.fspath(x) for x in cmd] for cmd in cmds]
 
     # Readable log message (without all the escaping)
     msg = f"({chroot}) % "

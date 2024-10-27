@@ -8,7 +8,7 @@ from typing import Literal, TypedDict
 from pmb.core.arch import Arch
 
 CrossCompileType = Literal["native"] | Literal["crossdirect"] | None
-PathString = Path | str
+PathString = Path | str | Arch
 Env = dict[str, PathString]
 
 # These types are not definitive / API, they exist to describe the current

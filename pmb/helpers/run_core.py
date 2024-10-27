@@ -41,7 +41,8 @@ def flat_cmd(cmds: Sequence[Sequence[PathString]], working_dir: Path | None = No
         escaped.append(key + "=" + shlex.quote(os.fspath(value)))
     for cmd in cmds:
         for i in range(len(cmd)):
-            escaped.append(shlex.quote(os.fspath(cmd[i])))
+            c = cmd[i]
+            escaped.append(shlex.quote(str(c) if isinstance(c, Arch) else os.fspath(c)))
         escaped.append(";")
 
     # Prepend working dir
@@ -279,7 +280,7 @@ def sudo_timer_iterate():
     if pmb.config.which_sudo() == "sudo":
         subprocess.Popen(["sudo", "-v"]).wait()
     else:
-        subprocess.Popen(pmb.config.sudo(["true"])).wait()
+        subprocess.Popen([str(x) for x in pmb.config.sudo(["true"])]).wait()
 
     timer = threading.Timer(interval=60, function=sudo_timer_iterate)
     timer.daemon = True
