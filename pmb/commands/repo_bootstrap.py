@@ -85,7 +85,7 @@ class RepoBootstrap(commands.Command):
 
         self.progress_done += 1
 
-    def run_steps(self, steps):
+    def run_steps(self, steps) -> None:
         chroot: Chroot
         if self.arch.cpu_emulation_required():
             chroot = Chroot(ChrootType.BUILDROOT, self.arch)
