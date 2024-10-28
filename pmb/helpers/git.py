@@ -13,6 +13,7 @@ import re
 import pmb.build
 import pmb.chroot.apk
 import pmb.config
+import pmb.config.workdir
 import pmb.helpers.pmaports
 import pmb.helpers.run
 from pmb.meta import Cache
@@ -75,7 +76,7 @@ def rev_parse(path: Path, revision="HEAD", extra_args: list = []) -> str:
         or (with ``--abbrev-ref``): the branch name, e.g. "master"
     """
     command = ["git", "rev-parse"] + extra_args + [revision]
-    rev = pmb.helpers.run.user_output(command, path)
+    rev = pmb.helpers.run.user_output(command, path, output="null")
     return rev.rstrip()
 
 
@@ -108,11 +109,16 @@ def get_upstream_remote(aports: Path) -> str:
     Usually "origin", but the user may have set up their git repository differently.
     """
     name_repo = aports.parts[-1]
+    remote = pmb.config.workdir.read_upstream_git_remote(name_repo)
+    if remote:
+        return remote
     urls = pmb.config.git_repos[name_repo]
     lines = list_remotes(aports)
     for line in lines:
         if any(u in line for u in urls):
-            return line.split("\t", 1)[0]
+            remote = line.split("\t", 1)[0]
+            pmb.config.workdir.save_upstream_git_remote(name_repo, remote)
+            return remote
 
     # Fallback to old URLs, in case the migration was not done yet
     if name_repo == "pmaports":

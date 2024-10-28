@@ -163,3 +163,43 @@ def clean():
             cfg.write(handle)
 
     return changed
+
+
+def read_upstream_git_remote(repo: str) -> str | None:
+    """Read the upstream git remote from workdir.cfg.
+
+    :param repo: the repository name
+
+    :returns: the upstream git remote, or None if it is not set
+    """
+    path = get_context().config.work / "workdir.cfg"
+    if not os.path.exists(path):
+        return None
+
+    cfg = configparser.ConfigParser()
+    cfg.read(path)
+    key = "upstream-git-remotes"
+    if key not in cfg or repo not in cfg[key]:
+        return None
+
+    return cfg[key][repo]
+
+
+def save_upstream_git_remote(repo: str, remote: str) -> None:
+    """Save the upstream git remote in workdir.cfg.
+
+    :param repo: the repository name
+    :param remote: the upstream git remote
+    """
+    path = get_context().config.work / "workdir.cfg"
+    cfg = configparser.ConfigParser()
+    if os.path.exists(path):
+        cfg.read(path)
+
+    key = "upstream-git-remotes"
+    if key not in cfg:
+        cfg[key] = {}
+    cfg[key][repo] = remote
+
+    with path.open("w") as handle:
+        cfg.write(handle)
