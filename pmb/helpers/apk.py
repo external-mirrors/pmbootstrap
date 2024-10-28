@@ -4,6 +4,7 @@ import os
 import shlex
 from collections.abc import Sequence
 from pathlib import Path
+from typing import overload, Literal
 
 import pmb.chroot
 import pmb.config.pmaports
@@ -20,10 +21,31 @@ from pmb.helpers import logging
 from pmb.meta import Cache
 
 
+@overload
+def update_repository_list(
+    root: Path,
+    user_repository: Literal[False],
+    for_chroot: Literal[False],
+    mirrors_exclude: list[str],
+    check: bool,
+) -> None: ...
+
+
+@overload
+def update_repository_list(
+    root: Path,
+    user_repository: Literal[True],
+    for_chroot: bool,
+    mirrors_exclude: list[str],
+    check: bool,
+) -> None: ...
+
+
 @Cache("root", "user_repository", mirrors_exclude=[])
 def update_repository_list(
     root: Path,
-    user_repository=False,
+    user_repository: bool = False,
+    for_chroot: bool = False,
     mirrors_exclude: list[str] = [],
     check=False,
 ):
@@ -68,7 +90,11 @@ def update_repository_list(
     for line in lines_new:
         pmb.helpers.run.root(["sh", "-c", "echo " f"{shlex.quote(line)} >> {path}"])
     update_repository_list(
-        root, user_repository=user_repository, mirrors_exclude=mirrors_exclude, check=True
+        root,
+        user_repository=user_repository,
+        for_chroot=for_chroot,
+        mirrors_exclude=mirrors_exclude,
+        check=True,
     )
 
 
