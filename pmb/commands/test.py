@@ -7,6 +7,7 @@ import pmb.helpers.repo
 import pmb.parse.apkindex
 from pmb.core.arch import Arch
 import time
+import pmb.helpers.run
 
 
 """Various internal test commands for performance testing and debugging."""
@@ -26,9 +27,12 @@ def apkindex_parse_all():
 
 
 class Test(commands.Command):
-    def __init__(self, action: str):
+    def __init__(self, action: str, sandbox_args: list[str]):
         self.action = action
+        self.sandbox_args = sandbox_args
 
     def run(self):
         if self.action == "apkindex_parse_all":
             apkindex_parse_all()
+        elif self.action == "sandbox":
+            pmb.helpers.run.sandbox(["/bin/sh", "-i"])

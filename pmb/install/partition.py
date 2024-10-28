@@ -20,10 +20,14 @@ def partitions_mount(device: str, layout, disk: Path | None):
     :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
     """
     if not disk:
-        img_path = Path("/home/pmos/rootfs") / f"{device}.img"
+        img_path = Chroot.native() / "/home/pmos/rootfs" / f"{device}.img"
         disk = pmb.install.losetup.device_by_back_file(img_path)
 
     logging.info(f"Mounting partitions of {disk} inside the chroot")
+
+    # Since parted was run in unshare() it doesn't have permission to
+    # partprobe the kernel automatically, so we have to do it here.
+    pmb.helpers.run.root(["partprobe", disk])
 
     tries = 20
 
@@ -55,18 +59,22 @@ def partitions_mount(device: str, layout, disk: Path | None):
     if layout["kernel"]:
         partitions += [layout["kernel"]]
 
+    chroot = Chroot.native()
     for i in partitions:
-        source = Path(f"{partition_prefix}{i}")
-        target = Chroot.native() / "dev" / f"installp{i}"
-        pmb.helpers.mount.bind_file(source, target)
+        source = f"{partition_prefix}{i}"
+        # FIXME: INSECURE! Permissions hack so we can write to the block devices
+        pmb.helpers.run.root(["chown", f"{os.getuid()}:{os.getgid()}", source])
+        target = f"/tmp/installp{i}"
+        chroot.link_file(source, target)
+        # pmb.helpers.mount.bind_file(source, target)
 
 
 def partition(layout, size_boot, size_reserve):
     """
-    Partition /dev/install and create /dev/install{p1,p2,p3}:
-    * /dev/installp1: boot
-    * /dev/installp2: root (or reserved space)
-    * /dev/installp3: (root, if reserved space > 0)
+    Partition /tmp/install and create /tmp/install{p1,p2,p3}:
+    * /tmp/installp1: boot
+    * /tmp/installp2: root (or reserved space)
+    * /tmp/installp3: (root, if reserved space > 0)
 
     When adjusting this function, make sure to also adjust
     ondev-prepare-internal-storage.sh in postmarketos-ondev.git!
@@ -80,7 +88,7 @@ def partition(layout, size_boot, size_reserve):
     mb_reserved = f"{round(size_reserve)}M"
     mb_root_start = f"{round(size_boot) + round(size_reserve)}M"
     logging.info(
-        f"(native) partition /dev/install (boot: {mb_boot},"
+        f"(native) partition /tmp/install (boot: {mb_boot},"
         f" reserved: {mb_reserved}, root: the rest)"
     )
 
@@ -119,7 +127,7 @@ def partition(layout, size_boot, size_reserve):
         commands += [["set", str(layout["boot"]), "boot", "on"]]
 
     for command in commands:
-        pmb.chroot.root(["parted", "-s", "/dev/install"] + command, check=False)
+        pmb.chroot.root(["parted", "-s", "/tmp/install"] + command, check=False)
 
 
 def partition_cgpt(layout, size_boot, size_reserve):
@@ -151,7 +159,7 @@ def partition_cgpt(layout, size_boot, size_reserve):
     mb_boot = f"{round(size_boot)}M"
     mb_reserved = f"{round(size_reserve)}M"
     logging.info(
-        f"(native) partition /dev/install (boot: {mb_boot},"
+        f"(native) partition /tmp/install (boot: {mb_boot},"
         f" reserved: {mb_reserved}, root: the rest)"
     )
 
@@ -162,8 +170,8 @@ def partition_cgpt(layout, size_boot, size_reserve):
     s_root_start = str(int(int(boot_part_start) + int(s_boot) + size_reserve * 1024 * 1024 / 512))
 
     commands = [
-        ["parted", "-s", "/dev/install", "mktable", "gpt"],
-        ["cgpt", "create", "/dev/install"],
+        ["parted", "-s", "/tmp/install", "mktable", "gpt"],
+        ["cgpt", "create", "/tmp/install"],
         [
             "cgpt",
             "add",
@@ -183,7 +191,7 @@ def partition_cgpt(layout, size_boot, size_reserve):
             "5",  # Tries flag
             "-P",
             "10",  # Priority flag
-            "/dev/install",
+            "/tmp/install",
         ],
         [
             "cgpt",
@@ -200,11 +208,11 @@ def partition_cgpt(layout, size_boot, size_reserve):
             s_boot,
             "-l",
             "pmOS_boot",
-            "/dev/install",
+            "/tmp/install",
         ],
     ]
 
-    dev_size = pmb.chroot.root(["blockdev", "--getsz", "/dev/install"], output_return=True)
+    dev_size = pmb.chroot.root(["blockdev", "--getsz", "/tmp/install"], output_return=True)
     # 33: Sec GPT table (32) + Sec GPT header (1)
     root_size = str(int(dev_size) - int(s_root_start) - 33)
 
@@ -222,9 +230,9 @@ def partition_cgpt(layout, size_boot, size_reserve):
             root_size,
             "-l",
             "pmOS_root",
-            "/dev/install",
+            "/tmp/install",
         ],
-        ["partx", "-a", "/dev/install"],
+        ["partx", "-a", "/tmp/install"],
     ]
 
     for command in commands:

@@ -1,7 +1,10 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+import os
+from pathlib import Path
 from pmb.helpers import logging
 import pmb.chroot
+import pmb.helpers.apk
 from pmb.core import Chroot
 from pmb.types import PmbArgs
 
@@ -14,9 +17,9 @@ def install_fsprogs(filesystem):
     pmb.chroot.apk.install([fsprogs], Chroot.native())
 
 
-def format_and_mount_boot(args: PmbArgs, device, boot_label):
+def format_and_mount_boot(args: PmbArgs, device, boot_label, rootfs: Path):
     """
-    :param device: boot partition on install block device (e.g. /dev/installp1)
+    :param device: boot partition on install block device (e.g. /tmp/installp1)
     :param boot_label: label of the root partition (e.g. "pmOS_boot")
 
     When adjusting this function, make sure to also adjust
@@ -36,13 +39,22 @@ def format_and_mount_boot(args: PmbArgs, device, boot_label):
         pmb.chroot.root(["mkfs.btrfs", "-f", "-q", "-L", boot_label, device])
     else:
         raise RuntimeError("Filesystem " + filesystem + " is not supported!")
-    pmb.chroot.root(["mkdir", "-p", mountpoint])
-    pmb.chroot.root(["mount", device, mountpoint])
+    # pmb.chroot.root(["mkdir", "-p", mountpoint])
+    # pmb.chroot.root(["mount", device, mountpoint])
+    native = Chroot.native()
+    native.bind_file(rootfs, "/mnt/install")
+    # Install mtools
+    pmb.helpers.apk.run(["add", "mtools"], chroot=native)
+    # Stuff the boot partition
+    files = list(
+        map(lambda x: "/mnt/install/" + os.fspath(x.relative_to(rootfs)), rootfs.glob("boot/*"))
+    )
+    pmb.chroot.root(["mcopy", "-i", device, "-s", *files, "::"], chroot=native)
 
 
 def format_luks_root(args: PmbArgs, device):
     """
-    :param device: root partition on install block device (e.g. /dev/installp2)
+    :param device: root partition on install block device (e.g. /tmp/installp2)
     """
     mountpoint = "/dev/mapper/pm_crypt"
 
@@ -143,9 +155,9 @@ def prepare_btrfs_subvolumes(args: PmbArgs, device, mountpoint):
     pmb.chroot.root(["chattr", "+C", f"{mountpoint}/var"])
 
 
-def format_and_mount_root(args: PmbArgs, device, root_label, disk):
+def format_and_mount_root(args: PmbArgs, device, root_label, disk, rootfs):
     """
-    :param device: root partition on install block device (e.g. /dev/installp2)
+    :param device: root partition on install block device (e.g. /tmp/installp2)
     :param root_label: label of the root partition (e.g. "pmOS_root")
     :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
     """
@@ -157,7 +169,17 @@ def format_and_mount_root(args: PmbArgs, device, root_label, disk):
             # Some downstream kernels don't support metadata_csum (#1364).
             # When changing the options of mkfs.ext4, also change them in the
             # recovery zip code (see 'grep -r mkfs\.ext4')!
-            mkfs_root_args = ["mkfs.ext4", "-O", "^metadata_csum", "-F", "-q", "-L", root_label]
+            mkfs_root_args = [
+                "mkfs.ext4",
+                "-O",
+                "^metadata_csum",
+                "-F",
+                "-q",
+                "-L",
+                root_label,
+                "-d",
+                "/mnt/install",
+            ]
             # When we don't know the file system size before hand like
             # with non-block devices, we need to explicitly set a number of
             # inodes. See #1717 and #1845 for details
@@ -172,17 +194,34 @@ def format_and_mount_root(args: PmbArgs, device, root_label, disk):
 
         install_fsprogs(filesystem)
         logging.info(f"(native) format {device} (root, {filesystem})")
-        pmb.chroot.root(mkfs_root_args + [device])
+        native = Chroot.native()
+        native.bind_file(rootfs, "/mnt/install")
+        # Mask the /boot directory so it isn't included in the root partition
+        pmb.chroot.root(
+            mkfs_root_args + [device], _custom_args=["--become-root", "--tmpfs", "/boot"]
+        )
+        del native.bindmounts[os.fspath(rootfs)]
 
+        return
+
+    # chroot = Chroot.native()
     # Mount
-    mountpoint = "/mnt/install"
-    logging.info("(native) mount " + device + " to " + mountpoint)
-    pmb.chroot.root(["mkdir", "-p", mountpoint])
-    pmb.chroot.root(["mount", device, mountpoint])
+    # mountpoint = chroot / "/mnt/install"
+    # logging.info(f"(native) mount {device} to {mountpoint}")
+    # mountpoint.mkdir(parents=True, exist_ok=True)
+    # # FIXME: we should use --map-users to map this mountpoint
+    # # into a user namespace (which we could back by a file).
+    # # This would solve the permission issues
+    # pmb.helpers.run.root(["mount", device, mountpoint])
+    # pmb.helpers
+    # pmb.chroot.root(["mkdir", "-p", mountpoint])
+    # pmb.chroot.root(["mount", device, mountpoint])
 
-    if not args.rsync and filesystem == "btrfs":
-        # Make flat btrfs subvolume layout
-        prepare_btrfs_subvolumes(args, device, mountpoint)
+    raise NotImplementedError("Rsync is broken.")
+
+    # if not args.rsync and filesystem == "btrfs":
+    #     # Make flat btrfs subvolume layout
+    #     prepare_btrfs_subvolumes(args, device, mountpoint)
 
 
 def format(args: PmbArgs, layout, boot_label, root_label, disk):
@@ -192,12 +231,19 @@ def format(args: PmbArgs, layout, boot_label, root_label, disk):
     :param root_label: label of the root partition (e.g. "pmOS_root")
     :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
     """
-    root_dev = f"/dev/installp{layout['root']}"
-    boot_dev = f"/dev/installp{layout['boot']}"
+    loopdev = ""
+    for src, target in Chroot.native().symlinks.items():
+        if target.startswith("/tmp/install"):
+            loopdev = src
+            break
+    root_dev = f"{loopdev}p{layout['root']}"
+    boot_dev = f"{loopdev}p{layout['boot']}"
+    # logging.warning("WARNING: HARDCODED /dev/loop0!")
 
     if args.full_disk_encryption:
         format_luks_root(args, root_dev)
         root_dev = "/dev/mapper/pm_crypt"
 
-    format_and_mount_root(args, root_dev, root_label, disk)
-    format_and_mount_boot(args, boot_dev, boot_label)
+    rootfs = Chroot.rootfs(pmb.parse.deviceinfo().codename).path
+    format_and_mount_root(args, root_dev, root_label, disk, rootfs)
+    format_and_mount_boot(args, boot_dev, boot_label, rootfs)

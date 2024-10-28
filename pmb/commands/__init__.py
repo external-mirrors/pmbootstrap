@@ -86,7 +86,7 @@ def run_command(args: PmbArgs):
         case "shutdown":
             command = Shutdown()
         case "test":
-            command = Test(args.action_test)
+            command = Test(args.action_test, args.sandbox_args)
         case "pkgrel_bump":
             command = PkgrelBump(args.packages, args.dry, args.auto)
         case "pkgver_bump":

@@ -169,12 +169,12 @@ def chroot(args: PmbArgs) -> None:
     # Suffix
     chroot = _parse_suffix(args)
     user = args.user
-    if (
-        user
-        and chroot != Chroot.native()
-        and chroot.type not in [ChrootType.BUILDROOT, ChrootType.IMAGE]
-    ):
-        raise RuntimeError("--user is only supported for native or" " buildroot_* chroots.")
+    # if (
+    #     user
+    #     and chroot != Chroot.native()
+    #     and chroot.type not in [ChrootType.BUILDROOT, ChrootType.IMAGE]
+    # ):
+    #     raise RuntimeError("--user is only supported for native or" " buildroot_* chroots.")
     if args.xauth and chroot != Chroot.native():
         raise RuntimeError("--xauth is only supported for native chroot.")
 
@@ -212,7 +212,7 @@ def chroot(args: PmbArgs) -> None:
 
     # Run the command as user/root
     if user:
-        logging.info(f"({chroot}) % su pmos -c '" + " ".join(args.command) + "'")
+        logging.info(f"({chroot}) [user] % " + " ".join(args.command))
         pmb.chroot.user(args.command, chroot, output=args.output, env=env)
     else:
         logging.info(f"({chroot}) % " + " ".join(args.command))

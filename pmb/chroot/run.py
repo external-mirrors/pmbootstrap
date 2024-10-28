@@ -9,6 +9,7 @@ import pmb.config
 import pmb.chroot
 import pmb.chroot.binfmt
 from pmb.core.arch import Arch
+from pmb.core.chroot import ChrootType
 import pmb.helpers.run
 import pmb.helpers.run_core
 from pmb.core import Chroot
@@ -32,16 +33,17 @@ def executables_absolute_path():
     return ret
 
 
-def rootm(
+def runm(
     cmds: Sequence[Sequence[PathString]],
     chroot: Chroot = Chroot.native(),
     working_dir: PurePath = PurePath("/"),
     output="log",
     output_return=False,
-    check=None,
+    check=True,
     env={},
     disable_timeout=False,
     add_proxy_env_vars=True,
+    sandbox_args=[],
 ):
     """
     Run a list of commands inside a chroot as root.
@@ -89,25 +91,67 @@ def rootm(
     # cmd: ["echo", "test"]
     # cmd_chroot: ["/sbin/chroot", "/..._native", "/bin/sh", "-c", "echo test"]
     # cmd_sudo: ["sudo", "env", "-i", "sh", "-c", "PATH=... /sbin/chroot ..."]
-    executables = executables_absolute_path()
+    # executables = executables_absolute_path()
+    sandbox = pmb.helpers.run.sandbox_executable()
     cmd_chroot = [
-        executables["chroot"],
-        chroot.path,
-        "/bin/sh",
-        "-c",
-        pmb.helpers.run_core.flat_cmd(cmd_strs, Path(working_dir)),
+        *sandbox,
+        *sandbox_args,
+        # "--become-root",  # We'll "su" if needed.
+        "--suppress-chown",
+        "--bind",
+        os.fspath(chroot.path),
+        "/",
+        "--bind",
+        "/dev",
+        "/dev",
+        # "--overlay-lowerdir", "/dev",
+        # "--overlay-upperdir", "tmpfs",
+        # "--overlay", "/dev",
+        # "--dev",
+        # "/dev",
+        "--proc",
+        "/proc",
+        "--tmpfs",
+        "/tmp",
+        "--setenv",
+        "PATH",
+        "/bin:/sbin:/usr/bin:/usr/sbin",
+        # executables["chroot"],
+        # chroot.path,
     ]
-    cmd_sudo = pmb.config.sudo(
+
+    if working_dir != PurePath("/"):
+        cmd_chroot.extend(["--chdir", os.fspath(working_dir)])
+
+    mountpoints = pmb.helpers.run.get_mountpoints(chroot)
+    for source, (arg, target) in mountpoints.items():
+        cmd_chroot.extend(
+            [
+                arg,
+                source,
+                target,
+            ]
+        )
+
+    cmd_chroot.extend(
         [
-            "env",
-            "-i",
-            executables["sh"],
+            "/bin/sh",
             "-c",
-            pmb.helpers.run_core.flat_cmd([cmd_chroot], env=env_all),
+            f"set +e; {pmb.helpers.run_core.flat_cmd(cmd_strs)}; exit {'$?' if check is not False else '0'}",
         ]
     )
+    print(" ".join(cmd_chroot))
+    # cmd_sudo = pmb.config.sudo(
+    #     [
+    #         "env",
+    #         "-i",
+    #         executables["sh"],
+    #         "-c",
+    #         pmb.helpers.run_core.flat_cmd([cmd_chroot], env=env_all),
+    #     ]
+    # )
     return pmb.helpers.run_core.core(
-        msg, cmd_sudo, None, output, output_return, check, True, disable_timeout
+        msg, cmd_chroot, None, output, output_return, True, True, disable_timeout
     )
 
 
@@ -121,8 +165,9 @@ def root(
     env={},
     disable_timeout=False,
     add_proxy_env_vars=True,
+    _custom_args=["--become-root"],
 ):
-    return rootm(
+    return runm(
         [cmds],
         chroot,
         working_dir,
@@ -132,6 +177,7 @@ def root(
         env,
         disable_timeout,
         add_proxy_env_vars,
+        sandbox_args=_custom_args,
     )
 
 
@@ -157,14 +203,29 @@ def userm(
     """
     env = env.copy()
     pmb.helpers.run_core.add_proxy_env_vars(env)
+    _is_rootfs = chroot.type in [ChrootType.ROOTFS, ChrootType.IMAGE]
+
+    username = "user" if _is_rootfs else "pmos"
+    uid_gid = "10000:10000" if _is_rootfs else "12345:12345"
 
     if "HOME" not in env:
-        env["HOME"] = "/home/pmos"
+        env["HOME"] = f"/home/{username}"
+
+    if working_dir == Path("/"):
+        working_dir = Path(env["HOME"])
 
     flat_cmd = pmb.helpers.run_core.flat_cmd(cmds, env=env)
-    cmd = ["busybox", "su", "pmos", "-c", flat_cmd]
+    cmd = ["/bin/sh", "-c", flat_cmd]
     return pmb.chroot.root(
-        cmd, chroot, working_dir, output, output_return, check, {}, add_proxy_env_vars=False
+        cmd,
+        chroot,
+        working_dir,
+        output,
+        output_return,
+        check,
+        {},
+        add_proxy_env_vars=False,
+        _custom_args=["--become", uid_gid],
     )
 
 

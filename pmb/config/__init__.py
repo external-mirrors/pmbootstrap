@@ -68,8 +68,12 @@ required_programs = [
 ]
 
 
+sudo_count = [0]
+
+
 def sudo(cmd: Sequence[PathString]) -> Sequence[PathString]:
     """Adapt a command to run as root."""
+    sudo_count[0] = sudo_count[0] + 1
     sudo = which_sudo()
     if sudo:
         return [sudo, *cmd]
@@ -153,7 +157,7 @@ chroot_host_path = os.environ["PATH"] + ":/usr/sbin/"
 # $CHANNEL gets replaced with the release channel (e.g. edge, v21.03)
 # Use no more than one dir after /mnt/pmbootstrap, see remove_mnt_pmbootstrap.
 chroot_mount_bind = {
-    "/proc": "/proc",
+    # "/proc": "/proc",
     "$WORK/cache_apk_$ARCH": "/var/cache/apk",
     "$WORK/cache_appstream/$ARCH/$CHANNEL": "/mnt/appstream-data",
     "$WORK/cache_ccache_$ARCH": "/mnt/pmbootstrap/ccache",

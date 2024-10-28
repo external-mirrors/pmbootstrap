@@ -4,9 +4,11 @@
 from __future__ import annotations
 import enum
 from collections.abc import Generator
+import os
 from pathlib import Path, PosixPath, PurePosixPath
 import pmb.config
 from pmb.core.arch import Arch
+from pmb.helpers import logging
 from .context import get_context
 
 
@@ -24,8 +26,28 @@ class ChrootType(enum.Enum):
 class Chroot:
     __type: ChrootType
     __name: str
+    __init_done: bool = False
+    __bindmounts: dict[str, str]
+    __symlinks: dict[str, str]
+    __singletons: dict[str, Chroot] = {}
 
     def __init__(self, suffix_type: ChrootType, name: str | Arch | None = ""):
+        if self.__init_done:
+            return
+        self.__initialize(suffix_type, name)
+        self.__bindmounts = {}
+        self.__symlinks = {}
+        # print("!!! CHROOT INIT!!!")
+        self.__init_done = True
+
+    def __new__(cls, suffix_type: ChrootType, name: str | Arch | None = "") -> Chroot:
+        chroot = super().__new__(cls)
+        # chroot.__init__(*args, **kwargs)
+        chroot.__initialize(suffix_type, name)
+
+        return cls.__singletons.setdefault(str(chroot), chroot)
+
+    def __initialize(self, suffix_type: ChrootType, name: str | Arch | None = ""):
         # We use the native chroot as the buildroot when building for the host arch
         if suffix_type == ChrootType.BUILDROOT and isinstance(name, Arch):
             if name.is_native():
@@ -34,6 +56,7 @@ class Chroot:
 
         self.__type = suffix_type
         self.__name = str(name or "")
+        # self.__bindmounts = {}
 
         self.__validate()
 
@@ -75,10 +98,16 @@ class Chroot:
             raise ValueError(f"Invalid device name: '{self.__name}'")
 
     def __str__(self) -> str:
+        val = ""
         if len(self.__name) > 0 and self.type != ChrootType.IMAGE:
-            return f"{self.__type.value}_{self.__name}"
+            val = f"{self.__type.value}_{self.__name}"
         else:
-            return self.__type.value
+            val = self.__type.value
+
+        # for src, dest in self.__bindmounts.items():
+        #     val += f"{{{src.name}}} -> {{{dest.name}}}"
+
+        return val
 
     @property
     def dirname(self) -> str:
@@ -92,7 +121,47 @@ class Chroot:
         return (self / "bin/sh").is_symlink()
 
     def is_mounted(self) -> bool:
-        return self.exists() and pmb.helpers.mount.ismount(self.path / "etc/apk/keys")
+        return (self.path / "lib/apk/db/installed").exists()
+
+    def bind_file(self, src: Path | str, dest: Path | str):
+        src, dest = os.fspath(src), os.fspath(dest)
+        print(f"({self}) bind_file {src} -> {dest}")
+
+        if src in self.__bindmounts:
+            if self.__bindmounts[src] != dest:
+                raise ValueError(
+                    f"Source '{src}' already bind mounted to '{self.__bindmounts[src]}'"
+                )
+            logging.warning(f"Source '{src}' already bind mounted to '{dest}'")
+
+        self.__bindmounts[src] = dest
+
+    def link_file(self, src: Path | str, dest: Path | str):
+        src, dest = os.fspath(src), os.fspath(dest)
+        print(f"({self}) link_file {src} -> {dest}")
+
+        if src in self.__symlinks:
+            if self.__symlinks[src] != dest:
+                raise ValueError(f"Source '{src}' already bind mounted to '{self.__symlinks[src]}'")
+            # logging.warning(f"Source '{src}' already bind mounted to '{dest}'")
+
+        self.__symlinks[src] = dest
+
+    @property
+    def bindmounts(self) -> dict[str, str]:
+        print(
+            f"({self}) bindmounts:"
+            + "\n\t".join(list(map(lambda x: f"{x[0]} -> {x[1]}", self.__bindmounts.items())))
+        )
+        return self.__bindmounts
+
+    @property
+    def symlinks(self) -> dict[str, str]:
+        print(
+            f"({self}) symlinks:"
+            + "\n\t".join(list(map(lambda x: f"{x[0]} -> {x[1]}", self.__symlinks.items())))
+        )
+        return self.__symlinks
 
     @property
     def arch(self) -> Arch:
@@ -152,6 +221,10 @@ class Chroot:
     @property
     def name(self) -> str:
         return self.__name
+
+    @property
+    def image_path(self) -> Path:
+        return get_context().config.work / "images" / self.name
 
     @staticmethod
     def native() -> Chroot:

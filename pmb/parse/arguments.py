@@ -754,6 +754,17 @@ def arguments_test(subparser):
     test = subparser.add_parser("test", help="Internal pmbootstrap test tools")
     sub = test.add_subparsers(dest="action_test", required=True)
     sub.add_parser("apkindex_parse_all", help="parse all APKINDEX files")
+    sbox = sub.add_parser(
+        "sandbox",
+        help="enter a sandbox, defaults to the root sandbox used" " for running apk.static",
+    )
+    sbox_defaults = ["--become-root", "--suppress-chown"]
+    sbox.add_argument(
+        "sandbox_args",
+        nargs="*",
+        help="additional arguments to mkosi-sandbox" f" default: {' '.join(sbox_defaults)}",
+        default=sbox_defaults,
+    )
 
 
 def arguments_status(subparser):
@@ -1101,7 +1112,7 @@ def get_parser():
         "--install-blockdev",
         action="store_true",
         help="Create a sparse image file and mount it as"
-        " /dev/install, just like during the"
+        " /tmp/install, just like during the"
         " installation process.",
     )
     for action in [build_init, chroot]:

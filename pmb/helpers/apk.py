@@ -1,7 +1,6 @@
 # Copyright 2023 Johannes Marbach, Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-import shlex
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
@@ -49,7 +48,7 @@ def update_repository_list(
             for line in handle:
                 lines_old.append(line[:-1])
     else:
-        pmb.helpers.run.root(["mkdir", "-p", path.parent])
+        path.parent.mkdir(parents=True, exist_ok=True)
 
     user_repo_dir: Path | None
     if isinstance(user_repository, Path):
@@ -70,10 +69,12 @@ def update_repository_list(
 
     # Update the file
     logging.debug(f"({root.name}) update /etc/apk/repositories")
-    if path.exists():
-        pmb.helpers.run.root(["rm", path])
-    for line in lines_new:
-        pmb.helpers.run.root(["sh", "-c", "echo " f"{shlex.quote(line)} >> {path}"])
+    path.unlink(missing_ok=True)
+    # if path.exists():
+    #     pmb.helpers.run.root(["rm", path])
+    path.open("w").write("\n".join(lines_new) + "\n")
+    # for line in lines_new:
+    #     pmb.helpers.run.user(["sh", "-c", "echo " f"{shlex.quote(line)} >> {path}"])
     update_repository_list(
         root,
         user_repository=user_repository,
@@ -132,23 +133,23 @@ def _compute_progress(line):
     return cur / tot if tot > 0 else 0
 
 
-def _apk_with_progress(command: Sequence[str]):
-    """Run an apk subcommand while printing a progress bar to STDOUT.
+# def _apk_with_progress(command: Sequence[str]):
+#     """Run an apk subcommand while printing a progress bar to STDOUT.
 
-    :param command: apk subcommand in list form
-    :raises RuntimeError: when the apk command fails
-    """
-    fifo = _prepare_fifo()
-    command_with_progress = _create_command_with_progress(command, fifo)
-    log_msg = " ".join(command)
-    with pmb.helpers.run.root(["cat", fifo], output="pipe") as p_cat:
-        with pmb.helpers.run.root(command_with_progress, output="background") as p_apk:
-            while p_apk.poll() is None:
-                line = p_cat.stdout.readline().decode("utf-8")
-                progress = _compute_progress(line)
-                pmb.helpers.cli.progress_print(progress)
-            pmb.helpers.cli.progress_flush()
-            pmb.helpers.run_core.check_return_code(p_apk.returncode, log_msg)
+#     :param command: apk subcommand in list form
+#     :raises RuntimeError: when the apk command fails
+#     """
+#     fifo = _prepare_fifo()
+#     command_with_progress = _create_command_with_progress(command, fifo)
+#     log_msg = " ".join(command)
+#     with pmb.helpers.run.root(["cat", fifo], output="pipe") as p_cat:
+#         with pmb.helpers.run.sandbox(command_with_progress, , output="background") as p_apk:
+#             while p_apk.poll() is None:
+#                 line = p_cat.stdout.readline().decode("utf-8")
+#                 progress = _compute_progress(line)
+#                 pmb.helpers.cli.progress_print(progress)
+#             pmb.helpers.cli.progress_flush()
+#             pmb.helpers.run_core.check_return_code(p_apk.returncode, log_msg)
 
 
 def _prepare_cmd(command: Sequence[PathString], chroot: Chroot | None) -> list[str]:
@@ -210,10 +211,10 @@ def run(command: Sequence[PathString], chroot: Chroot, with_progress=True):
         assert "--no-interactive" in _command
         assert "--cache-dir" in _command
 
-    if with_progress:
-        _apk_with_progress(_command)
-    else:
-        pmb.helpers.run.root(_command)
+    # if with_progress:
+    #     _apk_with_progress(_command)
+    # else:
+    pmb.helpers.run.sandbox(_command, chroot)
 
 
 def cache_clean(arch: Arch):

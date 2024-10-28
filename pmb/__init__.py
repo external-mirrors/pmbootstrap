@@ -19,6 +19,7 @@ from .helpers import frontend
 from .helpers import logging
 from .helpers import mount
 from .helpers import other
+from .install import losetup
 from .core import Chroot, Config
 from .core.context import get_context
 from .commands import run_command
@@ -145,6 +146,13 @@ def main() -> int:
         )
         print(f"Your version: {__version__}")
         return 1
+
+    try:
+        losetup.detach_all(silent=True)
+    except Exception as e:
+        logging.verbose(f"Failed to detach loop devices: {e}")
+
+    print(f"Final sudo count: {config.sudo_count[0]}")
 
     return 0
 

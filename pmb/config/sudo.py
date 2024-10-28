@@ -7,6 +7,7 @@ from functools import lru_cache
 
 @lru_cache
 def which_sudo() -> str | None:
+    # assert False, "no more sudo!"
     """Return a command required to run commands as root, if any.
 
     Find whether sudo or doas is installed for commands that require root.

@@ -29,9 +29,9 @@ def mount_chroot_image(chroot: Chroot):
     loopdev = pmb.install.losetup.mount(
         Path("/") / Path(chroot.name).relative_to(chroot_native.path)
     )
-    pmb.helpers.mount.bind_file(loopdev, chroot_native / "dev/install")
+    pmb.helpers.mount.bind_file(loopdev, chroot_native / "tmp/install")
     # Set up device mapper bits
-    pmb.chroot.root(["kpartx", "-u", "/dev/install"], chroot_native)
+    pmb.chroot.root(["kpartx", "-u", "/tmp/install"], chroot_native)
     chroot.path.mkdir(exist_ok=True)
     # # The name of the IMAGE chroot is the path to the rootfs image
     pmb.helpers.run.root(["mount", "/dev/mapper/install2", chroot.path])
@@ -119,6 +119,8 @@ def mount_dev_tmpfs(chroot: Chroot = Chroot.native()):
 def mount(chroot: Chroot):
     if chroot.type == ChrootType.IMAGE and not pmb.mount.ismount(chroot.path):
         mount_chroot_image(chroot)
+
+    return
 
     # Mount tmpfs as the chroot's /dev
     mount_dev_tmpfs(chroot)

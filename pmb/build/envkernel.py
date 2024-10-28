@@ -168,7 +168,7 @@ def run_abuild(context: Context, pkgname: str, arch: Arch, apkbuild_path: Path, 
             ]
         )
 
-    pmb.chroot.rootm(
+    pmb.chroot.runm(
         [
             ["mkdir", "-p", "/home/pmos/packages"],
             ["rm", "-f", "/home/pmos/packages/pmos"],

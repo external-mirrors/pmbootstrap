@@ -150,6 +150,7 @@ class PmbArgs(Namespace):
     resume: bool
     rootfs: bool
     rsync: bool
+    sandbox_args: list[str]
     scripts: str
     second_storage: str
     sector_size: int | None

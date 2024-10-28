@@ -219,10 +219,10 @@ def update(arch: Arch | None = None, force=False, existing_only=False):
         if not temp:
             logging.info("NOTE: check the [mirrors] section in 'pmbootstrap config'")
             raise NonBugError("getting APKINDEX from binary package mirror failed!")
-        target_folder = os.path.dirname(target)
-        if not os.path.exists(target_folder):
-            pmb.helpers.run.root(["mkdir", "-p", target_folder])
-        pmb.helpers.run.root(["cp", temp, target])
+        target.parent.mkdir(exist_ok=True, parents=True)
+        # if not os.path.exists(target_folder):
+        #     pmb.helpers.run.user(["mkdir", "-p", target_folder])
+        pmb.helpers.run.user(["cp", temp, target])
     pmb.helpers.cli.progress_flush()
 
     return True

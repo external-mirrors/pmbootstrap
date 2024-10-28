@@ -34,7 +34,7 @@ def del_chroot(path: Path, confirm=True, dry=False):
     # umount_all() will throw if any mount under path fails to unmount
     pmb.helpers.mount.umount_all(path)
 
-    pmb.helpers.run.root(["rm", "-rf", path])
+    pmb.helpers.run.user(["rm", "-rf", path])
 
 
 def zap(

@@ -41,11 +41,12 @@ def copy_resolv_conf(chroot: Chroot):
     """
     host = "/etc/resolv.conf"
     resolv_path = chroot / host
+    (chroot / "etc").mkdir(exist_ok=True)
     if os.path.exists(host):
         if not resolv_path.exists() or not filecmp.cmp(host, resolv_path):
-            pmb.helpers.run.root(["cp", host, resolv_path])
+            pmb.helpers.run.user(["cp", host, resolv_path])
     else:
-        pmb.helpers.run.root(["touch", resolv_path])
+        pmb.helpers.run.user(["touch", resolv_path])
 
 
 def mark_in_chroot(chroot: Chroot = Chroot.native()):
@@ -56,7 +57,7 @@ def mark_in_chroot(chroot: Chroot = Chroot.native()):
     """
     in_chroot_file = chroot / "in-pmbootstrap"
     if not in_chroot_file.exists():
-        pmb.helpers.run.root(["touch", in_chroot_file])
+        pmb.helpers.run.user(["touch", in_chroot_file])
 
 
 def init_keys():
@@ -73,13 +74,13 @@ def init_keys():
         target = get_context().config.work / "config_apk_keys" / key.name
         if not target.exists():
             # Copy as root, so the resulting files in chroots are owned by root
-            pmb.helpers.run.root(["cp", key, target])
+            pmb.helpers.run.user(["cp", key, target])
 
 
 def init_usr_merge(chroot: Chroot):
     logging.info(f"({chroot}) merge /usr")
     script = f"{pmb.config.pmb_src}/pmb/data/merge-usr.sh"
-    pmb.helpers.run.root(["sh", "-e", script, "CALLED_FROM_PMB", chroot.path])
+    pmb.helpers.run.user(["sh", "-e", script, "CALLED_FROM_PMB", chroot.path])
 
 
 @Cache()
@@ -134,6 +135,7 @@ def init(chroot: Chroot, usr_merge=UsrMerge.AUTO):
             pmb.chroot.del_chroot(chroot.path, confirm=False)
             pmb.config.workdir.clean()
 
+    chroot.path.mkdir(exist_ok=True)
     pmb.chroot.mount(chroot)
     mark_in_chroot(chroot)
     if chroot.exists():

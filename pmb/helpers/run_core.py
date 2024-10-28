@@ -39,11 +39,12 @@ def flat_cmd(cmds: Sequence[Sequence[PathString]], working_dir: Path | None = No
         if isinstance(value, Arch):
             value = str(value)
         escaped.append(key + "=" + shlex.quote(os.fspath(value)))
-    for cmd in cmds:
+    for i, cmd in enumerate(cmds):
         for i in range(len(cmd)):
             c = cmd[i]
             escaped.append(shlex.quote(str(c) if isinstance(c, Arch) else os.fspath(c)))
-        escaped.append(";")
+        if i + 1 < len(cmds):
+            escaped.append(";")
 
     # Prepend working dir
     ret = " ".join(escaped)

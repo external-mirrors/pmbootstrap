@@ -17,6 +17,7 @@ import pmb.chroot.other
 import pmb.chroot.initfs
 import pmb.config
 import pmb.config.pmaports
+import pmb.install.losetup
 from pmb.parse.deviceinfo import Deviceinfo
 from pmb.core import Config
 from pmb.types import PartitionLayout, PmbArgs
@@ -121,22 +122,24 @@ def copy_files_from_chroot(args: PmbArgs, chroot: Chroot):
     # Mount the device rootfs
     logging.info(f"(native) copy {chroot} to /mnt/install/")
     mountpoint = mount_device_rootfs(chroot)
-    mountpoint_outside = Chroot.native() / mountpoint
+    # mountpoint_outside = Chroot.native() / mountpoint
 
     # Remove empty qemu-user binary stub (where the binary was bind-mounted)
     arch_qemu = pmb.parse.deviceinfo().arch.qemu()
-    qemu_binary = mountpoint_outside / f"usr/bin/qemu-{arch_qemu}-static"
-    if os.path.exists(qemu_binary):
-        pmb.helpers.run.root(["rm", qemu_binary])
+    qemu_binary = chroot / f"usr/bin/qemu-{arch_qemu}-static"
+    qemu_binary.unlink(missing_ok=True)
+    # if os.path.exists(qemu_binary):
+    #     pmb.helpers.run.root(["rm", qemu_binary])
 
     # Remove apk progress fifo
     fifo = chroot / "tmp/apk_progress_fifo"
-    if os.path.exists(fifo):
-        pmb.helpers.run.root(["rm", fifo])
+    fifo.unlink(missing_ok=True)
+    # if os.path.exists(fifo):
+    #     pmb.helpers.run.root(["rm", fifo])
 
     # Get all folders inside the device rootfs (except for home)
     folders: list[str] = []
-    for path in mountpoint_outside.glob("*"):
+    for path in chroot.path.glob("*"):
         if path.name == "home":
             continue
         folders.append(path.name)
@@ -587,7 +590,7 @@ def generate_binary_list(args: PmbArgs, chroot: Chroot, step):
     return binary_list
 
 
-def embed_firmware(args: PmbArgs, suffix: Chroot):
+def embed_firmware(args: PmbArgs, chroot: Chroot):
     """
     This method will embed firmware, located at /usr/share, that are specified
     by the "sd_embed_firmware" deviceinfo parameter into the SD card image
@@ -610,19 +613,24 @@ def embed_firmware(args: PmbArgs, suffix: Chroot):
                 "Value for " "deviceinfo_sd_embed_firmware_step_size " f"is not valid: {step}"
             )
 
-    device_rootfs = mount_device_rootfs(suffix)
-    binary_list = generate_binary_list(args, suffix, step)
+    # device_rootfs = mount_device_rootfs(suffix)
+    binary_list = generate_binary_list(args, chroot, step)
 
     # Write binaries to disk
     for binary, offset in binary_list:
-        binary_file = os.path.join("/usr/share", binary)
+        binary_file = chroot / "usr/share" / binary
         logging.info(
             f"Embed firmware {binary} in the SD card image at offset {offset} with"
             f" step size {step}"
         )
-        filename = os.path.join(device_rootfs, binary_file.lstrip("/"))
-        pmb.chroot.root(
-            ["dd", "if=" + filename, "of=/dev/install", "bs=" + str(step), "seek=" + str(offset)]
+        pmb.helpers.run.user(
+            [
+                "dd",
+                "if=" + str(binary_file),
+                "of=" + str(chroot.image_path),
+                "bs=" + str(step),
+                "seek=" + str(offset),
+            ]
         )
 
 
@@ -638,7 +646,7 @@ def write_cgpt_kpart(args: PmbArgs, layout, suffix: Chroot):
 
     device_rootfs = mount_device_rootfs(suffix)
     filename = f"{device_rootfs}{pmb.parse.deviceinfo().cgpt_kpart}"
-    pmb.chroot.root(["dd", f"if={filename}", f"of=/dev/installp{layout['kernel']}"])
+    pmb.chroot.root(["dd", f"if={filename}", f"of=/tmp/installp{layout['kernel']}"])
 
 
 def sanity_check_boot_size():
@@ -789,8 +797,8 @@ def create_fstab(args: PmbArgs, layout, chroot: Chroot):
     if args.on_device_installer and chroot.type == ChrootType.ROOTFS:
         return
 
-    boot_dev = Path(f"/dev/installp{layout['boot']}")
-    root_dev = Path(f"/dev/installp{layout['root']}")
+    boot_dev = Path(f"/tmp/installp{layout['boot']}")
+    root_dev = Path(f"/tmp/installp{layout['root']}")
 
     boot_mount_point = f"UUID={get_uuid(args, boot_dev)}"
     root_mount_point = (
@@ -852,11 +860,11 @@ def install_system_image(
     :param split: create separate images for boot and root partitions
     :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
     """
-    config = get_context().config
+    # config = get_context().config
     device = chroot.name
     # Partition and fill image file/disk block device
     logging.info(f"*** ({step}/{steps}) PREPARE INSTALL BLOCKDEVICE ***")
-    pmb.helpers.mount.umount_all(chroot.path)
+    # pmb.helpers.mount.umount_all(chroot.path)
     (size_boot, size_root) = get_subpartitions_size(chroot)
     layout = get_partition_layout(
         size_reserve, pmb.parse.deviceinfo().cgpt_kpart and args.install_cgpt
@@ -874,39 +882,40 @@ def install_system_image(
     pmb.install.format(args, layout, boot_label, root_label, disk)
 
     # Since we shut down the chroot we need to mount it again
-    pmb.chroot.mount(chroot)
+    # pmb.chroot.mount(chroot)
 
+    print("SKipping a bunch of stuff lol (no /etc/fstab)")
     # Create /etc/fstab and /etc/crypttab
-    logging.info("(native) create /etc/fstab")
-    create_fstab(args, layout, chroot)
-    if args.full_disk_encryption:
-        logging.info("(native) create /etc/crypttab")
-        create_crypttab(args, layout, chroot)
+    # logging.info("(native) create /etc/fstab")
+    # create_fstab(args, layout, chroot)
+    # if args.full_disk_encryption:
+    #     logging.info("(native) create /etc/crypttab")
+    #     create_crypttab(args, layout, chroot)
 
-    # Run mkinitfs to pass UUIDs to cmdline
-    logging.info(f"({chroot}) mkinitfs")
-    pmb.chroot.root(["mkinitfs"], chroot)
+    # # Run mkinitfs to pass UUIDs to cmdline
+    # logging.info(f"({chroot}) mkinitfs")
+    # pmb.chroot.root(["mkinitfs"], chroot)
 
-    # Clean up after running mkinitfs in chroot
-    pmb.helpers.mount.umount_all(chroot.path)
-    pmb.helpers.run.root(["rm", chroot / "in-pmbootstrap"])
-    pmb.chroot.remove_mnt_pmbootstrap(chroot)
+    # # Clean up after running mkinitfs in chroot
+    # pmb.helpers.mount.umount_all(chroot.path)
+    # pmb.helpers.run.root(["rm", chroot / "in-pmbootstrap"])
+    # pmb.chroot.remove_mnt_pmbootstrap(chroot)
 
-    # Just copy all the files
-    logging.info(f"*** ({step + 1}/{steps}) FILL INSTALL BLOCKDEVICE ***")
-    copy_files_from_chroot(args, chroot)
-    create_home_from_skel(args.filesystem, config.user)
-    configure_apk(args)
-    copy_ssh_keys(config)
+    # # Just copy all the files
+    # logging.info(f"*** ({step + 1}/{steps}) FILL INSTALL BLOCKDEVICE ***")
+    # copy_files_from_chroot(args, chroot)
+    # create_home_from_skel(args.filesystem, config.user)
+    # configure_apk(args)
+    # copy_ssh_keys(config)
 
-    # Don't try to embed firmware and cgpt on split images since there's no
-    # place to put it and it will end up in /dev of the chroot instead
-    if not split:
-        embed_firmware(args, chroot)
-        write_cgpt_kpart(args, layout, chroot)
+    # # Don't try to embed firmware and cgpt on split images since there's no
+    # # place to put it and it will end up in /dev of the chroot instead
+    # if not split:
+    #     embed_firmware(args, chroot)
+    #     write_cgpt_kpart(args, layout, chroot)
 
-    if disk:
-        logging.info(f"Unmounting disk {disk} (this may take a while " "to sync, please wait)")
+    # if disk:
+    #     logging.info(f"Unmounting disk {disk} (this may take a while " "to sync, please wait)")
     pmb.chroot.shutdown(True)
 
     # Convert rootfs to sparse using img2simg
@@ -1372,6 +1381,9 @@ def install(args: PmbArgs):
 
     if args.zap:
         pmb.chroot.zap(False)
+
+    # Clean up any leftover losetup devices from previous runs
+    pmb.install.losetup.detach_all(silent=True)
 
     # Install required programs in native chroot
     step = 1
