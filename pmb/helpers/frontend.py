@@ -465,7 +465,7 @@ def deviceinfo_parse(args: PmbArgs) -> None:
     # Iterate over all devices
     kernel = args.deviceinfo_parse_kernel
     for device in devices:
-        print(f"{device}, with kernel={kernel}:")
+        print(f"{device}, with kernel={kernel}:", file=sys.stderr)
         print(json.dumps(pmb.parse.deviceinfo(device, kernel), indent=4, sort_keys=True))
 
 
