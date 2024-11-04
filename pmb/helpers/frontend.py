@@ -7,6 +7,7 @@ from pmb.helpers import logging
 import os
 from pathlib import Path
 import sys
+import shutil
 from typing import Any, NoReturn
 
 import pmb.aportgen
@@ -20,6 +21,7 @@ import pmb.ci
 import pmb.config
 from pmb.core import Config
 from pmb.types import Env, PmbArgs
+from pmb.helpers.exceptions import NonBugError
 import pmb.export
 import pmb.flasher
 import pmb.helpers.aportupgrade
@@ -342,14 +344,14 @@ def install(args: PmbArgs) -> None:
         if args.install_as_initramfs:
             raise ValueError("--on-device-installer cannot be combined with --initramfs")
     else:
-        if args.ondev_cp:
-            raise ValueError("--cp can only be combined with --ondev")
         if args.ondev_no_rootfs:
             raise ValueError(
                 "--no-rootfs can only be combined with --ondev. Do you mean --no-image?"
             )
+        if args.cp and not shutil.which("rsync"):
+            raise NonBugError("--cp requires rsync to be installed on the host system.")
     if args.ondev_no_rootfs:
-        _install_ondev_verify_no_rootfs(device, args.ondev_cp)
+        _install_ondev_verify_no_rootfs(device, args.cp)
 
     # On-device installer overrides
     if args.on_device_installer:

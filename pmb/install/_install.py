@@ -1167,8 +1167,8 @@ def install_on_device_installer(args: PmbArgs, step: int, steps: int) -> None:
     pmb.chroot.root(["ondev-prepare"], chroot_installer, env=env)
 
     # Copy files specified with 'pmbootstrap install --ondev --cp'
-    if args.ondev_cp:
-        for host_src, chroot_dest in args.ondev_cp:
+    if args.cp:
+        for host_src, chroot_dest in args.cp:
             host_dest = chroot_installer / chroot_dest
             logging.info(f"({chroot_installer}) add {host_src} as {chroot_dest}")
             pmb.helpers.run.root(["install", "-Dm644", host_src, host_dest])
@@ -1304,6 +1304,25 @@ def get_recommends(args: PmbArgs, packages: list[str]) -> Sequence[str]:
     return ret
 
 
+def merge_host_files(cp: list[tuple[str, str]], chroot: Chroot) -> None:
+    # We already asserted that rsync was available for this at
+    # the start, so we can assume it's here.
+
+    for host_src, chroot_dest in cp:
+        host_dest = chroot / chroot_dest
+        cmd = ["rsync", "--owner", "--group", "--recursive"]
+        if chroot_dest.startswith("/home"):
+            cmd += ["--chown=10000:10000"]
+        else:
+            cmd += ["--chown=root:root"]
+
+        if host_src[-1] != "/" and os.path.isdir(host_src):
+            host_src += "/"
+
+        logging.info(f"Merging {host_src} into {chroot}/{chroot_dest}")
+        pmb.helpers.run.root([*cmd, host_src, host_dest])
+
+
 def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
     # list all packages to be installed (including the ones specified by --add)
     # and upgrade the installed packages/apkindexes
@@ -1381,13 +1400,9 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
     if pmb.config.other.is_systemd_selected(context.config):
         pmb.chroot.apk.install(["postmarketos-base-systemd"], chroot)
 
-    # Install all packages to device rootfs chroot (and rebuild the initramfs,
-    # because that doesn't always happen automatically yet, e.g. when the user
-    # installed a hook without pmbootstrap - see #69 for more info)
+    # Install all packages to device rootfs chroot
     # Packages will be built if necessary as part of this step
     pmb.chroot.apk.install(install_packages, chroot)
-    flavor = pmb.chroot.other.kernel_flavor_installed(chroot)
-    pmb.chroot.initfs.build(flavor, chroot)
 
     # Set the user password
     setup_login(args, config, chroot)
@@ -1413,6 +1428,16 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
         enable_service(chroot, service)
     if args.no_firewall:
         disable_service(chroot, "nftables")
+
+    # This should be done last to ensure we can overwrite
+    # everything
+    if args.cp:
+        merge_host_files(args.cp, chroot)
+
+    # Rebuild the initramfs in case it was modified by some previous
+    # installation step
+    flavor = pmb.chroot.other.kernel_flavor_installed(chroot)
+    pmb.chroot.initfs.build(flavor, chroot)
 
 
 def install_as_initramfs(chroot: Chroot, sector_size: int, step: int, steps: int) -> None:
