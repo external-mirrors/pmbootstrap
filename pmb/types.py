@@ -140,7 +140,7 @@ class PmbArgs(Namespace):
     odin_flashable_tar: bool
     offline: bool
     on_device_installer: bool
-    ondev_cp: list[tuple[str, str]]
+    cp: list[tuple[str, str]]
     ondev_no_rootfs: bool
     output: str
     overview: bool
