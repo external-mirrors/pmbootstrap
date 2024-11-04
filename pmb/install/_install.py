@@ -1325,8 +1325,12 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
 
     pmb.helpers.repo.update(pmb.parse.deviceinfo().arch)
 
-    # Install uninstallable "dependencies" by default
-    install_packages += get_recommends(args, install_packages)
+    if args.installer:
+        # Add postmarketos-installer for installer images
+        install_packages += ["postmarketos-installer"]
+    else:
+        # Install uninstallable "dependencies" by default
+        install_packages += get_recommends(args, install_packages)
 
     # Install the base-systemd package first to make sure presets are available
     # when services are installed later
@@ -1371,6 +1375,31 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
     if args.cp:
         merge_host_files(args.cp, chroot)
 
+    if args.installer:
+        # Enable password-less sudo for the installer, oof
+        pmb.chroot.root(
+            ["sh", "-c", "echo permit nopass keepenv user > /etc/doas.d/installer.conf"], chroot
+        )
+        # GDM auto-login
+        pmb.chroot.root(
+            [
+                "sh",
+                "-c",
+                'echo -e "[daemon]\nAutomaticLoginEnable=True\nAutomaticLogin=user\n" > /etc/gdm/custom.conf',
+            ],
+            chroot,
+        )
+
+        merge_host_files(
+            [
+                (
+                    str(Chroot.native() / f"home/pmos/rootfs/{device}-target.img"),
+                    "/var/lib/postmarketos.img",
+                )
+            ],
+            chroot,
+        )
+
     # Rebuild the initramfs in case it was modified by some previous
     # installation step
     flavor = pmb.chroot.other.kernel_flavor_installed(chroot)
@@ -1378,7 +1407,8 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
 
 
 def install(args: PmbArgs) -> None:
-    device = get_context().config.device
+    config = get_context().config
+    device = config.device
     chroot = Chroot(ChrootType.ROOTFS, device)
     deviceinfo = pmb.parse.deviceinfo()
     # Sanity checks
@@ -1388,6 +1418,21 @@ def install(args: PmbArgs) -> None:
         sanity_check_disk_size(args)
     if args.on_device_installer:
         sanity_check_ondev_version(args)
+
+    if args.installer:
+        # We only support using GNOME for the installer, the image we install could be anything though...
+        config.ui = "gnome"
+        target_img = Chroot.native() / f"home/pmos/rootfs/{device}.img"
+        if not target_img.with_name(f"{device}-target.img").exists():
+            if not target_img.exists():
+                raise RuntimeError(
+                    "You need to run 'pmbootstrap install' to generate an image before building the installer..."
+                )
+            pmb.helpers.run.root(["mv", target_img, target_img.with_name(f"{device}-target.img")])
+
+        # Default user/password for the installer
+        args.user = "user"
+        args.password = "147147"  # Set a default password for the installer
 
     # Number of steps for the different installation methods.
     if args.no_image:

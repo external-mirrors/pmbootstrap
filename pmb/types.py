@@ -116,6 +116,7 @@ class PmbArgs(Namespace):
     install_key: bool
     install_local_pkgs: bool
     install_recommends: bool
+    installer: bool
     is_default_channel: str
     iter_time: str
     jobs: str

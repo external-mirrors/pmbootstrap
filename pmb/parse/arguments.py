@@ -258,6 +258,12 @@ def arguments_install(subparser):
         " as CHROOT_DEST with --cp",
         action="store_true",
     )
+    group.add_argument(
+        "--installer",
+        dest="installer",
+        action="store_true",
+        help="Generate an installer image for installing postmarketOS from removable media",
+    )
 
     # Other
     group = ret.add_argument_group("other optional arguments")
