@@ -10,7 +10,8 @@ if [ "$(id -u)" = 0 ]; then
 		openssl \
 		py3-pytest \
 		py3-pytest-cov \
-		doas
+		sudo \
+		doas # doas (default) is used for tests and sudo is installed to check if we can override
 	exec su "${TESTUSER:-build}" -c "sh -e $0"
 fi
 
