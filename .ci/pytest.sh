@@ -10,7 +10,7 @@ if [ "$(id -u)" = 0 ]; then
 		openssl \
 		py3-pytest \
 		py3-pytest-cov \
-		sudo
+		doas
 	exec su "${TESTUSER:-build}" -c "sh -e $0"
 fi
 
