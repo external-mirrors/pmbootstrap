@@ -47,7 +47,6 @@ pytest:
     - "apk -q add git android-tools multipath-tools losetup"
     - "su build -c 'git config --global user.email ci@ci'"
     - "su build -c 'git config --global user.name CI'"
-    - "echo 'build ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
     - ".ci/pytest.sh"
   after_script:
     - "cp /home/build/.local/var/pmbootstrap/log_testsuite.txt ."
