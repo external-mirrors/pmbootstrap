@@ -131,7 +131,7 @@ def extract(version, apk_path):
     os.chmod(temp_path, os.stat(temp_path).st_mode | stat.S_IEXEC)
     version_bin = pmb.helpers.run.user_output([temp_path, "--version"])
     version_bin = version_bin.split(" ")[1].split(",")[0]
-    if not version.startswith(f"{version_bin}-r"):
+    if not version.startswith(f"{version_bin}"):
         os.unlink(temp_path)
         raise RuntimeError(
             f"Downloaded apk-tools-static-{version}.apk,"
@@ -153,7 +153,7 @@ def download(file):
     """
     channel_cfg = pmb.config.pmaports.read_config_channel()
     mirrordir = channel_cfg["mirrordir_alpine"]
-    base_url = f"{get_context().config.mirrors['alpine']}{mirrordir}/main/{Arch.native()}"
+    base_url = f"{get_context().config.mirrors['alpine']}{mirrordir}/testing/{Arch.native()}"
     return pmb.helpers.http.download(f"{base_url}/{file}", file)
 
 
@@ -163,8 +163,8 @@ def init() -> None:
     """
     # Get and parse the APKINDEX. alpine_apkindex_path() will implicitly
     # download the APKINDEX file if it's missing.
-    apkindex = pmb.helpers.repo.alpine_apkindex_path("main")
-    index_data = pmb.parse.apkindex.package("apk-tools-static", indexes=[apkindex])
+    apkindex = pmb.helpers.repo.alpine_apkindex_path("testing")
+    index_data = pmb.parse.apkindex.package("apk-tools3-static", indexes=[apkindex])
 
     if index_data is None:
         raise RuntimeError("Could not find apk-tools-static in APKINDEX!")
@@ -175,6 +175,6 @@ def init() -> None:
     pmb.helpers.apk.check_outdated(version, "Run 'pmbootstrap update', then try again.")
 
     # Download, extract, verify apk-tools-static
-    apk_name = f"apk-tools-static-{version}.apk"
+    apk_name = f"apk-tools3-static-{version}.apk"
     apk_static = download(apk_name)
     extract(version, apk_static)

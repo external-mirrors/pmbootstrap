@@ -122,7 +122,7 @@ def init(chroot: Chroot, usr_merge: UsrMerge = UsrMerge.AUTO) -> None:
     # We plan to ship systemd with split /usr until the /usr merge is complete
     # in Alpine. Let's not drop all our code yet but just forcefully disable
     # it.
-    usr_merge = UsrMerge.OFF
+    usr_merge = UsrMerge.ON
 
     config = get_context().config
 
@@ -156,7 +156,7 @@ def init(chroot: Chroot, usr_merge: UsrMerge = UsrMerge.AUTO) -> None:
 
     # Install alpine-base
     pmb.helpers.repo.update(arch)
-    pkgs = ["alpine-base"]
+    pkgs = ["alpine-base", "coreutils"]
     cmd: list[PathString] = ["--initdb"]
     pmb.helpers.apk.run(cmd + ["add", *pkgs], chroot)
 
