@@ -1,23 +1,23 @@
 import os
 import pytest
-from pmb.config.sudo import which_sudo
+from pmb.config.sudo import which_sudo, PMB_SUDO_ENV_KEY
 
 
 def test_sudo_override(monkeypatch):
-    """check sudo is used when PMB_SUDO is set to sudo"""
-    monkeypatch.setenv("PMB_SUDO", "sudo")
+    """check sudo is used when PMB_SUDO_ENV_KEY is set to sudo"""
+    monkeypatch.setenv(PMB_SUDO_ENV_KEY, "sudo")
     assert which_sudo() == "sudo"
 
 
 def test_using_doas_default(monkeypatch):
-    """check doas is used when PMB_SUDO not defined"""
-    monkeypatch.delenv("PMB_SUDO", raising=False)
+    """check doas is used when PMB_SUDO_ENV_KEY not defined"""
+    monkeypatch.delenv(PMB_SUDO_ENV_KEY, raising=False)
     assert which_sudo() == "doas"
 
 
 def test_bad_env(monkeypatch):
-    """check error is raised when PMB_SUDO is misspelled"""
-    monkeypatch.setenv("PMB_SUDO", "doass")
+    """check error is raised when PMB_SUDO_ENV_KEY is misspelled"""
+    monkeypatch.setenv(PMB_SUDO_ENV_KEY, "doass")
     with pytest.raises(RuntimeError):
         which_sudo()
 
