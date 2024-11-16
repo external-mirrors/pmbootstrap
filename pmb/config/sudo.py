@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import shutil
-from functools import lru_cache
+from pmb.meta import Cache
 
 PMB_SUDO_ENV_KEY = "PMB_SUDO"
 
 
-@lru_cache
+@Cache()
 def which_sudo() -> str | None:
     """Return a command required to run commands as root, if any.
 
