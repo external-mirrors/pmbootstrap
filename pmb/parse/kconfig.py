@@ -11,6 +11,7 @@ import pmb.config
 import pmb.parse
 import pmb.helpers.pmaports
 import pmb.parse.kconfigcheck
+from pmb.core import Chroot
 from pmb.helpers.exceptions import NonBugError
 from pmb.types import PathString
 
@@ -269,6 +270,57 @@ def check(
             continue
         category = option.split("-", 1)[1]
         categories += [category]
+
+    configs = [c for c in aport.glob("config-*")]
+    if not configs:
+        # kernel could support multiple CPU archs, and that can influence
+        # config, so each one needs to be considered
+        logging.info("kernel appears to be using fragments, trying to generate config")
+        for arch in apkbuild["arch"]:
+            pmb.build.init()
+            pmb.chroot.init(Chroot.native())
+            pmb.build.copy_to_buildpath(pkgname)
+            logging.debug("(native) installing dependencies")
+            pmb.chroot.user(["abuild", "deps"], working_dir=Path("/home/pmos/build"))
+            logging.debug("(native) fetching kernel sources")
+            pmb.chroot.user(["abuild", "fetch"], working_dir=Path("/home/pmos/build"))
+            # abuild unpack
+            logging.debug("(native) extract kernel source")
+            # NOTE: checksum might fail, e.g. if a fragment was edited, but this
+            # behavior is allowed in the case using the standard *.config files
+            pmb.chroot.user(["abuild", "unpack"], working_dir=Path("/home/pmos/build"))
+            # abuild prepare
+            logging.debug("(native) patching and generating .config")
+            pmb.chroot.user(
+                ["abuild", "prepare"],
+                working_dir=Path("/home/pmos/build"),
+                env={"CARCH": str(arch)},
+            )
+            # extract .config from chroot
+            chroot = Chroot.native()
+            cmd = "srcdir=/home/pmos/build/src source APKBUILD; echo $builddir"
+            p = Path(
+                pmb.chroot.user(
+                    ["sh", "-c", cmd], chroot, Path("/home/pmos/build"), output_return=True
+                ).rstrip()
+            )
+            config_path = chroot / p / ".config"
+            if not config_path.exists():
+                logging.error(
+                    f"ERROR: unable to find config for {pkgname} on {arch} at location: {config_path}"
+                )
+                ret = False
+                continue
+
+            # check config
+            ret &= check_config(
+                config_path,
+                arch,
+                pkgver,
+                categories,
+                details=details,
+            )
+        return ret
 
     for config_path in aport.glob("config-*"):
         # The architecture of the config is in the name, so it just needs to be
