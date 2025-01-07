@@ -13,7 +13,7 @@ import pmb.helpers.pmaports
 import pmb.parse.kconfigcheck
 from pmb.core import Chroot
 from pmb.helpers.exceptions import NonBugError
-from pmb.types import PathString
+from pmb.types import Apkbuild, PathString
 
 
 def is_set(config: str, option: str) -> bool:
@@ -273,56 +273,9 @@ def check(
 
     configs = [c for c in aport.glob("config-*")]
     if not configs:
-        # kernel could support multiple CPU archs, and that can influence
-        # config, so each one needs to be considered
-        logging.info("kernel appears to be using fragments, trying to generate config")
-        for arch in apkbuild["arch"]:
-            pmb.build.init()
-            pmb.chroot.init(Chroot.native())
-            pmb.build.copy_to_buildpath(pkgname)
-            logging.debug("(native) installing dependencies")
-            pmb.chroot.user(["abuild", "deps"], working_dir=Path("/home/pmos/build"))
-            logging.debug("(native) fetching kernel sources")
-            pmb.chroot.user(["abuild", "fetch"], working_dir=Path("/home/pmos/build"))
-            # abuild unpack
-            logging.debug("(native) extract kernel source")
-            # NOTE: checksum might fail, e.g. if a fragment was edited, but this
-            # behavior is allowed in the case using the standard *.config files
-            pmb.chroot.user(["abuild", "unpack"], working_dir=Path("/home/pmos/build"))
-            # abuild prepare
-            logging.debug("(native) patching and generating .config")
-            pmb.chroot.user(
-                ["abuild", "prepare"],
-                working_dir=Path("/home/pmos/build"),
-                env={"CARCH": str(arch)},
-            )
-            # extract .config from chroot
-            chroot = Chroot.native()
-            cmd = "srcdir=/home/pmos/build/src source APKBUILD; echo $builddir"
-            p = Path(
-                pmb.chroot.user(
-                    ["sh", "-c", cmd], chroot, Path("/home/pmos/build"), output_return=True
-                ).rstrip()
-            )
-            config_path = chroot / p / ".config"
-            if not config_path.exists():
-                logging.error(
-                    f"ERROR: unable to find config for {pkgname} on {arch} at location: {config_path}"
-                )
-                ret = False
-                continue
+        return check_fragments(apkbuild, categories, details)
 
-            # check config
-            ret &= check_config(
-                config_path,
-                arch,
-                pkgver,
-                categories,
-                details=details,
-            )
-        return ret
-
-    for config_path in aport.glob("config-*"):
+    for config_path in configs:
         # The architecture of the config is in the name, so it just needs to be
         # extracted
         config_name = os.path.basename(config_path)
@@ -368,6 +321,70 @@ def extract_arch(config_path: PathString) -> str:
     # No match
     logging.info("WARNING: failed to extract arch from kernel config")
     return "unknown"
+
+
+def check_fragments(apkbuild: Apkbuild, categories: list[str] = [], details: bool = False) -> bool:
+    """
+    Check for necessary kernel config options in a package that uses kconfig fragments.
+
+    :param pkgname: the package to check for, optionally without "linux-"
+    :param pkgver: package version
+    :param archs: list of CPU archs to check for the kernel
+    :param categories: kconfig check categories, e.g. "pmb:kconfigcheck-nftables"
+    :param details: print all warnings if True, otherwise one generic warning
+    :returns: True when the check was successful, False otherwise
+    """
+    logging.info("kernel appears to be using fragments, trying to generate config")
+    # kernel could support multiple CPU archs, and that can influence
+    # config, so each one needs to be considered
+    ret = True
+    pkgname = apkbuild["pkgname"]
+    pkgver = apkbuild["pkgver"]
+    for arch in apkbuild["arch"]:
+        pmb.build.init()
+        pmb.chroot.init(Chroot.native())
+        pmb.build.copy_to_buildpath(pkgname)
+        logging.debug("(native) installing dependencies")
+        pmb.chroot.user(["abuild", "deps"], working_dir=Path("/home/pmos/build"))
+        logging.debug("(native) fetching kernel sources")
+        pmb.chroot.user(["abuild", "fetch"], working_dir=Path("/home/pmos/build"))
+        # abuild unpack
+        logging.debug("(native) extract kernel source")
+        # NOTE: checksum might fail, e.g. if a fragment was edited, but this
+        # behavior is allowed in the case using the standard *.config files
+        pmb.chroot.user(["abuild", "unpack"], working_dir=Path("/home/pmos/build"))
+        # abuild prepare
+        logging.debug("(native) patching and generating .config")
+        pmb.chroot.user(
+            ["abuild", "prepare"],
+            working_dir=Path("/home/pmos/build"),
+            env={"CARCH": str(arch)},
+        )
+        # extract .config from chroot
+        chroot = Chroot.native()
+        cmd = "srcdir=/home/pmos/build/src source APKBUILD; echo $builddir"
+        p = Path(
+            pmb.chroot.user(
+                ["sh", "-c", cmd], chroot, Path("/home/pmos/build"), output_return=True
+            ).rstrip()
+        )
+        config_path = chroot / p / ".config"
+        if not config_path.exists():
+            logging.error(
+                f"ERROR: unable to find config for {pkgname} on {arch} at location: {config_path}"
+            )
+            ret = False
+            continue
+
+        # check config
+        ret &= check_config(
+            config_path,
+            arch,
+            pkgver,
+            categories,
+            details=details,
+        )
+    return ret
 
 
 def extract_version(config_path: PathString) -> str:
