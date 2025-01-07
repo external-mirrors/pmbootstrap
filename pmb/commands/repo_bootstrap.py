@@ -14,10 +14,8 @@ import pmb.chroot.apk
 from pmb.build import BuildQueueItem
 from pmb.core.context import get_context
 
-from pmb import commands
 
-
-class RepoBootstrap(commands.Command):
+class RepoBootstrap:
     arch: Arch
     repo: str
     context: Context

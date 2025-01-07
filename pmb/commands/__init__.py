@@ -9,17 +9,16 @@ from pathlib import Path, PosixPath, PurePosixPath
 from pmb.types import PmbArgs
 from pmb.helpers import frontend
 
-from .base import Command
-from .aportgen import Aportgen
-from .flasher import Flasher
-from .log import Log
-from .index import Index
+from .aportgen import aportgen
+from .flasher import flasher
+from .log import log
+from .index import index
 from .repo_bootstrap import RepoBootstrap
-from .shutdown import Shutdown
-from .test import Test
-from .pkgrel_bump import PkgrelBump
-from .pkgver_bump import PkgverBump
-from .pull import Pull
+from .shutdown import shutdown
+from .test import test
+from .pkgrel_bump import pkgrel_bump
+from .pkgver_bump import pkgver_bump
+from .pull import pull
 from .kconfig import KConfigCheck, KConfigEdit, KConfigMigrate
 
 """New way to model pmbootstrap subcommands that can be invoked without PmbArgs."""
@@ -60,12 +59,11 @@ def run_command(args: PmbArgs) -> None:
         getattr(frontend, args.action)(args)
         return
 
-    command: Command
     match args.action:
         case "aportgen":
-            command = Aportgen(args.packages, args.fork_alpine, args.fork_alpine_retain_branch)
+            aportgen(args.packages, args.fork_alpine, args.fork_alpine_retain_branch)
         case "flasher":
-            command = Flasher(
+            flasher(
                 args.action_flasher,
                 # FIXME: defaults copied from pmb/helpers/arguments.py
                 # we should have these defaults defined in one place!
@@ -77,33 +75,31 @@ def run_command(args: PmbArgs) -> None:
                 getattr(args, "resume", None),
             )
         case "log":
-            command = Log(args.clear_log, args.lines)
+            log(args.clear_log, args.lines)
         case "index":
             # FIXME: should index support --arch?
-            command = Index()
+            index()
         case "repo_bootstrap":
-            command = RepoBootstrap(args.arch, args.repository)
+            RepoBootstrap(args.arch, args.repository).run()
         case "shutdown":
-            command = Shutdown()
+            shutdown()
         case "test":
-            command = Test(args.action_test)
+            test(args.action_test)
         case "pkgrel_bump":
-            command = PkgrelBump(args.packages, args.dry, args.auto)
+            pkgrel_bump(args.packages, args.dry, args.auto)
         case "pkgver_bump":
-            command = PkgverBump(args.packages)
+            pkgver_bump(args.packages)
         case "pull":
-            command = Pull()
+            pull()
         case "kconfig":
             match args.action_kconfig:
                 case "check":
-                    command = KConfigCheck(
+                    KConfigCheck(
                         args.kconfig_check_details, args.file, args.package, args.keep_going
-                    )
+                    ).run()
                 case "edit":
-                    command = KConfigEdit(args.package[0], args.arch, args.xconfig, args.nconfig)
+                    KConfigEdit(args.package[0], args.arch, args.xconfig, args.nconfig).run()
                 case "migrate":
-                    command = KConfigMigrate(args.package, args.arch)
+                    KConfigMigrate(args.package, args.arch).run()
         case _:
             raise NotImplementedError(f"Command '{args.action}' is not implemented.")
-
-    command.run()

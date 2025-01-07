@@ -7,14 +7,13 @@ import pmb.helpers.git
 import pmb.config
 import pmb.parse.kconfig
 import logging
-from pmb import commands
 from pmb.build.kconfig import KConfigUI
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.helpers.exceptions import NonBugError
 
 
-class KConfigCheck(commands.Command):
+class KConfigCheck:
     def __init__(
         self, details: bool, file: str, pkgname: str | list[str], keep_going: bool
     ) -> None:
@@ -70,7 +69,7 @@ class KConfigCheck(commands.Command):
             logging.info("kconfig check succeeded!")
 
 
-class KConfigEdit(commands.Command):
+class KConfigEdit:
     def __init__(
         self, pkgname: str, arch: Arch | None, use_xconfig: bool, use_nconfig: bool
     ) -> None:
@@ -91,7 +90,7 @@ class KConfigEdit(commands.Command):
         pmb.build.kconfig.edit_config(self.pkgname, self.arch, self.chosen_ui)
 
 
-class KConfigMigrate(commands.Command):
+class KConfigMigrate:
     def __init__(self, pkgname: str | list[str], arch: Arch | None) -> None:
         self.pkgname_list = [pkgname] if isinstance(pkgname, str) else pkgname
         self.arch = arch

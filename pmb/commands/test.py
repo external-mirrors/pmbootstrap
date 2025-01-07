@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
-from pmb import commands, logging
+from pmb import logging
 import pmb.helpers.repo
 import pmb.parse.apkindex
 from pmb.core.arch import Arch
@@ -25,10 +25,6 @@ def apkindex_parse_all() -> None:
     logging.info(f"Parsed {pkgs} packages from {indxs} APKINDEX files in {end - start:.3f} seconds")
 
 
-class Test(commands.Command):
-    def __init__(self, action: str) -> None:
-        self.action = action
-
-    def run(self) -> None:
-        if self.action == "apkindex_parse_all":
-            apkindex_parse_all()
+def test(action: str) -> None:
+    if action == "apkindex_parse_all":
+        apkindex_parse_all()
