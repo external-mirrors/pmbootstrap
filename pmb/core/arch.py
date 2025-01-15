@@ -81,18 +81,27 @@ class Arch(enum.Enum):
         we need to generate the "musl-$ARCH" and "gcc-$ARCH" packages (use
         "pmbootstrap aportgen musl-armhf" etc.)."""
         # FIXME: cache?
-        return set(
-            [
-                Arch.armhf,
-                Arch.armv7,
-                Arch.aarch64,
-                Arch.x86_64,
-                Arch.x86,
-                Arch.riscv64,
-                Arch.ppc64le,
-                Arch.native(),
-            ]
-        )
+        return {
+            Arch.armhf,
+            Arch.armv7,
+            Arch.aarch64,
+            Arch.x86_64,
+            Arch.x86,
+            Arch.riscv64,
+            Arch.ppc64le,
+            Arch.native(),
+        }
+
+    @staticmethod
+    def supported_binary() -> set[Arch]:
+        """Officially supported architectures that have a binary repository"""
+        return {
+            Arch.armhf,
+            Arch.armv7,
+            Arch.aarch64,
+            Arch.x86_64,
+            Arch.x86,
+        }
 
     def kernel(self) -> str:
         match self:

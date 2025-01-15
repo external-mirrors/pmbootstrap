@@ -86,7 +86,7 @@ def chroot(apkbuild: Apkbuild, arch: Arch) -> Chroot:
     if arch == Arch.native():
         return Chroot.native()
 
-    if "pmb:cross-native" in apkbuild["options"]:
+    if "pmb:cross-kernel" in apkbuild["options"]:
         return Chroot.native()
 
     return Chroot.buildroot(arch)
@@ -98,6 +98,8 @@ def crosscompile(apkbuild: Apkbuild, arch: Arch) -> CrossCompileType:
         return None
     if not arch.cpu_emulation_required():
         return None
+    if "pmb:cross-kernel" in apkbuild["options"]:
+        return "kernel"
     # We default to cross-native if the package has "noarch" since that implies
     # it won't run a compiler.
     if (
