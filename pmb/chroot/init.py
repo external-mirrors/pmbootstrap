@@ -32,6 +32,11 @@ class UsrMerge(enum.Enum):
     OFF = 2
 
 
+class ChrootInitResult(enum.Enum):
+    CREATED = 0
+    ALREADY_EXISTED = 1
+
+
 def copy_resolv_conf(chroot: Chroot) -> None:
     """
     Use pythons super fast file compare function (due to caching)
@@ -104,7 +109,7 @@ def warn_if_chroots_outdated() -> None:
 
 
 @Cache("chroot")
-def init(chroot: Chroot, usr_merge: UsrMerge = UsrMerge.AUTO) -> None:
+def init(chroot: Chroot, usr_merge: UsrMerge = UsrMerge.AUTO) -> ChrootInitResult:
     """
     Initialize a chroot by copying the resolv.conf and updating
     /etc/apk/repositories. If /bin/sh is missing, create the chroot from
@@ -113,6 +118,7 @@ def init(chroot: Chroot, usr_merge: UsrMerge = UsrMerge.AUTO) -> None:
     :param usr_merge: set to ON to force having a merged /usr. With AUTO it is
                       only done if the user chose to install systemd in
                       pmbootstrap init.
+    :return ChrootInitResult.ALREADY_EXISTED if the chroot already existed, otherwise ChrootInitResult.CREATED
     """
     # When already initialized: just prepare the chroot
     arch = chroot.arch
@@ -138,7 +144,7 @@ def init(chroot: Chroot, usr_merge: UsrMerge = UsrMerge.AUTO) -> None:
         copy_resolv_conf(chroot)
         pmb.helpers.apk.update_repository_list(chroot.path)
         warn_if_chroots_outdated()
-        return
+        return ChrootInitResult.ALREADY_EXISTED
 
     # Fetch apk.static
     pmb.helpers.apk_static.init()
@@ -177,3 +183,5 @@ def init(chroot: Chroot, usr_merge: UsrMerge = UsrMerge.AUTO) -> None:
                 pmb.chroot.root(["mkdir", "-p", target], chroot)
             pmb.chroot.user(["ln", "-s", target, link_name], chroot)
             pmb.chroot.root(["chown", "pmos:pmos", target], chroot)
+
+    return ChrootInitResult.CREATED
