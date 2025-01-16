@@ -268,6 +268,12 @@ def arguments_install(subparser: argparse._SubParsersAction) -> None:
         action="store_true",
     )
     group.add_argument(
+        "--initramfs",
+        dest="install_as_initramfs",
+        help="Pack the entire rootfs into an initramfs",
+        action="store_true",
+    )
+    group.add_argument(
         "--enable",
         dest="enable_services",
         nargs="+",

@@ -28,6 +28,7 @@ import pmb.helpers.run
 import pmb.helpers.other
 import pmb.helpers.package
 import pmb.install.blockdevice
+import pmb.install.losetup
 import pmb.install.recovery
 import pmb.install.ui
 import pmb.install
@@ -1002,7 +1003,9 @@ def install_system_image(
             pmb.chroot.user(["mv", "-f", sys_image_patched, sys_image], working_dir=workdir)
 
 
-def print_flash_info(device: str, deviceinfo: Deviceinfo, split: bool, have_disk: bool) -> None:
+def print_flash_info(
+    device: str, deviceinfo: Deviceinfo, split: bool, as_initramfs: bool, have_disk: bool
+) -> None:
     """Print flashing information, based on the deviceinfo data and the
     pmbootstrap arguments."""
     logging.info("")  # make the note stand out
@@ -1029,7 +1032,9 @@ def print_flash_info(device: str, deviceinfo: Deviceinfo, split: bool, have_disk
     if "flash_rootfs" in flasher_actions and not have_disk and bool(split) == requires_split:
         logging.info("* pmbootstrap flasher flash_rootfs")
         logging.info("  Flashes the generated rootfs image to your device:")
-        if split:
+        if as_initramfs:
+            logging.info(f"  {Chroot.native() / 'home/pmos/rootfs' / device}-boot.img")
+        elif split:
             logging.info(f"  {Chroot.native() / 'home/pmos/rootfs' / device}-root.img")
         else:
             logging.info(f"  {Chroot.native() / 'home/pmos/rootfs' / device}.img")
@@ -1337,6 +1342,12 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
     if locale_is_set:
         install_packages += ["lang", "musl-locales"]
 
+    # Automatically configure the network gadget when rootfs-is-initramfs
+    # FIXME: this shouldn't be hardcoded but somehow described with configuration
+    if args.install_as_initramfs:
+        install_packages += ["postmarketos-network-gadget"]
+        args.enable_services = list(set([*args.enable_services, "network-gadget"]))
+
     pmaports_cfg = pmb.config.pmaports.read_config()
     # postmarketos-base supports a dummy package for blocking unl0kr install
     # when not required
@@ -1404,6 +1415,56 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
         disable_service(chroot, "nftables")
 
 
+def install_as_initramfs(chroot: Chroot, sector_size: int, step: int, steps: int) -> None:
+    logging.info(f"*** ({step}/{steps}) GENERATING ROOTFS INITRAMFS ***")
+
+    config = get_context().config
+    device = config.device
+    pmb.helpers.mount.umount_all(chroot.path)
+
+    mountpoint = Path(mount_device_rootfs(chroot))
+    mountpoint_outside = Chroot.native() / mountpoint
+
+    pmb.chroot.apk.install(["dosfstools"], Chroot.native(), build=False)
+
+    if not (Chroot.native() / "home/pmos/rootfs").exists():
+        pmb.chroot.user(["mkdir", "-p", "/home/pmos/rootfs"])
+
+    pmb.chroot.root(
+        [
+            "sh",
+            "-c",
+            f"find init bin sbin usr lib var etc dev proc run sys home mnt tmp -print | cpio -o -v -H newc | gzip > /home/pmos/rootfs/{device}.cpio.gz",
+        ],
+        working_dir=mountpoint,
+    )
+    pmb.chroot.root(["cp", f"/home/pmos/rootfs/{device}.cpio.gz", mountpoint / "boot/initramfs"])
+    pmb.chroot.root(
+        ["truncate", "-s", f"{config.boot_size}M", f"/home/pmos/rootfs/{device}-boot.img"]
+    )
+    pmb.chroot.root(
+        [
+            "mkfs.vfat",
+            "-S",
+            str(sector_size),
+            "-F",
+            "32",
+            "-n",
+            "pmOS_boot",
+            f"/home/pmos/rootfs/{device}-boot.img",
+        ]
+    )
+    dev = pmb.install.losetup.mount(Path(f"/home/pmos/rootfs/{device}-boot.img"), sector_size)
+    pmb.chroot.root(["mkdir", "-p", "/mnt/boot"])
+    pmb.chroot.root(["mount", dev, "/mnt/boot"])
+    files = []
+    for path in (mountpoint_outside / "boot").glob("*"):
+        files.append(path.name)
+    pmb.chroot.root(["cp", "-a", *files, "/mnt/boot/"], working_dir=mountpoint / "boot")
+    pmb.chroot.root(["umount", "/mnt/boot"])
+    pmb.install.losetup.detach_all()
+
+
 def install(args: PmbArgs) -> None:
     device = get_context().config.device
     chroot = Chroot(ChrootType.ROOTFS, device)
@@ -1417,7 +1478,7 @@ def install(args: PmbArgs) -> None:
         sanity_check_ondev_version(args)
 
     # Number of steps for the different installation methods.
-    if args.no_image:
+    if args.no_image or args.install_as_initramfs:
         steps = 2
     elif args.android_recovery_zip:
         steps = 3
@@ -1448,11 +1509,17 @@ def install(args: PmbArgs) -> None:
     if args.on_device_installer:
         # Runs install_system_image twice
         install_on_device_installer(args, step, steps)
+    elif args.install_as_initramfs:
+        install_as_initramfs(chroot, args.sector_size or 512, step, steps)
     else:
         install_system_image(args, 0, chroot, step, steps, split=args.split, disk=args.disk)
 
     print_flash_info(
-        device, deviceinfo, args.split, True if args.disk and args.disk.is_absolute() else False
+        device,
+        deviceinfo,
+        args.split,
+        args.install_as_initramfs,
+        True if args.disk and args.disk.is_absolute() else False,
     )
     print_sshd_info(args)
     print_firewall_info(args.no_firewall, deviceinfo.arch)

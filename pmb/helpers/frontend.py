@@ -338,6 +338,9 @@ def install(args: PmbArgs) -> None:
 
         if deviceinfo.cgpt_kpart:
             raise ValueError("--on-device-installer cannot be used with ChromeOS devices")
+
+        if args.install_as_initramfs:
+            raise ValueError("--on-device-installer cannot be combined with --initramfs")
     else:
         if args.ondev_cp:
             raise ValueError("--cp can only be combined with --ondev")

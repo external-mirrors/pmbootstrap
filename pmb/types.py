@@ -112,6 +112,7 @@ class PmbArgs(Namespace):
     ignore_depends: bool
     image_size: str
     image: bool
+    install_as_initramfs: bool
     install_base: bool
     install_blockdev: bool
     install_cgpt: bool
