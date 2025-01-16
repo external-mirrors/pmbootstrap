@@ -189,6 +189,23 @@ def install_run_apk(
         pmb.helpers.apk.run(command, chroot, with_progress=(i == 0))
 
 
+def upgrade(chroot: Chroot, available: bool = False) -> None:
+    """Run 'apk upgrade' on a chroot
+
+    :param available: reset all packages to versions available from current repositories
+    """
+
+    context = get_context()
+    user_repo: list[PathString] = []
+    for channel in pmb.config.pmaports.all_channels():
+        user_repo += ["--repository", context.config.work / "packages" / channel]
+
+    command = [*user_repo, "upgrade"]
+    if available:
+        command.append("-a")
+    pmb.helpers.apk.run(command, chroot, with_progress=False)
+
+
 def install(packages: list[str], chroot: Chroot, build: bool = True, quiet: bool = False) -> None:
     """
     Install packages from pmbootstrap's local package index or the pmOS/Alpine
