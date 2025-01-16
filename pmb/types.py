@@ -91,6 +91,7 @@ class PmbArgs(Namespace):
     disk: Path
     dry: bool
     efi: bool
+    enable_services: list[str]
     envkernel: bool
     export_folder: Path
     extra_space: str

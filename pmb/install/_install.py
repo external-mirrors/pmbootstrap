@@ -501,9 +501,10 @@ def print_sshd_info(args: PmbArgs) -> None:
         logging.info("More info: https://postmarketos.org/ondev-debug")
 
 
-def disable_service_systemd(chroot: Chroot, service_name: str) -> None:
-    preset = f"/usr/lib/systemd/system-preset/80-pmbootstrap-install-disable-{service_name}.preset"
-    preset_content = f"disable {service_name}.service"
+def configure_service_systemd(chroot: Chroot, service_name: str, enable: bool = True) -> None:
+    action = "enable" if enable else "disable"
+    preset = f"/usr/lib/systemd/system-preset/80-pmbootstrap-install-{action}-{service_name}.preset"
+    preset_content = f"{action} {service_name}.service"
     pmb.chroot.root(
         ["sh", "-c", f"echo {shlex.quote(preset_content)} > {shlex.quote(preset)}"], chroot
     )
@@ -518,27 +519,35 @@ def disable_service_systemd(chroot: Chroot, service_name: str) -> None:
         check=False,
     )
     output = output.rstrip()
-    if output != "disabled":
-        raise RuntimeError(f"Failed to disable {service_name} service (systemd preset): {output}")
+    if output != f"{action}d":
+        raise RuntimeError(f"Failed to {action} {service_name} service (systemd preset): {output}")
 
 
-def disable_service_openrc(chroot: Chroot, service_name: str) -> None:
+def configure_service_openrc(chroot: Chroot, service_name: str, enable: bool = True) -> None:
+    action = "add" if enable else "del"
     # check=False: rc-update doesn't exit with 0 if already disabled
-    pmb.chroot.root(["rc-update", "del", service_name, "default"], chroot, check=False)
+    pmb.chroot.root(["rc-update", action, service_name, "default"], chroot, check=False)
 
     # Verify that it's gone
     runlevel_files = pmb.helpers.run.root(
         ["find", "-name", service_name], output_return=True, working_dir=chroot / "etc/runlevels"
     )
-    if runlevel_files:
-        raise RuntimeError(f"Failed to disable service {service_name} (openrc): {runlevel_files}")
+    if runlevel_files ^ (not enable):
+        raise RuntimeError(f"Failed to {action} service {service_name} (openrc): {runlevel_files}")
 
 
 def disable_service(chroot: Chroot, service_name: str) -> None:
     if pmb.config.is_systemd_selected():
-        disable_service_systemd(chroot, service_name)
+        configure_service_systemd(chroot, service_name, enable=False)
     else:
-        disable_service_openrc(chroot, service_name)
+        configure_service_openrc(chroot, service_name, enable=False)
+
+
+def enable_service(chroot: Chroot, service_name: str) -> None:
+    if pmb.config.is_systemd_selected():
+        configure_service_systemd(chroot, service_name, enable=True)
+    else:
+        configure_service_openrc(chroot, service_name, enable=True)
 
 
 def print_firewall_info(disabled: bool, arch: Arch) -> None:
@@ -1389,6 +1398,8 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
 
     if args.no_sshd:
         disable_service(chroot, "sshd")
+    for service in args.enable_services:
+        enable_service(chroot, service)
     if args.no_firewall:
         disable_service(chroot, "nftables")
 

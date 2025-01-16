@@ -267,6 +267,13 @@ def arguments_install(subparser: argparse._SubParsersAction) -> None:
         " as CHROOT_DEST with --cp",
         action="store_true",
     )
+    group.add_argument(
+        "--enable",
+        dest="enable_services",
+        nargs="+",
+        help="List of services to enable by default",
+        default=[],
+    )
 
     # Other
     group = ret.add_argument_group("other optional arguments")
