@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pmb.build
 import pmb.chroot
+from pmb.chroot.init import ChrootInitResult
 import pmb.chroot.apk
 import pmb.chroot.other
 import pmb.chroot.initfs
@@ -1298,7 +1299,8 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
     logging.info(f'*** ({step}/{steps}) CREATE DEVICE ROOTFS ("{device}") ***')
 
     chroot = Chroot(ChrootType.ROOTFS, device)
-    pmb.chroot.init(chroot)
+    if pmb.chroot.init(chroot) == ChrootInitResult.ALREADY_EXISTED:
+        pmb.chroot.apk.upgrade(chroot, available=True)
     # Create user before installing packages, so post-install scripts of
     # pmaports can figure out the username (legacy reasons: pmaports#820)
     set_user(context.config)
