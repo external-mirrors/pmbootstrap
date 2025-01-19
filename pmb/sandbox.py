@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
+# Vendored from mkosi commit
+# bb9c419b0d87 ("Merge pull request #3131 from NekkoDroid/no-more-split-uki")
 
 """
 This is a standalone implementation of sandboxing which is used by mkosi. Note that this is
@@ -339,14 +341,14 @@ def become_user(uid: int, gid: int) -> None:
         raise OSError(rc, os.strerror(rc))
 
 
-def acquire_privileges(*, become_root: bool = False) -> bool:
-    if os.getuid() == 0 or (not become_root and have_effective_cap(CAP_SYS_ADMIN)):
+def acquire_privileges(*, become: tuple[int, int]) -> bool:
+    if os.getuid() == 0 or (not become == (0, 0) and have_effective_cap(CAP_SYS_ADMIN)):
         return False
 
-    if become_root:
+    if become == (0, 0):
         become_user(0, 0)
     else:
-        become_user(os.getuid(), os.getgid())
+        become_user(*become)
         cap_permitted_to_ambient()
 
     return True
@@ -660,6 +662,7 @@ mkosi-sandbox [OPTIONS...] COMMAND [ARGUMENTS...]
      --chdir DIR                  Change the working directory in the sandbox to DIR
      --same-dir                   Change the working directory in the sandbox to $PWD
      --become-root                Map the current user/group to root:root in the sandbox
+     --become uid:gid             Map the current user/group to uid:gid in the sandbox
      --suppress-chown             Make chown() syscalls in the sandbox a noop
      --unshare-net                Unshare the network namespace if possible
      --unshare-ipc                Unshare the IPC namespace if possible
@@ -680,7 +683,8 @@ def main() -> None:
     upperdir = ""
     workdir = ""
     chdir = None
-    become_root = suppress_chown = unshare_net = unshare_ipc = False
+    suppress_chown = unshare_net = unshare_ipc = False
+    become = (os.getuid(), os.getgid())
 
     ttyname = os.ttyname(2) if os.isatty(2) else ""
 
@@ -732,7 +736,10 @@ def main() -> None:
         elif arg == "--same-dir":
             chdir = os.getcwd()
         elif arg == "--become-root":
-            become_root = True
+            become = (0, 0)
+        elif arg == "--become":
+            _tmp = list(map(int, argv.pop().split(":")))
+            become = (_tmp[1], _tmp[0])
         elif arg == "--suppress-chown":
             suppress_chown = True
         elif arg == "--unshare-net":
@@ -773,7 +780,7 @@ def main() -> None:
     if unshare_ipc:
         namespaces |= CLONE_NEWIPC
 
-    userns = acquire_privileges(become_root=become_root)
+    userns = acquire_privileges(become=become)
 
     # If we're root in a user namespace with a single user, we're still not going to be able to
     # chown() stuff, so check for that and apply the seccomp filter as well in that case.
