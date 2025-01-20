@@ -24,8 +24,11 @@ class ChrootType(enum.Enum):
 class Chroot:
     __type: ChrootType
     __name: str
+    __sandbox: bool
 
-    def __init__(self, suffix_type: ChrootType, name: str | Arch | None = ""):
+    def __init__(
+        self, suffix_type: ChrootType, name: str | Arch | None = "", *, sandbox: bool = False
+    ):
         # We use the native chroot as the buildroot when building for the host arch
         if suffix_type == ChrootType.BUILDROOT and isinstance(name, Arch):
             if name.is_native():
@@ -34,6 +37,7 @@ class Chroot:
 
         self.__type = suffix_type
         self.__name = str(name or "")
+        self.__sandbox = sandbox
 
         self.__validate()
 
@@ -72,8 +76,12 @@ class Chroot:
             return self.__type.value
 
     @property
+    def prefix(self) -> str:
+        return "sandbox" if self.__sandbox else "chroot"
+
+    @property
     def dirname(self) -> str:
-        return f"chroot_{self}"
+        return f"{self.prefix}_{self}"
 
     @property
     def path(self) -> Path:
@@ -183,6 +191,8 @@ class Chroot:
                 yield f"chroot_{stype.value}"
             else:
                 yield f"chroot_{stype.value}_*"
+
+            yield f"sandbox_{stype.value}*"
 
     @staticmethod
     def glob() -> Generator[Path, None, None]:
