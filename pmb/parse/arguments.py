@@ -1008,6 +1008,17 @@ def get_parser() -> argparse.ArgumentParser:
     arguments_status(sub)
     arguments_ci(sub)
 
+    sandbox = sub.add_parser("sandbox", help="Start a shell in a user namespace")
+    sandbox.add_argument(
+        "--chroot", action="store_true", dest="sandbox_chroot", help="Enter a chroot"
+    )
+    sandbox.add_argument(
+        "--persistent",
+        action="store_true",
+        dest="sandbox_chroot_persistent",
+        help="Use a persistent chroot rather than creating a new one for each working directory you start it from",
+    )
+
     # Action: log
     log = sub.add_parser("log", help="follow the pmbootstrap logfile")
     log.add_argument("-n", "--lines", type=int, default=60, help="count of initial output lines")

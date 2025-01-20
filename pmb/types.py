@@ -176,6 +176,7 @@ class PmbArgs(Namespace):
     resume: bool
     rootfs: bool
     rsync: bool
+    sandbox_chroot: bool
     scripts: str
     second_storage: str
     sector_size: int | None
