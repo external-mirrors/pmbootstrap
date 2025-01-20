@@ -4,7 +4,7 @@ import os
 import shlex
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Literal
+from typing import Literal, overload
 
 import pmb.chroot
 import pmb.config.pmaports
@@ -154,32 +154,39 @@ def _apk_with_progress(command: list[str]) -> None:
             pmb.helpers.run_core.check_return_code(p_apk.returncode, log_msg)
 
 
-def _prepare_cmd(command: Sequence[PathString], chroot: Chroot | None) -> list[str]:
+@overload
+def prepare_cmd(command: Sequence[PathString], work: Path, root: Path, arch: Arch) -> list[str]: ...
+
+
+@overload
+def prepare_cmd(command: Sequence[PathString], work: Path, root: None, arch: None) -> list[str]: ...
+
+
+def prepare_cmd(
+    command: Sequence[PathString], work: Path, root: Path | None, arch: Arch | None
+) -> list[str]:
     """Prepare the apk command.
 
     Returns a tuple of the first part of the command with generic apk flags, and the second part
     with the subcommand and its arguments.
     """
-    config = get_context().config
     # Our _apk_with_progress() wrapper also need --no-progress, since all that does is
     # prevent apk itself from rendering progress bars. We instead want it to tell us
     # the progress so we can render it. So we always set --no-progress.
-    _command: list[str] = [str(config.work / "apk.static"), "--no-progress"]
-    if chroot:
-        cache_dir = config.work / f"cache_apk_{chroot.arch}"
+    _command: list[str] = [str(work / "apk.static"), "--no-progress"]
+    if root:
+        cache_dir = work / f"cache_apk_{arch}"
         _command.extend(
             [
                 "--root",
-                str(chroot.path),
+                str(root),
                 "--arch",
-                str(chroot.arch),
+                str(arch),
                 "--cache-dir",
                 str(cache_dir),
             ]
         )
-        local_repos = pmb.helpers.repo.urls(
-            user_repository=config.work / "packages", mirrors_exclude=True
-        )
+        local_repos = pmb.helpers.repo.urls(user_repository=work / "packages", mirrors_exclude=True)
         for repo in local_repos:
             _command.extend(["--repository", repo])
     if get_context().offline:
@@ -192,6 +199,18 @@ def _prepare_cmd(command: Sequence[PathString], chroot: Chroot | None) -> list[s
         if c == "add":
             _command.append("--no-interactive")
 
+    # Sanity checks. We should avoid accidentally writing to
+    # /var/cache/apk on the host!
+    if "add" in _command:
+        if "--no-interactive" not in _command:
+            raise RuntimeError(
+                "Encountered an 'apk add' command without --no-interactive! This is a bug."
+            )
+        if "--cache-dir" not in _command:
+            raise RuntimeError(
+                "Encountered an 'apk add' command without --cache-dir! This is a bug."
+            )
+
     return _command
 
 
@@ -203,19 +222,7 @@ def run(command: Sequence[PathString], chroot: Chroot, with_progress: bool = Tru
     :param chroot: chroot to run the command in
     :raises RuntimeError: when the apk command fails
     """
-    _command = _prepare_cmd(command, chroot)
-
-    # Sanity checks. We should avoid accidentally writing to
-    # /var/cache/apk on the host!
-    if "add" in command:
-        if "--no-interactive" not in _command:
-            raise RuntimeError(
-                "Encountered an 'apk add' command without --no-interactive! This is a bug."
-            )
-        if "--cache-dir" not in _command:
-            raise RuntimeError(
-                "Encountered an 'apk add' command without --cache-dir! This is a bug."
-            )
+    _command = prepare_cmd(command, get_context().config.work, chroot.path, chroot.arch)
 
     if with_progress:
         _apk_with_progress(_command)
@@ -271,7 +278,7 @@ def cache_clean(arch: Arch) -> None:
     ]
 
     command += ["cache", "clean"]
-    _command = _prepare_cmd(command, None)
+    _command = prepare_cmd(command, get_context().config.work, None, None)
 
     pmb.helpers.apk_static.init()
     pmb.helpers.run.root(_command)
