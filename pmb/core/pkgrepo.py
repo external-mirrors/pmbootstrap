@@ -12,36 +12,49 @@ from pmb.meta import Cache
 from pmb.types import WithExtraRepos
 
 
-@Cache("with_extra_repos")
-def pkgrepo_paths(with_extra_repos: WithExtraRepos = "default") -> list[Path]:
+def pkgrepo_paths_names(with_extra_repos: WithExtraRepos = "default") -> list[tuple[str, Path]]:
     config = get_context().config
     paths = list(map(lambda x: Path(x), config.aports))
     if not paths:
         raise RuntimeError("No package repositories specified?")
 
+    out = []
+
+    # FIXME: change config.aports to be a key/value store rather than a list so
+    # we can be sure here
+    if len(paths) > 1:
+        raise RuntimeError("Multiple aports are not supported yet... sorry!")
+
+    aports_upstream_path = get_context().config.work / "cache_git/aports_upstream"
+    if aports_upstream_path.exists():
+        out.append(("alpine", aports_upstream_path))
+
+    # FIXME: same as above
+    out.append(("pmaports", paths[-1]))
+
     with_systemd = False
 
     match with_extra_repos:
         case "disabled":
-            return paths
+            return out
         case "enabled":
             with_systemd = True
         case "default":
             with_systemd = pmb.config.is_systemd_selected(config)
 
-    out_paths = []
-    for p in paths:
-        # This isn't very generic, but we don't plan to add new extra-repos...
-        if (p / "extra-repos/systemd").is_dir() and with_systemd:
-            out_paths.append(p / "extra-repos/systemd")
-        out_paths.append(p)
+    if (paths[-1] / "extra-repos/systemd").is_dir() and with_systemd:
+        out.append(("systemd", (paths[-1] / "extra-repos/systemd")))
 
-    return out_paths
+    return out
+
+@Cache("with_extra_repos")
+def pkgrepo_paths(with_extra_repos: WithExtraRepos = "default") -> list[Path]:
+    return list(map(lambda x: x[1], pkgrepo_paths_names(with_extra_repos=with_extra_repos)))
 
 
 @Cache()
 def pkgrepo_default_path() -> Path:
-    return pkgrepo_paths(with_extra_repos="disabled")[0]
+    return pkgrepo_path("pmaports")
 
 
 def pkgrepo_names(with_extra_repos: WithExtraRepos = "default") -> list[str]:
@@ -50,9 +63,7 @@ def pkgrepo_names(with_extra_repos: WithExtraRepos = "default") -> list[str]:
     that the last repository is "pmaports", though the directory
     may be named differently. So we hardcode the name here.
     """
-    names = [aports.name for aports in pkgrepo_paths(with_extra_repos)]
-    names[-1] = "pmaports"
-    return names
+    return list(map(lambda x: x[0], pkgrepo_paths_names(with_extra_repos=with_extra_repos)))
 
 
 def pkgrepo_name(path: Path) -> str:
@@ -61,6 +72,8 @@ def pkgrepo_name(path: Path) -> str:
     MUST be used instead of "path.name" as we need special handling
     for the pmaports repository.
     """
+    if path.name == "aports_upstream":
+        return "alpine"
     if path == get_context().config.aports[-1]:
         return "pmaports"
 
@@ -75,9 +88,9 @@ def pkgrepo_path(name: str) -> Path:
     if name == "pmaports":
         return get_context().config.aports[-1]
 
-    for aports in pkgrepo_paths():
-        if aports.name == name:
-            return aports
+    for repo in pkgrepo_paths_names():
+        if repo[0] == name:
+            return repo[1]
     raise RuntimeError(f"aports '{name}' not found")
 
 

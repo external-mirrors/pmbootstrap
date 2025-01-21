@@ -5,6 +5,7 @@ from pathlib import Path
 from pmb.core.pkgrepo import (
     pkgrepo_default_path,
     pkgrepo_name,
+    pkgrepo_path,
     pkgrepo_paths,
     pkgrepo_relative_path,
 )
@@ -97,7 +98,14 @@ def read_config(aports: Path | None = None) -> configparser.SectionProxy:
     will be the systemd one (e.g. systemd-edge instead of edge)
     since we'll use the first pkgrepo which is systemd."""
     if aports is None:
-        aports = pkgrepo_paths()[0]
+        aports = pkgrepo_path("pmaports")
+
+    # FIXME: switch aports channel when switching pmaports channel and somehow
+    # produce useful data here (or improve this API)
+    if pkgrepo_name(aports) == "alpine":
+        return {
+            "channel": "alpine-edge"
+        }
 
     systemd = pkgrepo_name(aports) == "systemd"
     # extra-repos don't have a pmaports.cfg
