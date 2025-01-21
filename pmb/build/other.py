@@ -91,8 +91,8 @@ def get_status(arch: Arch | None, apkbuild: Apkbuild) -> BuildStatus:
     :param indexes: list of APKINDEX.tar.gz paths
     :returns: boolean
     """
-    package = apkbuild["pkgname"]
-    version_pmaports = apkbuild["pkgver"] + "-r" + apkbuild["pkgrel"]
+    package = apkbuild.pkgname
+    version_pmaports = apkbuild.pkgver + "-r" + apkbuild.pkgrel
     msg = "Build is necessary for package '" + package + "': "
 
     # Get version from APKINDEX
@@ -102,7 +102,7 @@ def get_status(arch: Arch | None, apkbuild: Apkbuild) -> BuildStatus:
         return BuildStatus.NEW
 
     # Can't build pmaport for arch: use Alpine's package (#1897)
-    if arch and not pmb.helpers.pmaports.check_arches(apkbuild["arch"], arch):
+    if arch and not pmb.helpers.pmaports.check_arches(apkbuild.arch, arch):
         logging.verbose(
             f"{package}: build is not necessary, because pmaport"
             f" can't be built for {arch}. Using Alpine's binary"

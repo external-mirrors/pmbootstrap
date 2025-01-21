@@ -162,7 +162,7 @@ def zap_pkgs_local_mismatch(confirm: bool = True, dry: bool = False) -> None:
 
             # Clear out any binary apks that do not match what is in aports
             apkbuild = pmb.parse.apkbuild(aport_path)
-            version_aport = f"{apkbuild['pkgver']}-r{apkbuild['pkgrel']}"
+            version_aport = f"{apkbuild.pkgver}-r{apkbuild.pkgrel}"
             if version != version_aport:
                 logging.info(f"% rm {apk_path_short} ({origin} aport: {version_aport})")
                 if not dry:

@@ -174,7 +174,7 @@ def random_valid_deviceinfo(tmp_path):
     # This would be the device package dir...
     info["codename"] = tmp_path.name[7:]
     info["chassis"] = random.choice(deviceinfo_chassis_types)
-    info["arch"] = random.choice(["armhf", "aarch64", "x86_64"])
+    info.arch = random.choice(["armhf", "aarch64", "x86_64"])
 
     # Now write it all out to a file
     with open(path, "w") as f:

@@ -131,15 +131,15 @@ def flash_lk2nd(deviceinfo: Deviceinfo, method: str) -> None:
     if not apkbuild:
         raise RuntimeError(f"Failed to find {device_pkg} in pmaports")
     lk2nd_pkg = None
-    for dep in apkbuild["depends"]:
+    for dep in apkbuild.depends:
         if dep.startswith("lk2nd"):
             lk2nd_pkg = dep
             break
 
     # If not found, also check subpackages
     if not lk2nd_pkg:
-        for subpackage in apkbuild["subpackages"]:
-            for dep in apkbuild["subpackages"][subpackage]["depends"]:
+        for subpackage in apkbuild.subpackages:
+            for dep in apkbuild.subpackages[subpackage].depends:
                 if dep.startswith("lk2nd"):
                     lk2nd_pkg = dep
                     break

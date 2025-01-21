@@ -260,11 +260,11 @@ def check(
             raise e
         return None
     apkbuild = pmb.parse.apkbuild(aport / "APKBUILD")
-    pkgver = apkbuild["pkgver"]
+    pkgver = apkbuild.pkgver
 
     # Get categories from the APKBUILD
     categories = []
-    for option in apkbuild["options"]:
+    for option in apkbuild.options:
         if not option.startswith("pmb:kconfigcheck-"):
             continue
         category = option.split("-", 1)[1]

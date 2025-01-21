@@ -45,9 +45,9 @@ def override_source(
         pmb.chroot.root(["rm", append_path], chroot)
 
     # Add src path to pkgdesc, cut it off after max length
-    pkgdesc = ("[" + src + "] " + apkbuild["pkgdesc"])[:127]
+    pkgdesc = ("[" + src + "] " + apkbuild.pkgdesc)[:127]
 
-    pkgname = apkbuild["pkgname"]
+    pkgname = apkbuild.pkgname
 
     # Appended content
     append = (
@@ -172,16 +172,16 @@ def handle_csum_failure(apkbuild: Apkbuild, chroot: Chroot) -> None:
     if reason == "local":
         logging.info(
             "WARNING: Some checksums didn't match, run"
-            f" 'pmbootstrap checksum {apkbuild['pkgname']}' to fix them."
+            f" 'pmbootstrap checksum {apkbuild.pkgname}' to fix them."
         )
     else:
-        logging.error(f"ERROR: Remote checksum mismatch for {apkbuild['pkgname']}")
+        logging.error(f"ERROR: Remote checksum mismatch for {apkbuild.pkgname}")
         logging.error("NOTE: If you just modified this package:")
         logging.error(
-            f" * run 'pmbootstrap checksum {apkbuild['pkgname']}' to update the checksums."
+            f" * run 'pmbootstrap checksum {apkbuild.pkgname}' to update the checksums."
         )
         logging.error("If you didn't modify it, try building again to re-download the sources.")
-        raise RuntimeError(f"Remote checksum mismatch for {apkbuild['pkgname']}")
+        raise RuntimeError(f"Remote checksum mismatch for {apkbuild.pkgname}")
 
 
 def run_abuild(
@@ -211,7 +211,7 @@ def run_abuild(
               the environment variables dict generated in this function.
     """
     # Sanity check
-    if cross == "native" and "!tracedeps" not in apkbuild["options"]:
+    if cross == "native" and "!tracedeps" not in apkbuild.options:
         logging.info(
             "WARNING: Option !tracedeps is not set, but we're"
             " cross-compiling in the native chroot. This will"
@@ -296,7 +296,7 @@ def run_abuild(
         cmd += ["-K"]
 
     # Copy the aport to the chroot and build it
-    pmb.build.copy_to_buildpath(apkbuild["pkgname"], chroot, no_override=strict)
+    pmb.build.copy_to_buildpath(apkbuild.pkgname, chroot, no_override=strict)
     if src and strict:
         logging.debug(f"({chroot}) Ensuring previous build artifacts are removed")
         pmb.chroot.root(["rm", "-rf", "/tmp/pmbootstrap-local-source-copy"], chroot)

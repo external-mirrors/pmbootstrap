@@ -19,15 +19,15 @@ def get_groups(config: Config) -> list[str]:
     # UI package
     meta = f"postmarketos-ui-{config.ui}"
     apkbuild = pmb.helpers.pmaports.get(meta)
-    groups = apkbuild["_pmb_groups"]
+    groups = apkbuild.pmb_groups
     if groups:
         logging.debug(f"{meta}: install _pmb_groups: {', '.join(groups)}")
         ret += groups
 
     # UI-extras subpackage
     meta_extras = f"{meta}-extras"
-    if config.ui_extras and meta_extras in apkbuild["subpackages"]:
-        groups = apkbuild["subpackages"][meta_extras]["_pmb_groups"]
+    if config.ui_extras and meta_extras in apkbuild.subpackages:
+        groups = apkbuild.subpackages[meta_extras].pmb_groups
         if groups:
             logging.debug(f"{meta_extras}: install _pmb_groups: {', '.join(groups)}")
             ret += groups

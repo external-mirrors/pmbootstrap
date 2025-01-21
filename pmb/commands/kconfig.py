@@ -50,7 +50,7 @@ class KConfigCheck(commands.Command):
                 pkgname = package if package.startswith("linux-") else f"linux-{package}"
                 aport = pmb.helpers.pmaports.find(pkgname)
                 apkbuild = pmb.parse.apkbuild(aport)
-                if "!pmb:kconfigcheck" in apkbuild["options"]:
+                if "!pmb:kconfigcheck" in apkbuild.options:
                     skipped += 1
                     continue
             if not pmb.parse.kconfig.check(package, components_list, details=self.details):

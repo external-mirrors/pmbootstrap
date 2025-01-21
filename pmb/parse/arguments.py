@@ -772,6 +772,8 @@ def arguments_test(subparser: argparse._SubParsersAction) -> None:
     test = subparser.add_parser("test", help="Internal pmbootstrap test tools")
     sub = test.add_subparsers(dest="action_test", required=True)
     sub.add_parser("apkindex_parse_all", help="parse all APKINDEX files")
+    apk = sub.add_parser("apkbuild_parse", help="parse an APKBUILD")
+    apk.add_argument("file", help="File to parse", type=str)
 
 
 def arguments_status(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:

@@ -108,7 +108,7 @@ def modify_apkbuild(pkgname: str, aport: Path) -> None:
     pmb.helpers.run.user(["mkdir", work / "aportgen"])
     pmb.helpers.run.user(["cp", "-r", apkbuild_path, work / "aportgen"])
 
-    pkgver = pmb.build._package.get_pkgver(apkbuild["pkgver"], original_source=False)
+    pkgver = pmb.build._package.get_pkgver(apkbuild.pkgver, original_source=False)
     fields = {
         "pkgver": pkgver,
         "pkgrel": "0",
@@ -241,13 +241,14 @@ def package_kernel(args: PmbArgs) -> None:
     if apkbuild["_outdir"]:
         kbuild_out = apkbuild["_outdir"]
     else:
-        function_body = pmb.parse.function_body(aport / "APKBUILD", "package")
-        kbuild_out = find_kbuild_output_dir(function_body)
+        pass
+        # function_body = pmb.parse.function_body(aport / "APKBUILD", "package")
+        # kbuild_out = find_kbuild_output_dir(function_body)
 
     if not kbuild_out:
         kbuild_out = ".output"
 
-    if "pmb:cross-native" in apkbuild["options"]:
+    if "pmb:cross-native" in apkbuild.options:
         chroot = Chroot.native()
     else:
         chroot = pmb.build.autodetect.chroot(apkbuild, arch)
@@ -260,7 +261,7 @@ def package_kernel(args: PmbArgs) -> None:
     pmb.chroot.apk.install(depends, chroot)
 
     output = pmb.build.output_path(
-        arch, apkbuild["pkgname"], apkbuild["pkgver"], apkbuild["pkgrel"]
+        arch, apkbuild.pkgname, apkbuild.pkgver, apkbuild.pkgrel
     )
     message = f"({chroot}) build {output}"
     logging.info(message)

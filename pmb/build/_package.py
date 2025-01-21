@@ -50,7 +50,7 @@ def check_build_for_arch(pkgname: str, arch: Arch) -> bool:
     binary = pmb.parse.apkindex.package(pkgname, arch, False)
     if binary:
         pmaport = pmb.helpers.pmaports.get(pkgname)
-        pmaport_version = pmaport["pkgver"] + "-r" + pmaport["pkgrel"]
+        pmaport_version = pmaport.pkgver + "-r" + pmaport.pkgrel
         logging.debug(
             pkgname + ": found pmaport (" + pmaport_version + ") and"
             " binary package (" + binary.version + ", from"
@@ -69,7 +69,7 @@ def check_build_for_arch(pkgname: str, arch: Arch) -> bool:
     raise RuntimeError(f"Can't build '{pkgname}' for architecture {arch}")
 
 
-def get_depends(context: Context, apkbuild: dict[str, Any]) -> list[str]:
+def get_depends(context: Context, apkbuild: Apkbuild) -> list[str]:
     """Alpine's abuild always builds/installs the "depends" and "makedepends" of a package
     before building it.
 
@@ -79,17 +79,17 @@ def get_depends(context: Context, apkbuild: dict[str, Any]) -> list[str]:
     :returns: list of dependency pkgnames (eg. ["sdl2", "sdl2_net"])
     """
     # Read makedepends and depends
-    ret = list(apkbuild["makedepends"])
-    if "!check" not in apkbuild["options"]:
-        ret += apkbuild["checkdepends"]
+    ret = list(apkbuild.makedepends)
+    if "!check" not in apkbuild.options:
+        ret += apkbuild.checkdepends
     if not context.ignore_depends:
-        ret += apkbuild["depends"]
+        ret += apkbuild.depends
     ret = sorted(set(ret))
 
     # Don't recurse forever when a package depends on itself (#948)
-    for pkgname in [apkbuild["pkgname"], *apkbuild["subpackages"].keys()]:
+    for pkgname in [apkbuild.pkgname, *apkbuild.subpackages.keys()]:
         if pkgname in ret:
-            logging.verbose(apkbuild["pkgname"] + ": ignoring dependency on itself: " + pkgname)
+            logging.verbose(apkbuild.pkgname + ": ignoring dependency on itself: " + pkgname)
             ret.remove(pkgname)
 
     # FIXME: is this needed? is this sensible?
@@ -144,7 +144,7 @@ def finish(
     pmb.parse.apkindex.clear_cache(out_dir / arch / "APKINDEX.tar.gz")
 
     # Uninstall build dependencies (strict mode)
-    if strict or "pmb:strict" in apkbuild["options"]:
+    if strict or "pmb:strict" in apkbuild.options:
         logging.info(f"({chroot}) uninstall build dependencies")
         pmb.chroot.user(
             ["abuild", "undeps"],
@@ -156,16 +156,16 @@ def finish(
         # abuild will have removed the postmarketOS repository key (pma#1230)
         pmb.chroot.init_keys()
 
-    logging.info(f"@YELLOW@=>@END@ @BLUE@{channel}/{apkbuild['pkgname']}@END@: Done!")
+    logging.info(f"@YELLOW@=>@END@ @BLUE@{channel}/{apkbuild.pkgname}@END@: Done!")
 
     # If we just built a package which is used to build other packages, then
     # update the buildroot to use the newly built version.
-    if apkbuild["pkgname"] in pmb.config.build_packages:
+    if apkbuild.pkgname in pmb.config.build_packages:
         logging.info(
-            f"NOTE: Updating package {apkbuild['pkgname']} in buildroot since it's"
+            f"NOTE: Updating package {apkbuild.pkgname} in buildroot since it's"
             " used for building..."
         )
-        pmb.chroot.apk.install([apkbuild["pkgname"]], chroot, build=False, quiet=True)
+        pmb.chroot.apk.install([apkbuild.pkgname], chroot, build=False, quiet=True)
 
 
 _package_cache: dict[str, list[str]] = {}
@@ -224,7 +224,7 @@ class BuildQueueItem(TypedDict):
 def has_cyclical_dependency(
     unmet_deps: dict[str, list[str]], item: BuildQueueItem, dep: str
 ) -> bool:
-    pkgnames = [item["name"], *item["apkbuild"]["subpackages"].keys()]
+    pkgnames = [item["name"], *item["apkbuild"].subpackages.keys()]
 
     for pkgname in pkgnames:
         if pkgname in unmet_deps.get(dep, []):
@@ -254,13 +254,13 @@ def prioritise_build_queue(disarray: list[BuildQueueItem]) -> list[BuildQueueIte
     all_pkgnames = []
     for item in disarray:
         all_pkgnames.append(item["name"])
-        all_pkgnames += item["apkbuild"]["subpackages"].keys()
+        all_pkgnames += item["apkbuild"].subpackages.keys()
 
     def queue_item(item: BuildQueueItem) -> None:
         queue.append(item)
         disarray.remove(item)
         all_pkgnames.remove(item["name"])
-        for subpkg in item["apkbuild"]["subpackages"].keys():
+        for subpkg in item["apkbuild"].subpackages.keys():
             all_pkgnames.remove(subpkg)
 
         unmet_deps.pop(item["name"], None)
@@ -287,7 +287,7 @@ def prioritise_build_queue(disarray: list[BuildQueueItem]) -> list[BuildQueueIte
                 dep = dep_data.pkgname
 
                 # If the dependency is a subpackage we can safely ignore it
-                if dep in item["apkbuild"]["subpackages"]:
+                if dep in item["apkbuild"].subpackages:
                     continue
 
                 if dep in all_pkgnames:
@@ -395,14 +395,19 @@ def process_package(
     # aren't needed for building (and can conflict with depends for other subpackages)
     depends += functools.reduce(
         operator.iadd,
-        map(lambda sp: sp["depends"] if sp else [], base_apkbuild["subpackages"].values()),
+        map(lambda sp: sp.depends if sp else [], base_apkbuild.subpackages.values()),
         [],
     )
+
+    if any(not d.strip() for d in depends):
+        logging.warning(f"Parsing error found for {pkgname}! Empty dependency detected")
 
     parent = pkgname
     while len(depends):
         # FIXME: pop(0) is really quite slow!
         dep = depends.pop(0)
+        if dep.startswith("!"):
+            continue
         if is_cached_or_cache(arch, pmb.helpers.package.remove_operators(dep)):
             continue
         cross = None
@@ -440,7 +445,7 @@ def process_package(
 
             subpkg_deps: list[str] = functools.reduce(
                 operator.iadd,
-                map(lambda sp: sp["depends"] if sp else [], apkbuild["subpackages"].values()),
+                map(lambda sp: sp.depends if sp else [], apkbuild.subpackages.values()),
                 [],
             )
             logging.verbose(
@@ -496,14 +501,14 @@ def packages(
         cross: CrossCompileType = None,
     ) -> list[str]:
         # Skip if already queued
-        name = apkbuild["pkgname"]
+        name = apkbuild.pkgname
         if any(item["name"] == name for item in build_queue):
             return []
 
         pkg_arch = pmb.build.autodetect.arch(apkbuild) if arch is None else arch
         chroot = pmb.build.autodetect.chroot(apkbuild, pkg_arch)
         cross = cross or pmb.build.autodetect.crosscompile(apkbuild, pkg_arch)
-        pkgver = get_pkgver(apkbuild["pkgver"], src is None)
+        pkgver = get_pkgver(apkbuild.pkgver, src is None)
         channel = pmb.config.pmaports.read_config(aports)["channel"]
         index_data = pmb.parse.apkindex.package(name, arch, False)
         # Make sure we aren't building a package that will never be used! This can happen if
@@ -511,20 +516,20 @@ def packages(
         # in which case we assume it was intentional.
         if (
             index_data
-            and pmb.parse.version.compare(index_data.version, f"{pkgver}-r{apkbuild['pkgrel']}")
+            and pmb.parse.version.compare(index_data.version, f"{pkgver}-r{apkbuild.pkgrel}")
             == 1
         ):
             if force:
                 logging.warning(
                     f"WARNING: A binary package for {name} has a newer version ({index_data.version})"
-                    f" than the source ({pkgver}-{apkbuild['pkgrel']}). The package to be build will"
-                    f" not be installed automatically, use 'apk add {name}={pkgver}-r{apkbuild['pkgrel']}'"
+                    f" than the source ({pkgver}-{apkbuild.pkgrel}). The package to be build will"
+                    f" not be installed automatically, use 'apk add {name}={pkgver}-r{apkbuild.pkgrel}'"
                     " to install it."
                 )
             else:
                 raise NonBugError(
                     f"A binary package for {name} has a newer version ({index_data.version})"
-                    f" than the source ({pkgver}-{apkbuild['pkgrel']}). Please ensure your pmaports branch is up"
+                    f" than the source ({pkgver}-{apkbuild.pkgrel}). Please ensure your pmaports branch is up"
                     " to date and that you don't have a newer version of the package in your local"
                     f" binary repo ({context.config.work / 'packages' / channel / pkg_arch})."
                 )
@@ -537,7 +542,7 @@ def packages(
                 "has_binary": bool(index_data),
                 "pkgver": pkgver,
                 "output_path": output_path(
-                    pkg_arch, apkbuild["pkgname"], pkgver, apkbuild["pkgrel"]
+                    pkg_arch, apkbuild.pkgname, pkgver, apkbuild.pkgrel
                 ),
                 "channel": channel,
                 "depends": depends,
@@ -548,8 +553,8 @@ def packages(
 
         # If we just queued a package that was request to be built explicitly then
         # record it, since we return which packages we actually built
-        if apkbuild["pkgname"] in pkgnames:
-            built_packages.add(apkbuild["pkgname"])
+        if apkbuild.pkgname in pkgnames:
+            built_packages.add(apkbuild.pkgname)
 
         return depends
 
@@ -674,18 +679,18 @@ def packages(
         # makedepends_build are dependencies that should be installed in the native
         # chroot (e.g. 'meson'). makedepends_host are dependencies that should be
         # in the chroot for the architecture we're building for (e.g. 'libevdev-dev').
-        if apkbuild["makedepends_host"]:
-            depends_host = apkbuild["makedepends_host"]
+        if apkbuild.makedepends_host:
+            depends_host = apkbuild.makedepends_host
         else:
-            depends_host = apkbuild["makedepends"]
-        if apkbuild["makedepends_build"]:
+            depends_host = apkbuild.makedepends
+        if apkbuild.makedepends_build:
             # If we have makedepends_build but not build then just subtrack
             # the host depends from the main depends
-            if "makedepends_host" not in apkbuild:
-                depends_host = list(set(depends_host) - set(apkbuild["makedepends_build"]))
-            depends_build = apkbuild["makedepends_build"]
+            if apkbuild.makedepends_host:
+                depends_host = list(set(depends_host) - set(apkbuild.makedepends_build))
+            depends_build = apkbuild.makedepends_build
         else:
-            depends_build = apkbuild["makedepends"]
+            depends_build = apkbuild.makedepends
         if depends_host:
             logging.info("*** Install host dependencies")
             pmb.chroot.apk.install(depends_host, hostchroot, build=False)

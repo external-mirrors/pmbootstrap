@@ -83,13 +83,13 @@ def sort_scripts_by_speed(scripts: dict[str, CiScriptDescriptor]) -> dict[str, C
 
     # Fast scripts first
     for script_name, script in scripts.items():
-        if "slow" in script["options"]:
+        if "slow" in script.options:
             continue
         ret[script_name] = script
 
     # Then slow scripts
     for script_name, script in scripts.items():
-        if "slow" not in script["options"]:
+        if "slow" not in script.options:
             continue
         ret[script_name] = script
     return ret
@@ -112,7 +112,7 @@ def ask_which_scripts_to_run(
     logging.info(f"Available CI scripts ({count}):")
     for script_name, script in scripts_available.items():
         extra = ""
-        if "slow" in script["options"]:
+        if "slow" in script.options:
             extra += " (slow)"
         logging.info(f"* {script_name}: {script['description']}{extra}")
         choices += [script_name]
@@ -170,13 +170,13 @@ def run_scripts(topdir: Path, scripts: dict[str, CiScriptDescriptor]) -> None:
         step += 1
 
         where = "pmbootstrap chroot"
-        if "native" in script["options"]:
+        if "native" in script.options:
             where = "native"
 
         script_path = f".ci/{script_name}.sh"
         logging.info(f"*** ({step}/{steps}) RUNNING CI SCRIPT: {script_path} [{where}] ***")
 
-        if "native" in script["options"]:
+        if "native" in script.options:
             rc = pmb.helpers.run.user([script_path], topdir, output="tui")
             continue
         else:

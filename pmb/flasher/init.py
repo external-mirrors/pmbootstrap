@@ -20,7 +20,7 @@ def install_depends(method: str) -> None:
             " package it yourself, and then add it to"
             " pmb/config/__init__.py."
         )
-    depends = pmb.config.flashers[method]["depends"]
+    depends = pmb.config.flashers[method].depends
 
     # Depends for some flash methods may be different for various pmaports
     # branches, so read them from pmaports.cfg.

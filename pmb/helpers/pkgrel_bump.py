@@ -55,7 +55,7 @@ def package(
     pmb.helpers.file.replace(path, old, new)
 
     if bump_type == BumpType.PKGVER:
-        pkgrel = int(apkbuild["pkgrel"])
+        pkgrel = int(apkbuild.pkgrel)
         # Set pkgrel to 0 if we bump pkgver
         pmb.helpers.file.replace(path, f"pkgrel={pkgrel}", "pkgrel=0")
 
@@ -83,9 +83,9 @@ def auto_apkindex_package(
     :param dry: don't modify the APKBUILD, just print the message
     :returns: True when there was an APKBUILD that needed to be changed.
     """
-    version_aport = aport["pkgver"] + "-r" + aport["pkgrel"]
+    version_aport = aport.pkgver + "-r" + aport.pkgrel
     version_apk = apk.version
-    pkgname = aport["pkgname"]
+    pkgname = aport.pkgname
 
     # Skip when aport version != binary package version
     compare = pmb.parse.version.compare(version_aport, version_apk)

@@ -26,8 +26,8 @@ def list_ui(arch: Arch) -> list[tuple[str, str]]:
     for path in sorted(pkgrepo_iglob("main/postmarketos-ui-*")):
         apkbuild = pmb.parse.apkbuild(path)
         ui = os.path.basename(path).split("-", 2)[2]
-        if pmb.helpers.package.check_arch(apkbuild["pkgname"], arch):
-            ret.append((ui, apkbuild["pkgdesc"]))
+        if pmb.helpers.package.check_arch(apkbuild.pkgname, arch):
+            ret.append((ui, apkbuild.pkgdesc))
     return ret
 
 
@@ -44,4 +44,4 @@ def check_option(ui: str, option: str, with_extra_repos: WithExtraRepos = "defau
     apkbuild = pmb.helpers.pmaports.get(
         pkgname, subpackages=False, with_extra_repos=with_extra_repos
     )
-    return option in apkbuild["options"]
+    return option in apkbuild.options

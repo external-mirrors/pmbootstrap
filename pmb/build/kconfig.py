@@ -57,24 +57,24 @@ def get_arch(apkbuild: Apkbuild) -> Arch:
     or: {"pkgname": "linux-...", "arch": ["armhf"]}
 
     """
-    pkgname = apkbuild["pkgname"]
+    pkgname = apkbuild.pkgname
 
     # Disabled package (arch="")
-    if not apkbuild["arch"]:
+    if not apkbuild.arch:
         raise RuntimeError(
             f"'{pkgname}' is disabled (arch=\"\"). Please use"
             " '--arch' to specify the desired architecture."
         )
 
     # Multiple architectures
-    if len(apkbuild["arch"]) > 1:
+    if len(apkbuild.arch) > 1:
         raise RuntimeError(
             f"'{pkgname}' supports multiple architectures"
             f" ({', '.join(apkbuild['arch'])}). Please use"
             " '--arch' to specify the desired architecture."
         )
 
-    return Arch.from_str(apkbuild["arch"][0])
+    return Arch.from_str(apkbuild.arch[0])
 
 
 def get_outputdir(pkgname: str, apkbuild: Apkbuild) -> Path:
@@ -186,7 +186,7 @@ def _init(pkgname: str, arch: Arch | None) -> tuple[str, Arch, Any, Chroot, Env]
     if cross:
         pmb.build.init_compiler(get_context(), [], cross, arch)
 
-    depends = apkbuild["makedepends"] + ["gcc", "make"]
+    depends = apkbuild.makedepends + ["gcc", "make"]
 
     pmb.chroot.apk.install(depends, chroot)
 

@@ -75,7 +75,7 @@ def get_nonfree_packages(device: str) -> list[str]:
         raise RuntimeError(f"Device package not found for {device}")
 
     apkbuild = pmb.parse.apkbuild(device_path)
-    subpackages = apkbuild["subpackages"]
+    subpackages = apkbuild.subpackages
 
     # Check for firmware and userland
     ret = []
@@ -563,7 +563,7 @@ def print_firewall_info(disabled: bool, arch: Arch) -> None:
     if kernel:
         _, kernel_apkbuild = pmb.build.get_apkbuild(kernel[0])
         if kernel_apkbuild:
-            opts = kernel_apkbuild["options"]
+            opts = kernel_apkbuild.options
             apkbuild_has_opt = "pmb:kconfigcheck-nftables" in opts
             apkbuild_found = True
 
@@ -1228,7 +1228,7 @@ def get_selected_providers(args: PmbArgs, packages: list[str]) -> list[str]:
         apkbuild = pmb.helpers.pmaports.get(package, subpackages=False, must_exist=False)
         if not apkbuild:
             continue
-        for select in apkbuild["_pmb_select"]:
+        for select in apkbuild.pmb_select:
             if select in get_context().config.providers:
                 ret += [get_context().config.providers[select]]
                 logging.verbose(f"{package}: install selected_providers: {', '.join(ret)}")
@@ -1239,7 +1239,7 @@ def get_selected_providers(args: PmbArgs, packages: list[str]) -> list[str]:
                     if default.startswith(f"{select}-"):
                         ret += [default]
         # Also iterate through dependencies to collect any providers they have
-        depends = apkbuild["depends"]
+        depends = apkbuild.depends
         if depends:
             ret += get_selected_providers(args, depends)
 
@@ -1281,15 +1281,15 @@ def get_recommends(args: PmbArgs, packages: list[str]) -> Sequence[str]:
         apkbuild = pmb.helpers.pmaports.get(package, must_exist=False)
         if not apkbuild:
             continue
-        if package in apkbuild["subpackages"]:
+        if package in apkbuild.subpackages:
             # Just focus on the subpackage
-            apkbuild = apkbuild["subpackages"][package]
+            apkbuild = apkbuild.subpackages[package]
             # The subpackage is None if the subpackage does not have a function
             # in the APKBUILD (uses the default function), e.g. for most openrc
             # subpackages. See pmb.parse._apkbuild._parse_subpackage().
             if not apkbuild:
                 continue
-        recommends = apkbuild["_pmb_recommends"]
+        recommends = apkbuild.pmb_recommends
         if recommends:
             logging.debug(f"{package}: install _pmb_recommends: {', '.join(recommends)}")
             ret += recommends
@@ -1297,7 +1297,7 @@ def get_recommends(args: PmbArgs, packages: list[str]) -> Sequence[str]:
             # own.
             ret += get_recommends(args, recommends)
         # Also iterate through dependencies to collect any recommends they have
-        depends = apkbuild["depends"]
+        depends = apkbuild.depends
         if depends:
             ret += get_recommends(args, depends)
 

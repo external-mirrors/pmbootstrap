@@ -140,10 +140,10 @@ def upgrade_git_package(args: PmbArgs, pkgname: str, package: Apkbuild) -> None:
     sha_new = verinfo["sha"]
 
     # Format the new pkgver, keep the value before _git the same
-    if package["pkgver"] == "9999":
+    if package.pkgver == "9999":
         pkgver = package["_pkgver"]
     else:
-        pkgver = package["pkgver"]
+        pkgver = package.pkgver
 
     pkgver_match = re.match(r"([\d.]+)_git", pkgver)
     if pkgver_match is None:
@@ -154,7 +154,7 @@ def upgrade_git_package(args: PmbArgs, pkgname: str, package: Apkbuild) -> None:
     pkgver_new = f"{pkgver_match.group(1)}_git{date_pkgver}"
 
     # pkgrel will be zero
-    pkgrel = int(package["pkgrel"])
+    pkgrel = int(package.pkgrel)
     pkgrel_new = 0
 
     if sha == sha_new:
@@ -168,7 +168,7 @@ def upgrade_git_package(args: PmbArgs, pkgname: str, package: Apkbuild) -> None:
         logging.info(f"  Would change pkgrel from {pkgrel} to {pkgrel_new}")
         return
 
-    if package["pkgver"] == "9999":
+    if package.pkgver == "9999":
         pmb.helpers.file.replace_apkbuild(args, pkgname, "_pkgver", pkgver_new)
     else:
         pmb.helpers.file.replace_apkbuild(args, pkgname, "pkgver", pkgver_new)
@@ -229,18 +229,18 @@ def upgrade_stable_package(args: PmbArgs, pkgname: str, package: Apkbuild) -> No
     version = project["stable_versions"][0]
 
     # Compare the pmaports version with the project version
-    if package["pkgver"] == version:
+    if package.pkgver == version:
         logging.info(f"{pkgname}: up-to-date")
         return
 
-    if package["pkgver"] == "9999":
+    if package.pkgver == "9999":
         pkgver = package["_pkgver"]
     else:
-        pkgver = package["pkgver"]
+        pkgver = package.pkgver
 
     pkgver_new = version
 
-    pkgrel = package["pkgrel"]
+    pkgrel = package.pkgrel
     pkgrel_new = 0
 
     if not pmb.parse.version.validate(pkgver_new):
@@ -253,7 +253,7 @@ def upgrade_stable_package(args: PmbArgs, pkgname: str, package: Apkbuild) -> No
         logging.info(f"  Would change pkgrel from {pkgrel} to {pkgrel_new}")
         return
 
-    if package["pkgver"] == "9999":
+    if package.pkgver == "9999":
         pmb.helpers.file.replace_apkbuild(args, pkgname, "_pkgver", pkgver_new)
     else:
         pmb.helpers.file.replace_apkbuild(args, pkgname, "pkgver", pkgver_new)
@@ -274,7 +274,7 @@ def upgrade(args: PmbArgs, pkgname: str, git: bool = True, stable: bool = True) 
 
     package = pmb.helpers.pmaports.get(pkgname)
     # Run the correct function
-    if "_git" in package["pkgver"]:
+    if "_git" in package.pkgver:
         if git:
             upgrade_git_package(args, pkgname, package)
     else:

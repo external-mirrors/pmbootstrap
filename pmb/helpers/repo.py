@@ -16,7 +16,7 @@ from pmb.core.arch import Arch
 from pmb.core.pkgrepo import pkgrepo_names
 from pmb.helpers import logging
 from pathlib import Path
-from typing import Literal
+from typing import Literal, get_args
 
 import pmb.config.pmaports
 from pmb.meta import Cache
@@ -88,7 +88,7 @@ def urls(
         mirrors_exclude.append("systemd")
 
     # ["pmaports", "systemd", "alpine", "plasma-nightly"]
-    for repo in [*pkgrepo_names(), "alpine"]:
+    for repo in set([*pkgrepo_names(), "alpine"]):
         if repo in mirrors_exclude:
             continue
 
@@ -240,7 +240,10 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
     return True
 
 
-def alpine_apkindex_path(repo: str = "main", arch: Arch | None = None) -> Path:
+AlpineRepo = Literal["main", "community", "testing"]
+
+
+def alpine_apkindex_path(*, arch: Arch | None = None, repos: list[AlpineRepo]|Literal["all"]) -> list[Path]:
     """Get the path to a specific Alpine APKINDEX file on disk and download it if necessary.
 
     :param repo: Alpine repository name (e.g. "main")
@@ -248,8 +251,11 @@ def alpine_apkindex_path(repo: str = "main", arch: Arch | None = None) -> Path:
     :returns: full path to the APKINDEX file
     """
     # Repo sanity check
-    if repo not in ["main", "community", "testing", "non-free"]:
-        raise RuntimeError(f"Invalid Alpine repository: {repo}")
+    if repos == "all":
+        repos = get_args(AlpineRepo)
+    for repo in repos:
+        if any(repo not in get_args(AlpineRepo) for repo in repos):
+            raise RuntimeError(f"Invalid Alpine repository: {repo}")
 
     # Download the file
     arch = arch or Arch.native()
@@ -257,6 +263,10 @@ def alpine_apkindex_path(repo: str = "main", arch: Arch | None = None) -> Path:
 
     # Find it on disk
     channel_cfg = pmb.config.pmaports.read_config_channel()
-    repo_link = f"{get_context().config.mirrors['alpine']}{channel_cfg['mirrordir_alpine']}/{repo}"
-    cache_folder = get_context().config.work / (f"cache_apk_{arch}")
-    return cache_folder / apkindex_hash(repo_link)
+    paths = []
+    for repo in repos:
+        repo_link = f"{get_context().config.mirrors['alpine']}{channel_cfg['mirrordir_alpine']}/{repo}"
+        cache_folder = get_context().config.work / (f"cache_apk_{arch}")
+        paths.append(cache_folder / apkindex_hash(repo_link))
+
+    return paths

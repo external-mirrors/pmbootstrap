@@ -52,9 +52,9 @@ def generate(arch: Arch) -> list[dict[str, list[str] | str | None]]:
             apkbuild_path = Path(apkbuild_path_str)
             pkgname = apkbuild_path.parent.name
             package = pmb.parse.apkbuild(apkbuild_path)
-            version = f"{package['pkgver']}-r{package['pkgrel']}"
+            version = f"{package.pkgver}-r{package.pkgrel}"
 
-            if not pmb.helpers.pmaports.check_arches(package["arch"], arch):
+            if not pmb.helpers.pmaports.check_arches(package.arch, arch):
                 continue
 
             relpath = apkbuild_path.relative_to(pmaports_dir)

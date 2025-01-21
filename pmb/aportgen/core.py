@@ -202,7 +202,7 @@ def get_upstream_aport(pkgname: str, arch: Arch | None = None, retain_branch: bo
 
     # Parse APKBUILD
     apkbuild = pmb.parse.apkbuild(aport_path, check_pkgname=False)
-    apkbuild_version = apkbuild["pkgver"] + "-r" + apkbuild["pkgrel"]
+    apkbuild_version = apkbuild.pkgver + "-r" + apkbuild.pkgrel
 
     # Binary package
     split = aport_path.parts

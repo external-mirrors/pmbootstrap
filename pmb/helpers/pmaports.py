@@ -13,6 +13,7 @@ from pmb.core.pkgrepo import pkgrepo_iter_package_dirs
 from pmb.helpers import logging
 from pathlib import Path
 from typing import overload, Any, Literal
+import pmb.parse.apkindex
 from pmb.types import Apkbuild, WithExtraRepos
 
 from pmb.meta import Cache
@@ -35,6 +36,14 @@ def _find_apkbuilds(with_extra_repos: WithExtraRepos = "default") -> dict[str, P
     # get_list()
     apkbuilds = dict(sorted(apkbuilds.items()))
     return apkbuilds
+
+
+@Cache("pkgname", "with_extra_repos")
+def find_apkbuild(pkgname: str, with_extra_repos: WithExtraRepos = "default") -> Path|None:
+    for package in pkgrepo_iter_package_dirs(with_extra_repos=with_extra_repos):
+        if pkgname == package.name:
+            return package / "APKBUILD"
+    return None
 
 
 def get_list() -> list[str]:
@@ -152,18 +161,18 @@ def _find_package_in_apkbuild(package: str, path: Path) -> bool:
     apkbuild = pmb.parse.apkbuild(path)
 
     # Subpackages
-    if package in apkbuild["subpackages"]:
+    if package in apkbuild.subpackages:
         return True
 
     # Search for provides in both package and subpackages
-    apkbuild_pkgs = [apkbuild, *apkbuild["subpackages"].values()]
+    apkbuild_pkgs = [apkbuild, *apkbuild.subpackages.values()]
     for apkbuild_pkg in apkbuild_pkgs:
         if not apkbuild_pkg:
             continue
 
         # Provides (cut off before equals sign for entries like
         # "mkbootimg=0.0.1")
-        for provides_i in apkbuild_pkg["provides"]:
+        for provides_i in apkbuild_pkg.provides:
             # Ignore provides without version, they shall never be
             # automatically selected
             if "=" not in provides_i:
@@ -232,10 +241,22 @@ def find(
     if "*" in package:
         raise RuntimeError("Invalid pkgname: " + package)
 
+    provider_name = package
+
+    # Greedily resolve packages that are provided by another package by looking through
+    # the APKINDEX files to save us from grepping through the source repos multiple
+    # times
+    binary_providers = pmb.parse.apkindex.providers(package, must_exist=True)
+    if binary_providers:
+        provider = pmb.parse.apkindex.provider_highest_priority(binary_providers, package)
+        origin_name = next(iter(provider.values())).origin
+        if origin_name:
+            provider_name = origin_name
     # Try to find an APKBUILD with the exact pkgname we are looking for
-    path = _find_apkbuilds(with_extra_repos).get(package)
+    logging.info(f"Searching for {provider_name}")
+    path = find_apkbuild(provider_name, with_extra_repos)
     if path:
-        logging.verbose(f"{package}: found apkbuild: {path}")
+        logging.debug(f"{package}: found apkbuild: {path}")
         ret = path.parent
     elif subpackages:
         # No luck, take a guess what APKBUILD could have the package we are
@@ -353,12 +374,12 @@ def find_providers(provide: str, default: list[str]) -> list[tuple[Any, Any]]:
     providers = {}
 
     apkbuild = get(provide)
-    for subpkgname, subpkg in apkbuild["subpackages"].items():
+    for subpkgname, subpkg in apkbuild.subpackages.items():
         for provides in subpkg["provides"]:
             # Strip provides version (=$pkgver-r$pkgrel)
             if provides.split("=", 1)[0] == provide:
                 if subpkgname in default:
-                    subpkg["provider_priority"] = 999999
+                    subpkg.provider_priority = 999999
                 providers[subpkgname] = subpkg
 
     return sorted(providers.items(), reverse=True, key=lambda p: p[1].get("provider_priority", 0))

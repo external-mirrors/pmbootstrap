@@ -603,7 +603,7 @@ def ci(args: PmbArgs) -> None:
 
     if args.fast:
         for script, script_data in scripts_available.items():
-            if "slow" not in script_data["options"]:
+            if "slow" not in script_data.options:
                 scripts_selected[script] = script_data
 
     if not pmb.helpers.git.clean_worktree(topdir):

@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
+from pathlib import Path
 from pmb import commands, logging
 import pmb.helpers.repo
 import pmb.parse.apkindex
 from pmb.core.arch import Arch
+from pmb.parse import apkbuild
 import time
 
 
@@ -26,9 +28,13 @@ def apkindex_parse_all() -> None:
 
 
 class Test(commands.Command):
-    def __init__(self, action: str) -> None:
+    def __init__(self, action: str, file: Path|None) -> None:
         self.action = action
+        self.file = file
 
     def run(self) -> None:
         if self.action == "apkindex_parse_all":
             apkindex_parse_all()
+        elif self.action == "apkbuild_parse":
+            apk = apkbuild(self.file)
+            print(apk.toJSON(pretty=True))

@@ -195,7 +195,7 @@ def ask_for_ui(deviceinfo: Deviceinfo) -> str:
         for i in reversed(range(len(ui_list))):
             pkgname = f"postmarketos-ui-{ui_list[i][0]}"
             apkbuild = pmb.helpers.pmaports.get(pkgname, subpackages=False, must_exist=False)
-            if apkbuild and "pmb:gpu-accel" in apkbuild["options"]:
+            if apkbuild and "pmb:gpu-accel" in apkbuild.options:
                 ui_list.pop(i)
                 hidden_ui_count += 1
 
@@ -233,7 +233,7 @@ def ask_for_ui_extras(config: Config, ui: str) -> bool:
     if not apkbuild:
         return False
 
-    extra = apkbuild["subpackages"].get(f"postmarketos-ui-{ui}-extras")
+    extra = apkbuild.subpackages.get(f"postmarketos-ui-{ui}-extras")
     if extra is None:
         return False
 
@@ -315,7 +315,7 @@ def ask_for_provider_select(apkbuild: dict[str, Any], providers_cfg: dict[str, s
     :param providers_cfg: the configuration section with previously selected
                           providers. Updated with new providers after selection
     """
-    for select in apkbuild["_pmb_select"]:
+    for select in apkbuild.pmb_select:
         providers = pmb.helpers.pmaports.find_providers(select, apkbuild["_pmb_default"])
         logging.info(f"Available providers for {select} ({len(providers)}):")
 

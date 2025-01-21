@@ -31,7 +31,7 @@ def newapkbuild(folder: PathString, args_passed: list[str], force: bool = False)
 
     # Paths for copying
     source_apkbuild = glob_result[0]
-    pkgname = pmb.parse.apkbuild(source_apkbuild, False)["pkgname"]
+    pkgname = pmb.parse.apkbuild(source_apkbuild, False).pkgname
     target = pkgrepo_default_path() / folder / pkgname
 
     # Move /home/pmos/build/$pkgname/* to /home/pmos/build/*

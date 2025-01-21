@@ -50,7 +50,7 @@ def arch(package: str | Apkbuild) -> Arch:
               * device arch (this will be preferred instead if build_default_device_arch is true)
               * first arch in the APKBUILD
     """
-    pkgname = package["pkgname"] if isinstance(package, dict) else package
+    pkgname = package.pkgname if isinstance(package, Apkbuild) else package
     aport = pmb.helpers.pmaports.find(pkgname)
     if not aport:
         raise FileNotFoundError(f"APKBUILD not found for {pkgname}")
@@ -59,7 +59,7 @@ def arch(package: str | Apkbuild) -> Arch:
         return ret
 
     apkbuild = pmb.parse.apkbuild(aport) if isinstance(package, str) else package
-    arches = apkbuild["arch"]
+    arches = apkbuild.arch
     deviceinfo = pmb.parse.deviceinfo()
 
     if get_context().config.build_default_device_arch:
@@ -76,7 +76,7 @@ def arch(package: str | Apkbuild) -> Arch:
         return preferred_arch_2nd
 
     try:
-        arch_str = apkbuild["arch"][0]
+        arch_str = apkbuild.arch[0]
         return Arch.from_str(arch_str) if arch_str else Arch.native()
     except IndexError:
         return Arch.native()
@@ -86,7 +86,7 @@ def chroot(apkbuild: Apkbuild, arch: Arch) -> Chroot:
     if arch == Arch.native():
         return Chroot.native()
 
-    if "pmb:cross-kernel" in apkbuild["options"]:
+    if "pmb:cross-kernel" in apkbuild.options:
         return Chroot.native()
 
     return Chroot.buildroot(arch)
@@ -98,17 +98,17 @@ def crosscompile(apkbuild: Apkbuild, arch: Arch) -> CrossCompileType:
         return None
     if not arch.cpu_emulation_required():
         return None
-    if "pmb:cross-kernel" in apkbuild["options"]:
+    if "pmb:cross-kernel" in apkbuild.options:
         return "kernel"
     # We default to cross-native if the package has "noarch" since that implies
     # it won't run a compiler.
     if (
         arch.is_native()
-        or "pmb:cross-native" in apkbuild["options"]
-        or apkbuild["arch"] == ["noarch"]
-        or apkbuild["pkgname"].startswith("device-")
+        or "pmb:cross-native" in apkbuild.options
+        or apkbuild.arch == ["noarch"]
+        or apkbuild.pkgname.startswith("device-")
     ):
         return "native"
-    if "!pmb:crossdirect" in apkbuild["options"]:
+    if "!pmb:crossdirect" in apkbuild.options:
         return None
     return "crossdirect"

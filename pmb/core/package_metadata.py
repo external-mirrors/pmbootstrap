@@ -29,11 +29,11 @@ class PackageMetadata:
 
     @staticmethod
     def from_pmaport(pmaport: dict[str, Any]) -> "PackageMetadata":
-        pmaport_arches = pmaport["arch"]
+        pmaport_arches = pmaport.arch
         pmaport_depends = pmb.build._package.get_depends(get_context(), pmaport)
-        pmaport_pkgname = pmaport["pkgname"]
-        pmaport_provides = pmaport["provides"]
-        pmaport_version = pmaport["pkgver"] + "-r" + pmaport["pkgrel"]
+        pmaport_pkgname = pmaport.pkgname
+        pmaport_provides = pmaport.provides
+        pmaport_version = pmaport.pkgver + "-r" + pmaport.pkgrel
 
         return PackageMetadata(
             arch=pmaport_arches,
