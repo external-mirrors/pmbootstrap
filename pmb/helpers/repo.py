@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Literal
 
 import pmb.config.pmaports
+import pmb.parse.apkindex
 from pmb.meta import Cache
 import pmb.helpers.http
 import pmb.helpers.run
@@ -137,6 +138,8 @@ def apkindex_files(
     if not arch:
         arch = Arch.native()
 
+    update(arch)
+
     ret = []
     # Local user repository (for packages compiled with pmbootstrap)
     if user_repository:
@@ -175,7 +178,7 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
     # Find outdated APKINDEX files. Formats:
     # outdated: {URL: apkindex_path, ... }
     # outdated_arches: ["armhf", "x86_64", ... ]
-    outdated = {}
+    outdated: dict[str, Path] = {}
     outdated_arches: list[Arch] = []
     for url in urls(False):
         for arch in architectures:
@@ -216,6 +219,7 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
 
     # Download and move to right location
     missing_ignored = False
+    found_valid = False
     for i, (url, target) in enumerate(outdated.items()):
         pmb.helpers.cli.progress_print(i / len(outdated))
         temp = pmb.helpers.http.download(url, "APKINDEX", False, logging.DEBUG, True, True)
@@ -226,10 +230,20 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
             else:
                 logging.info("NOTE: check the [mirrors] section in 'pmbootstrap config'")
                 raise NonBugError("getting APKINDEX from binary package mirror failed!")
+        # Once we find one valid APKINDEX we can avoid parsing all the others to validate them
+        if not found_valid:
+            contents = pmb.parse.apkindex.parse(temp)
+            # Parsing failed, maybe a captive portal or something?
+            if not contents and temp.open().read(128).isascii():
+                raise RuntimeError(
+                    f"{url} doesn't seem to be a valid APKINDEX, maybe a network configuration issue?"
+                )
+        found_valid = True
         target_folder = os.path.dirname(target)
         if not os.path.exists(target_folder):
             pmb.helpers.run.root(["mkdir", "-p", target_folder])
         pmb.helpers.run.root(["cp", temp, target])
+
     pmb.helpers.cli.progress_flush()
 
     if missing_ignored:
