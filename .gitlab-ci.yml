@@ -131,12 +131,16 @@ deploy:
 
 # Test that we can generate an install rootfs on AMD64 for native
 # and arm64 QEMU targets
-install amd64:
+install amd64 on amd64:
   extends: .integration
   script:
   # Native AMD64 on AMD64
     - .ci/integration_tests/build_images qemu-amd64 console
-  # ARM64 on AMD64
+
+install aarch64 on amd64:
+  extends: .integration
+  resource_group: qemu
+  script:
     - .ci/integration_tests/build_images postmarketos-trailblazer console
 
 # Test that building images works on Python 3.10
@@ -155,12 +159,19 @@ install aarch64:
   # so disable it until OSUOSL can fix it.
     # - .ci/integration_tests/build_images qemu-amd64 console
 
-# Test building packages with --force on AMD64 for AMD64, aarch64, and armv7
+# Test building packages with --force on AMD64 for AMD64
 force build amd64:
   extends: .integration
   script:
   # Packages chosen for being small, unlikely to break, and for language coverage.
     - .ci/integration_tests/force_build x86_64 hello-world postmarketos-mkinitfs
+
+# Test building packages with --force on AMD64 for aarch64
+force build ARM on amd64:
+  extends: .integration
+  resource_group: qemu
+  script:
+  # Packages chosen for being small, unlikely to break, and for language coverage.
     - .ci/integration_tests/force_build aarch64 hello-world postmarketos-mkinitfs
     - .ci/integration_tests/force_build armv7 hello-world postmarketos-mkinitfs
 
@@ -179,6 +190,7 @@ force build aarch64:
 # since the cross-build codepath is the more complicated one.
 strict build amd64:
   extends: .integration
+  resource_group: qemu
   script:
   # Packages chosen for being small, unlikely to break, and for language coverage.
     - .ci/integration_tests/strict_build aarch64 hello-world postmarketos-mkinitfs
