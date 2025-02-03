@@ -145,10 +145,10 @@ install aarch64 on amd64:
 
 # Test that building images works on Python 3.10
 install amd64 python3.10:
-  extends: install amd64
+  extends: install amd64 on amd64
   image: alpine:3.17
 
-install aarch64:
+install aarch64 on amd64:
   extends: .integration
   tags: [arm64]
   script:
@@ -160,7 +160,7 @@ install aarch64:
     # - .ci/integration_tests/build_images qemu-amd64 console
 
 # Test building packages with --force on AMD64 for AMD64
-force build amd64:
+force build amd64 on amd64:
   extends: .integration
   script:
   # Packages chosen for being small, unlikely to break, and for language coverage.
@@ -176,7 +176,7 @@ force build ARM on amd64:
     - .ci/integration_tests/force_build armv7 hello-world postmarketos-mkinitfs
 
 # Same again but on the arm64 runner
-force build aarch64:
+force build aarch64 on aarch64:
   extends: .integration
   tags: [arm64]
   script:
@@ -188,7 +188,7 @@ force build aarch64:
 
 # Test building packages with --strict on AMD64 for ARM64
 # since the cross-build codepath is the more complicated one.
-strict build amd64:
+strict build amd64 on aarch64:
   extends: .integration
   resource_group: qemu
   script:
@@ -196,7 +196,7 @@ strict build amd64:
     - .ci/integration_tests/strict_build aarch64 hello-world postmarketos-mkinitfs
 
 # Test building with --force --strict, for diversity run this on the ARM64 runner
-force_strict build aarch64:
+force_strict build aarch64 on amd64:
   extends: .integration
   tags: [arm64]
   script:
