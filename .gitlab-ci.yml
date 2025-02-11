@@ -12,7 +12,7 @@ workflow:
 
 before_script: &global_before_scripts
   - ".ci/note.sh"
-  - apk upgrade -U
+  - apk upgrade -U --ignore linux-lts
   - "adduser -D build"
   # Force IPv4 for gitlab.postmarketos.org until it supports IPv6 too, OSUOSL is
   # working on it (infra#195)
@@ -118,7 +118,7 @@ deploy:
   stage: integration-test
   before_script:
     - *global_before_scripts
-    - apk upgrade -U
+    - apk upgrade -U --ignore linux-lts
     - apk add doas git losetup multipath-tools python3 openssl
     - echo "permit nopass build" > /etc/doas.d/ci-user.conf
   # Add built packages as artifacts so they can be inspected if needed.
