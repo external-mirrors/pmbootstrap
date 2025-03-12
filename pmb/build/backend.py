@@ -270,6 +270,7 @@ def run_abuild(
     if not context.ccache:
         env["CCACHE_DISABLE"] = "1"
 
+
     # Use sccache without crossdirect (crossdirect uses it via rustc.sh)
     if context.ccache and cross != "crossdirect":
         env["RUSTC_WRAPPER"] = "/usr/bin/sccache"
@@ -293,13 +294,17 @@ def run_abuild(
     # Since we install dependencies with pmb, disable dependency handling in abuild.
     # This is also required so that abuild doesn't try to install base-build-$ARCH packages
     # which don't exist
-    cmd = ["abuild", "-d", "-D", "postmarketOS"]
+    cmd = ["abuild", "-r", "-D", "postmarketOS"]
     if force:
         cmd += ["-f"]
     if src:
         # Keep build artifacts, so repeated invocations will do incremental
         # building.
         cmd += ["-K"]
+
+    # provide a base-build-$CARCH package
+    if env["CBUILDROOT"] != "":
+        pmb.chroot.root(["apk", "add", "-t", f"build-base-{str(arch)}"], Chroot.native(), Path("/"))
 
     # Copy the aport to the chroot and build it
     pmb.build.copy_to_buildpath(apkbuild["pkgname"], chroot, no_override=strict)
@@ -314,4 +319,4 @@ def run_abuild(
     finally:
         handle_csum_failure(apkbuild, chroot)
 
-    pmb.helpers.run.root(["umount", Chroot.native() / "/mnt/sysroot"], output="null", check=False)
+    #pmb.helpers.run.root(["umount", Chroot.native() / "/mnt/sysroot"], output="null", check=False)

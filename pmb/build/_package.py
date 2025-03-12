@@ -635,6 +635,7 @@ def packages(
         else:
             log_callback(pkg)
 
+        # TODO: replace by abuild's calcdeps. this even handles checkdepends
         # FIXME: this is only used to detect special compilers and a workaround for rust
         # in pmb.build.init_compiler(), this should all be refactored and enforce correct
         # APKBUILDs rather than trying to hack things in here
@@ -698,12 +699,12 @@ def packages(
             depends_build += apkbuild["checkdepends"]
         if depends_host:
             logging.info("*** Install host dependencies")
-            pmb.chroot.apk.install(depends_host, hostchroot, build=False)
+            #pmb.chroot.apk.install(depends_host, hostchroot, build=False)
         if depends_build:
             logging.info("*** Install build dependencies")
             if src:
                 depends_build.append("rsync")
-            pmb.chroot.apk.install(depends_build, chroot, build=False)
+            #pmb.chroot.apk.install(depends_build, chroot, build=False)
 
         # Build and finish up
         logging.info(f"@YELLOW@=>@END@ @BLUE@{channel}/{pkg['name']}@END@: Building package")
