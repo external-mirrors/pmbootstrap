@@ -4,11 +4,11 @@
 
 if [ "$(id -u)" = 0 ]; then
 	set -x
-	apk -q add py3-argcomplete py3-pip
+	wget https://gitlab.postmarketos.org/postmarketOS/ci-common/-/raw/master/install_mypy.sh
+	sh ./install_mypy.sh py3-argcomplete
 	exec su "${TESTUSER:-build}" -c "sh -e $0"
 fi
 
 set -x
 
-pip install --break-system-packages --no-warn-script-location mypy
 python -m mypy pmbootstrap.py
