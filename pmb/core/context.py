@@ -13,7 +13,6 @@ class Context:
     details_to_stdout: bool = False
     quiet: bool = False
     command_timeout: float = 900
-    sudo_timer: bool = False
     force: bool = False
     log: Path
 

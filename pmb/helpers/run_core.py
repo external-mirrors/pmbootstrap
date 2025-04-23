@@ -17,7 +17,6 @@ import selectors
 import shlex
 import subprocess
 import sys
-import threading
 import time
 from collections.abc import Sequence
 from typing import overload, Literal
@@ -319,27 +318,6 @@ def check_return_code(code: int, log_message: str) -> None:
         raise RuntimeError(f"Command failed (exit code {code}): " + log_message)
 
 
-def sudo_timer_iterate() -> None:
-    """Run sudo -v and schedule a new timer to repeat the same."""
-    if pmb.config.which_sudo() == "sudo":
-        subprocess.Popen(["sudo", "-v"]).wait()
-    else:
-        subprocess.Popen(pmb.config.sudo(["true"])).wait()
-
-    timer = threading.Timer(interval=60, function=sudo_timer_iterate)
-    timer.daemon = True
-    timer.start()
-
-
-def sudo_timer_start() -> None:
-    """Start a timer to call sudo -v periodically, so that the password is only needed once."""
-    if "sudo_timer_active" in pmb.helpers.other.cache:
-        return
-    pmb.helpers.other.cache["sudo_timer_active"] = True
-
-    sudo_timer_iterate()
-
-
 def add_proxy_env_vars(env: Env) -> None:
     """Add proxy environment variables from host to the environment of the command we are running.
 
@@ -428,9 +406,6 @@ def core(
     """
     sanity_checks(output, output_return, check)
     context = pmb.core.context.get_context()
-
-    if context.sudo_timer and sudo:
-        sudo_timer_start()
 
     # Log simplified and full command (pmbootstrap -v)
     logging.debug(log_message)
