@@ -422,17 +422,31 @@ def become_user(uid: int, gid: int) -> None:
         try:
             os.read(event, ctypes.sizeof(ctypes.c_uint64))
             os.close(event)
-            with open(f"/proc/{ppid}/setgroups", "wb") as f:
-                f.write(b"deny\n")
-            with open(f"/proc/{ppid}/gid_map", "wb") as f:
-                f.write(f"{gid} {os.getgid()} 1\n".encode())
-            with open(f"/proc/{ppid}/uid_map", "wb") as f:
-                f.write(f"{uid} {os.getuid()} 1\n".encode())
+            # Fork again for UID map, bweh this is suuuper gross
+            newpid = os.fork()
+            if newpid == 0:
+                os.execl("/usr/bin/newuidmap", "newuidmap",
+                        str(ppid),
+                            "0",   str(uid), "1",
+                            "1",   "100000", "9999",
+                        # 12345 is the UID of the "pmos" or "build" user in our containers
+                        "12345",  "110000",     "55536")
+                        # str(uid+1), "110000", "55536")
+            else:
+                os.waitpid(newpid, 0)
+            os.execl("/usr/bin/newgidmap", "newgidmap",
+                      str(ppid),
+                            "0",  str(uid), "1",
+                            "1",  "100000", "9999",
+                        "12345",  "110000",     "55536")
         except OSError as e:
+            print(e.strerror, flush=True)
             os._exit(e.errno or 1)
-        except BaseException:
+        except BaseException as e:
+            print(e, flush=True)
             os._exit(1)
         else:
+            print("", flush=True)
             os._exit(0)
 
     try:
