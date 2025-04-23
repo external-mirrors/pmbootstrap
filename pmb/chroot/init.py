@@ -142,7 +142,7 @@ def init(chroot: Chroot) -> None:
 
     # Building chroots: create "pmos" user, add symlinks to /home/pmos
     if chroot.type != ChrootType.ROOTFS:
-        pmb.chroot.root(["adduser", "-D", "pmos", "-u", pmb.config.chroot_uid_user], chroot)
+        pmb.chroot.root(["adduser", "-s", "/bin/sh", "-D", "pmos", "-u", pmb.config.chroot_uid_user], chroot)
 
         # Create the links (with subfolders if necessary)
         for target, link_name in pmb.config.chroot_home_symlinks.items():
