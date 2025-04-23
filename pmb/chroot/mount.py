@@ -67,6 +67,8 @@ def mount(chroot: Chroot) -> None:
     if chroot.type == ChrootType.IMAGE and not pmb.mount.ismount(chroot.path):
         mount_chroot_image(chroot)
 
+    if not chroot.path.exists():
+        os.mkdir(str(chroot.path))
     # Mount tmpfs as the chroot's /dev
     mount_dev_tmpfs(chroot)
 
