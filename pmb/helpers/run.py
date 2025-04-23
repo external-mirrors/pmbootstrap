@@ -124,6 +124,5 @@ def root(
 
     if env:
         cmd = ["sh", "-c", pmb.helpers.run_core.flat_cmd([cmd], env=env)]
-    cmd = pmb.config.sudo(cmd)
 
     return user(cmd, working_dir, output, output_return, check, env, True)
