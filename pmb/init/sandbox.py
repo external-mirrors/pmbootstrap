@@ -871,6 +871,64 @@ documentation", for workarounds.\
 """
 
 
+def setup_mounts(fsops: list[FSOperation]) -> None:
+    # We need a workspace to setup the sandbox, the easiest way to do this in a tmpfs, since it's
+    # automatically cleaned up. We need a mountpoint to put the workspace on and it can't be root,
+    # so let's use /tmp which is almost guaranteed to exist.
+    mount("tmpfs", "/tmp", "tmpfs", 0, "")
+
+    os.chdir("/tmp")
+
+    with umask(~0o755):
+        # This is where we set up the sandbox rootfs
+        os.mkdir("newroot")
+        # This is the old rootfs which is used as the source for mounts in the new rootfs.
+        os.mkdir("oldroot")
+
+    # Make sure that newroot is a mountpoint.
+    mount("newroot", "newroot", "", MS_BIND | MS_REC, "")
+
+    # Make the workspace in /tmp / and put the old rootfs in oldroot.
+    if libc.pivot_root(b".", b"oldroot") < 0:
+        # pivot_root() can fail in the initramfs since / isn't a mountpoint there, so let's fall
+        # back to MS_MOVE if that's the case.
+
+        # First we move the old rootfs to oldroot.
+        mount("/", "oldroot", "", MS_BIND | MS_REC, "")
+
+        # Then we move the workspace (/tmp) to /.
+        mount(".", "/", "", MS_MOVE, "")
+
+        # chroot and chdir to fully make the workspace the new root.
+        os.chroot(".")
+        os.chdir(".")
+
+        # When we use MS_MOVE we have to unmount oldroot/tmp manually to reveal the original /tmp
+        # again as it might contain stuff that we want to mount into the sandbox.
+        umount2("oldroot/tmp", MNT_DETACH)
+
+    for fsop in fsops:
+        fsop.execute("oldroot", "newroot")
+
+    # Now that we're done setting up the sandbox let's pivot root into newroot to make it the new
+    # root. We use the pivot_root(".", ".") process described in the pivot_root() man page.
+
+    os.chdir("newroot")
+
+    # We're guaranteed to have / be a mount when we get here, so pivot_root() won't fail anymore,
+    # even if we're in the initramfs.
+    if libc.pivot_root(b".", b".") < 0:
+        oserror("pivot_root")
+
+    # As documented in the pivot_root() man page, this will unmount the old rootfs.
+    umount2(".", MNT_DETACH)
+
+    # Avoid surprises by making sure the sandbox's mount propagation is shared. This doesn't
+    # actually mean mounts get propagated into the host. Instead, a new mount propagation peer
+    # group is set up.
+    mount("", ".", "", MS_SHARED | MS_REC, "")
+
+
 def main() -> None:
     # We don't use argparse as it takes +- 10ms to import and since this is primarily for internal
     # use, it's not necessary to have amazing UX for this CLI interface so it's trivial to write
@@ -1015,61 +1073,7 @@ def main() -> None:
     if not userns:
         mount("", "/", "", MS_SLAVE | MS_REC, "")
 
-    # We need a workspace to setup the sandbox, the easiest way to do this in a tmpfs, since it's
-    # automatically cleaned up. We need a mountpoint to put the workspace on and it can't be root,
-    # so let's use /tmp which is almost guaranteed to exist.
-    mount("tmpfs", "/tmp", "tmpfs", 0, "")
-
-    os.chdir("/tmp")
-
-    with umask(~0o755):
-        # This is where we set up the sandbox rootfs
-        os.mkdir("newroot")
-        # This is the old rootfs which is used as the source for mounts in the new rootfs.
-        os.mkdir("oldroot")
-
-    # Make sure that newroot is a mountpoint.
-    mount("newroot", "newroot", "", MS_BIND | MS_REC, "")
-
-    # Make the workspace in /tmp / and put the old rootfs in oldroot.
-    if libc.pivot_root(b".", b"oldroot") < 0:
-        # pivot_root() can fail in the initramfs since / isn't a mountpoint there, so let's fall
-        # back to MS_MOVE if that's the case.
-
-        # First we move the old rootfs to oldroot.
-        mount("/", "oldroot", "", MS_BIND | MS_REC, "")
-
-        # Then we move the workspace (/tmp) to /.
-        mount(".", "/", "", MS_MOVE, "")
-
-        # chroot and chdir to fully make the workspace the new root.
-        os.chroot(".")
-        os.chdir(".")
-
-        # When we use MS_MOVE we have to unmount oldroot/tmp manually to reveal the original /tmp
-        # again as it might contain stuff that we want to mount into the sandbox.
-        umount2("oldroot/tmp", MNT_DETACH)
-
-    for fsop in fsops:
-        fsop.execute("oldroot", "newroot")
-
-    # Now that we're done setting up the sandbox let's pivot root into newroot to make it the new
-    # root. We use the pivot_root(".", ".") process described in the pivot_root() man page.
-
-    os.chdir("newroot")
-
-    # We're guaranteed to have / be a mount when we get here, so pivot_root() won't fail anymore,
-    # even if we're in the initramfs.
-    if libc.pivot_root(b".", b".") < 0:
-        oserror("pivot_root")
-
-    # As documented in the pivot_root() man page, this will unmount the old rootfs.
-    umount2(".", MNT_DETACH)
-
-    # Avoid surprises by making sure the sandbox's mount propagation is shared. This doesn't
-    # actually mean mounts get propagated into the host. Instead, a new mount propagation peer
-    # group is set up.
-    mount("", ".", "", MS_SHARED | MS_REC, "")
+    setup_mounts(fsops)
 
     if chdir:
         os.chdir(chdir)
