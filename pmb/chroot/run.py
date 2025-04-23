@@ -76,26 +76,16 @@ def rootm(
     # Build the command in steps and run it, e.g.:
     # cmd: ["echo", "test"]
     # cmd_chroot: ["/sbin/chroot", "/..._native", "/bin/sh", "-c", "echo test"]
-    # cmd_sudo: ["sudo", "env", "-i", "sh", "-c", "PATH=... /sbin/chroot ..."]
     executables = pmb.config.required_programs
     cmd_chroot: list[PathString] = [
         executables["chroot"],
         chroot.path,
         "/bin/sh",
         "-c",
-        pmb.helpers.run_core.flat_cmd(cmd_strs, Path(working_dir)),
+        pmb.helpers.run_core.flat_cmd(cmd_strs, Path(working_dir), env=env_all),
     ]
-    cmd_sudo = pmb.config.sudo(
-        [
-            "env",
-            "-i",
-            executables["sh"],
-            "-c",
-            pmb.helpers.run_core.flat_cmd([cmd_chroot], env=env_all),
-        ]
-    )
     return pmb.helpers.run_core.core(
-        msg, cmd_sudo, None, output, output_return, check, True, disable_timeout
+        msg, cmd_chroot, None, output, output_return, check, True, disable_timeout
     )
 
 
