@@ -6,6 +6,7 @@ import pmb.helpers
 from pmb.core import Chroot
 from pmb.types import PathString
 import pmb.helpers.run
+from pmb.init import sandbox
 
 
 def ismount(folder: Path) -> bool:
@@ -48,7 +49,7 @@ def bind(
             raise RuntimeError(f"Mount failed, folder does not exist: {path}")
 
     # Actually mount the folder
-    pmb.helpers.run.root(["mount", "--bind", source, destination])
+    sandbox.mount_rbind(str(source), str(destination))
 
     # Verify that it has worked
     if not ismount(destination):
@@ -99,9 +100,8 @@ def umount_all_list(prefix: Path, source: Path = Path("/proc/mounts")) -> list[P
 def umount_all(folder: Path) -> None:
     """Umount all folders that are mounted inside a given folder."""
     for mountpoint in umount_all_list(folder):
-        pmb.helpers.run.root(["umount", mountpoint])
-        if ismount(mountpoint):
-            raise RuntimeError(f"Failed to umount: {mountpoint}")
+        if mountpoint.name != "binfmt_misc":
+            sandbox.umount2(str(mountpoint), sandbox.MNT_DETACH)
 
 
 def mount_device_rootfs(chroot_rootfs: Chroot, chroot_base: Chroot = Chroot.native()) -> PurePath:
