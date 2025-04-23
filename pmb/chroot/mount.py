@@ -8,11 +8,11 @@ from pathlib import Path
 import pmb.chroot.binfmt
 import pmb.config
 import pmb.helpers.run
-import pmb.parse
 import pmb.install.losetup
 import pmb.helpers.mount
 from pmb.core import Chroot
 from pmb.core.context import get_context
+from pmb.init import sandbox
 
 
 def mount_chroot_image(chroot: Chroot) -> None:
@@ -43,54 +43,6 @@ def mount_chroot_image(chroot: Chroot) -> None:
     logging.info(f"({chroot}) mounted {chroot.name}")
 
 
-def create_device_nodes(chroot: Chroot) -> None:
-    """
-    Create device nodes for null, zero, full, random, urandom in the chroot.
-    """
-    try:
-        # Create all device nodes as specified in the config
-        for dev in pmb.config.chroot_device_nodes:
-            path = chroot / "dev" / str(dev[4])
-            if not path.exists():
-                pmb.helpers.run.root(
-                    [
-                        "mknod",
-                        path,  # name
-                        str(dev[1]),  # type
-                        str(dev[2]),  # major
-                        str(dev[3]),  # minor
-                    ]
-                )
-                # chmod needs to be split from mknod to accommodate
-                # for FreeBSD mknod not including -m
-                pmb.helpers.run.root(
-                    [
-                        "chmod",
-                        str(dev[0]),  # permissions
-                        path,  # name
-                    ]
-                )
-
-        # Verify major and minor numbers of created nodes
-        for dev in pmb.config.chroot_device_nodes:
-            path = chroot / "dev" / str(dev[4])
-            stat_result = path.stat()
-            rdev = stat_result.st_rdev
-            assert os.major(rdev) == dev[2], f"Wrong major in {path}"
-            assert os.minor(rdev) == dev[3], f"Wrong minor in {path}"
-
-        # Verify /dev/zero reading and writing
-        path = chroot / "dev/zero"
-        with open(path, "r+b", 0) as handle:
-            assert handle.write(bytes([0xFF])), f"Write failed for {path}"
-            assert handle.read(1) == bytes([0x00]), f"Read failed for {path}"
-
-    # On failure: Show filesystem-related error
-    except Exception as e:
-        logging.info(str(e) + "!")
-        raise RuntimeError(f"Failed to create device nodes in the '{chroot}' chroot.")
-
-
 def mount_dev_tmpfs(chroot: Chroot = Chroot.native()) -> None:
     """
     Mount tmpfs inside the chroot's dev folder to make sure we can create
@@ -102,19 +54,10 @@ def mount_dev_tmpfs(chroot: Chroot = Chroot.native()) -> None:
     if pmb.helpers.mount.ismount(dev):
         return
 
-    # Create the $chroot/dev folder and mount tmpfs there
-    pmb.helpers.run.root(["mkdir", "-p", dev])
-    pmb.helpers.run.root(["mount", "-t", "tmpfs", "-o", "size=1M,noexec,dev", "tmpfs", dev])
-
-    # Create pts, shm folders and device nodes
-    pmb.helpers.run.root(["mkdir", "-p", dev / "pts", dev / "shm"])
-    pmb.helpers.run.root(
-        ["mount", "-t", "tmpfs", "-o", "nodev,nosuid,noexec", "tmpfs", dev / "shm"]
-    )
-    create_device_nodes(chroot)
-
-    # Setup /dev/fd as a symlink
-    pmb.helpers.run.root(["ln", "-sf", "/proc/self/fd", f"{dev}/"])
+    # Use sandbox to set up /dev inside the chroot
+    ttyname = os.ttyname(2) if os.isatty(2) else ""
+    devop = sandbox.DevOperation(ttyname, "/dev")
+    devop.execute("/", str(chroot.path))
 
 
 def mount(chroot: Chroot) -> None:
