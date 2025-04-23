@@ -568,7 +568,6 @@ def ask_for_additional_options(config: Config) -> None:
         f" boot partition size: {config.boot_size} MB,"
         f" parallel jobs: {config.jobs},"
         f" ccache per arch: {config.ccache_size},"
-        f" sudo timer: {context.sudo_timer},"
         f" mirror: {config.mirrors['pmaports']}"
     )
 
@@ -612,19 +611,6 @@ def ask_for_additional_options(config: Config) -> None:
         "Ccache size", None, config.ccache_size, lowercase_answer=False, validation_regex=regex
     )
     config.ccache_size = answer
-
-    # Sudo timer
-    logging.info(
-        "pmbootstrap does everything in Alpine Linux chroots, so your host system does not get"
-        " modified. In order to work with these chroots, pmbootstrap calls 'sudo' internally. For"
-        " long running operations, it is possible that you'll have to authorize sudo more than"
-        " once."
-    )
-    answer_background_timer = pmb.helpers.cli.confirm(
-        "Enable background timer to prevent repeated sudo authorization?",
-        default=context.sudo_timer,
-    )
-    config.sudo_timer = answer_background_timer
 
     # Mirrors
     # prompt for mirror change
