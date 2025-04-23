@@ -5,8 +5,11 @@
 # PYTHON_ARGCOMPLETE_OK
 import sys
 import pmb
+import os
+
+original_uid = os.geteuid()
 
 # A convenience wrapper for running pmbootstrap from the git repository. This
 # script is not part of the python packaging, so don't add more logic here!
 if __name__ == "__main__":
-    sys.exit(pmb.main())
+    sys.exit(pmb.main(original_uid=original_uid))
