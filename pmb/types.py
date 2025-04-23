@@ -233,7 +233,6 @@ class PmbArgs(Namespace):
     src: str
     ssh_keys: str
     strict: bool
-    sudo_timer: bool
     suffix: str
     systemd: str
     timeout: float
