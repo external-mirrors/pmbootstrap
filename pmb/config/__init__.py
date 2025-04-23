@@ -187,16 +187,6 @@ chroot_home_symlinks = {
     "/mnt/pmbootstrap/sccache": "/home/pmos/.cache/sccache",
 }
 
-# Device nodes to be created in each chroot. Syntax for each entry:
-# [permissions, type, major, minor, name]
-chroot_device_nodes = [
-    [666, "c", 1, 3, "null"],
-    [666, "c", 1, 5, "zero"],
-    [666, "c", 1, 7, "full"],
-    [644, "c", 1, 8, "random"],
-    [644, "c", 1, 9, "urandom"],
-]
-
 # Age in hours that we keep the APKINDEXes before downloading them again.
 # You can force-update them with 'pmbootstrap update'.
 apkindex_retention_time = 4
