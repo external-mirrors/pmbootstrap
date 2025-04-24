@@ -122,7 +122,6 @@ class PmbArgs(Namespace):
     auto: bool
     autoinstall: bool
     boot_size: str
-    build_default_device_arch: str
     buildroot: str
     built: bool
     ccache: bool
