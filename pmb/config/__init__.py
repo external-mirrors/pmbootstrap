@@ -23,6 +23,9 @@ from . import workdir as workdir
 pmb_src: Path = Path(Path(__file__) / "../../..").resolve()
 apk_keys_path: Path = pmb_src / "pmb/data/keys"
 
+# In the mount namespace this is where we mount our own binfmt_misc dir
+binfmt_misc = "/tmp/pmb_binfmt_misc"
+
 # apk-tools minimum version
 # https://pkgs.alpinelinux.org/packages?name=apk-tools&branch=edge
 # Update this frequently to prevent a MITM attack with an outdated version
