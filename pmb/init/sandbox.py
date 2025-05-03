@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
+# FIXME: this file is wayyy off lol
+# ruff: noqa
 
 """
 This is a standalone implementation of sandboxing which is used by mkosi. Note that this is
@@ -30,6 +32,7 @@ CLONE_NEWNS = 0x00020000
 CLONE_NEWUSER = 0x10000000
 EBADF = 9
 UNSHARE_EPERM_MSGEPERM = 1
+EPERM = 1
 ENOENT = 2
 ENOSYS = 38
 F_DUPFD = 0
@@ -669,6 +672,15 @@ class ProcOperation(FSOperation):
             os.makedirs(dst, exist_ok=True)
 
         mount_rbind(joinpath(oldroot, "proc"), dst)
+
+
+class BinfmtOperation(FSOperation):
+    def execute(self, oldroot: str, newroot: str) -> None:
+        dst = chase(newroot, self.dst)
+        with umask(~0o755):
+            os.makedirs(dst, exist_ok=True)
+
+        mount("binfmt_misc", dst, "binfmt_misc", 0, "")
 
 
 class DevOperation(FSOperation):
