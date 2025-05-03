@@ -17,6 +17,7 @@ from .pkgrel_bump import PkgrelBump
 from .pkgver_bump import PkgverBump
 from .pull import Pull
 from .kconfig import KConfigCheck, KConfigEdit, KConfigMigrate
+from .shell import Shell
 
 """New way to model pmbootstrap subcommands that can be invoked without PmbArgs."""
 
@@ -89,6 +90,8 @@ def run_command(args: PmbArgs) -> None:
             command = PkgverBump(args.packages)
         case "pull":
             command = Pull()
+        case "shell":
+            command = Shell()
         case "kconfig":
             match args.action_kconfig:
                 case "check":
