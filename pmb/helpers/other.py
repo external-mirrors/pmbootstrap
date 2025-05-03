@@ -46,31 +46,6 @@ def check_grsec() -> None:
     )
 
 
-def check_binfmt_misc() -> None:
-    """Check if the 'binfmt_misc' module is loaded.
-
-    This is done by checking, if /proc/sys/fs/binfmt_misc/ exists.
-    If it exists, then do nothing.
-    Otherwise, load the module and mount binfmt_misc.
-    If that fails as well, raise an exception pointing the user to the wiki.
-    """
-    path = "/proc/sys/fs/binfmt_misc/status"
-    if os.path.exists(path):
-        return
-
-    # check=False: this might be built-in instead of being a module
-    pmb.helpers.run.root(["modprobe", "binfmt_misc"], check=False)
-
-    # check=False: we check it below and print a more helpful message on error
-    pmb.helpers.run.root(
-        ["mount", "-t", "binfmt_misc", "none", "/proc/sys/fs/binfmt_misc"], check=False
-    )
-
-    if not os.path.exists(path):
-        link = "https://postmarketos.org/binfmt_misc"
-        raise RuntimeError(f"Failed to set up binfmt_misc, see: {link}")
-
-
 def migrate_success(work: Path, version: int) -> None:
     logging.info("Migration to version " + str(version) + " done")
     with open(work / "version", "w") as handle:

@@ -34,7 +34,9 @@ fsops = [
         readonly=False,
         required=True,
         relative=False,
-    )
+    ),
+    # Mount binfmt_misc at /tmp/pmb_binfmt_misc
+    sandbox.BinfmtOperation(pmb.config.binfmt_misc),
 ]
 sandbox.setup_mounts(fsops)
 
