@@ -1002,6 +1002,10 @@ def get_parser() -> argparse.ArgumentParser:
     log.add_argument("-n", "--lines", type=int, default=60, help="count of initial output lines")
     log.add_argument("-c", "--clear", help="clear the log", action="store_true", dest="clear_log")
 
+    # Actions: shell
+    # Spawn a shell after unshare()
+    sub.add_parser("shell", help="Spawn a shell after unsharing namespaces (DEBUGGING)")
+
     # Action: zap
     zap = sub.add_parser("zap", help="safely delete chroot folders")
     zap.add_argument(
