@@ -83,7 +83,7 @@ def partition(layout: PartitionLayout, size_boot: int, size_reserve: int) -> Non
         f" reserved: {mb_reserved}, root: the rest)"
     )
 
-    filesystem = pmb.parse.deviceinfo().boot_filesystem or "ext2"
+    filesystem = pmb.parse.deviceinfo().boot_filesystem or "vfat"
 
     # Actual partitioning with 'parted'. Using check=False, because parted
     # sometimes "fails to inform the kernel". In case it really failed with
