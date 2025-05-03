@@ -77,7 +77,7 @@ def mount(chroot: Chroot) -> None:
         src_template = src_template.replace("$WORK", os.fspath(get_context().config.work))
         src_template = src_template.replace("$ARCH", str(arch))
         src_template = src_template.replace("$CHANNEL", channel)
-        mountpoints[Path(src_template)] = Path(target_template)
+        mountpoints[Path(src_template).resolve()] = Path(target_template)
 
     # Mount if necessary
     for source, target in mountpoints.items():
