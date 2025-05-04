@@ -163,7 +163,7 @@ class Deviceinfo:
     sd_embed_firmware: str | None = ""
     sd_embed_firmware_step_size: str | None = ""
     partition_blacklist: str | None = ""
-    boot_part_start: str | None = ""
+    boot_part_start: int
     partition_type: str | None = ""
     root_filesystem: str | None = ""
     flash_kernel_on_update: str | None = ""
@@ -277,12 +277,19 @@ class Deviceinfo:
             # FIXME: something to turn on and fix in the future
             # if key not in Deviceinfo.__annotations__.keys():
             #     logging.warning(f"deviceinfo: {key} is not a known attribute")
-            if key == "arch":
-                setattr(self, key, Arch.from_str(value))
-            elif key == "gpu_accelerated":  # deprecated
-                setattr(self, "drm", value)
-            else:
-                setattr(self, key, value)
+            match key:
+                case "arch":
+                    setattr(self, key, Arch.from_str(value))
+                case "gpu_accelerated":  # deprecated
+                    setattr(self, "drm", value)
+                case "boot_part_start" | "rootfs_image_sector_size":
+                    setattr(self, key, int(value))
+                case _:
+                    setattr(self, key, value)
 
         if not self.flash_method:
             self.flash_method = "none"
+
+        # Default boot partition start offset
+        if not hasattr(self, "boot_part_start"):
+            setattr(self, "boot_part_start", 2048)
