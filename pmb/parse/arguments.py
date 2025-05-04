@@ -61,29 +61,6 @@ def toggle_other_boolean_flags(
     return SetOtherDestinationsAction
 
 
-def type_ondev_cp(val: str) -> list[str]:
-    """Parse and validate arguments to 'pmbootstrap install --ondev --cp'.
-
-    :param val: 'HOST_SRC:CHROOT_DEST' string
-
-    :returns: [HOST_SRC, CHROOT_DEST]
-    """
-    ret = val.split(":")
-
-    if len(ret) != 2:
-        raise argparse.ArgumentTypeError(f"does not have HOST_SRC:CHROOT_DEST format: {val}")
-    host_src = ret[0]
-    if not os.path.exists(host_src):
-        raise argparse.ArgumentTypeError(f"HOST_SRC not found: {host_src}")
-    if not os.path.isfile(host_src):
-        raise argparse.ArgumentTypeError(f"HOST_SRC is not a file: {host_src}")
-
-    chroot_dest = ret[1]
-    if not chroot_dest.startswith("/"):
-        raise argparse.ArgumentTypeError(f"CHROOT_DEST must start with '/': {chroot_dest}")
-    return ret
-
-
 def arguments_install(subparser: argparse._SubParsersAction) -> None:
     ret = subparser.add_parser(
         "install", help="set up device specific chroot and install to SD card or image file"
@@ -237,42 +214,6 @@ def arguments_install(subparser: argparse._SubParsersAction) -> None:
     )
     group.add_argument(
         "--no-sparse", help="do not generate sparse image file", dest="sparse", action="store_false"
-    )
-
-    # On-device installer
-    group = ret.add_argument_group(
-        "optional on-device installer arguments",
-        "Wrap the resulting image in a postmarketOS based installation OS, so"
-        " it can be encrypted and customized on first boot."
-        " Related: https://postmarketos.org/on-device-installer",
-    )
-    group.add_argument(
-        "--on-device-installer", "--ondev", action="store_true", help="enable on-device installer"
-    )
-    group.add_argument(
-        "--no-local-pkgs",
-        dest="install_local_pkgs",
-        help="do not install locally compiled packages and package signing keys",
-        action="store_false",
-    )
-    group.add_argument(
-        "--cp",
-        dest="ondev_cp",
-        nargs="+",
-        metavar="HOST_SRC:CHROOT_DEST",
-        type=type_ondev_cp,
-        help="copy one or more files from the host system path"
-        " HOST_SRC to the target path CHROOT_DEST",
-    )
-    group.add_argument(
-        "--no-rootfs",
-        dest="ondev_no_rootfs",
-        help="do not generate a pmOS rootfs as"
-        " /var/lib/rootfs.img (install chroot). The file"
-        " must either exist from a previous"
-        " 'pmbootstrap install' run or by providing it"
-        " as CHROOT_DEST with --cp",
-        action="store_true",
     )
 
     # Other
