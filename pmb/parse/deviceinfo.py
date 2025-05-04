@@ -225,7 +225,7 @@ class Deviceinfo:
     sd_embed_firmware: str | None = ""
     sd_embed_firmware_step_size: str | None = ""
     partition_blacklist: str | None = ""
-    boot_part_start: str | None = ""
+    boot_part_start: int
     partition_type: str | None = ""
     root_filesystem: str | None = ""
     flash_kernel_on_update: str | None = ""
@@ -348,8 +348,14 @@ class Deviceinfo:
                     setattr(self, key, int(value))
                 case "initfs_compression":
                     setattr(self, key, InitfsCompression.from_str(value))
+                case "boot_part_start" | "rootfs_image_sector_size":
+                    setattr(self, key, int(value))
                 case _:
                     setattr(self, key, value)
 
         if not self.flash_method:
             self.flash_method = "none"
+
+        # Default boot partition start offset
+        if not hasattr(self, "boot_part_start"):
+            setattr(self, "boot_part_start", 2048)
