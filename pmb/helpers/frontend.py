@@ -84,26 +84,6 @@ def _parse_suffix(args: PmbArgs) -> Chroot:
         return Chroot(ChrootType.NATIVE)
 
 
-def _install_ondev_verify_no_rootfs(device: str, ondev_cp: list[tuple[str, str]]) -> None:
-    chroot_dest = "/var/lib/rootfs.img"
-    dest = Chroot(ChrootType.INSTALLER, device) / chroot_dest
-    if dest.exists():
-        return
-
-    if ondev_cp:
-        for _, chroot_dest_cp in ondev_cp:
-            if chroot_dest_cp == chroot_dest:
-                return
-
-    raise ValueError(
-        f"--no-rootfs set, but rootfs.img not found in install"
-        " chroot. Either run 'pmbootstrap install' without"
-        " --no-rootfs first to let it generate the postmarketOS"
-        " rootfs once, or supply a rootfs file with:"
-        f" --cp os.img:{chroot_dest}"
-    )
-
-
 def build(args: PmbArgs) -> None:
     # Strict mode: zap everything
     if args.strict:
@@ -325,55 +305,6 @@ def install(args: PmbArgs) -> None:
         deviceinfo.arch, f"do 'pmbootstrap install' for {deviceinfo.arch} (deviceinfo_arch)"
     )
 
-    # On-device installer checks
-    # Note that this can't be in the mutually exclusive group that has most of
-    # the conflicting options, because then it would not work with --disk.
-    if args.on_device_installer:
-        if args.full_disk_encryption:
-            raise ValueError(
-                "--on-device-installer cannot be combined with"
-                " --fde. The user can choose to encrypt their"
-                " installation later in the on-device installer."
-            )
-        if args.android_recovery_zip:
-            raise ValueError(
-                "--on-device-installer cannot be combined with"
-                " --android-recovery-zip (patches welcome)"
-            )
-        if args.no_image:
-            raise ValueError("--on-device-installer cannot be combined with --no-image")
-        if args.rsync:
-            raise ValueError("--on-device-installer cannot be combined with --rsync")
-        if args.filesystem:
-            raise ValueError("--on-device-installer cannot be combined with --filesystem")
-
-        if deviceinfo.cgpt_kpart:
-            raise ValueError("--on-device-installer cannot be used with ChromeOS devices")
-    else:
-        if args.ondev_cp:
-            raise ValueError("--cp can only be combined with --ondev")
-        if args.ondev_no_rootfs:
-            raise ValueError(
-                "--no-rootfs can only be combined with --ondev. Do you mean --no-image?"
-            )
-    if args.ondev_no_rootfs:
-        _install_ondev_verify_no_rootfs(device, args.ondev_cp)
-
-    # On-device installer overrides
-    if args.on_device_installer:
-        # To make code for the on-device installer not needlessly complex, just
-        # hardcode "user" as username here. (The on-device installer will set
-        # a password for the user, disable SSH password authentication,
-        # optionally add a new user for SSH that must not have the same
-        # username etc.)
-        if config.user != "user":
-            logging.warning(
-                f"WARNING: custom username '{config.user}' will be"
-                " replaced with 'user' for the on-device"
-                " installer."
-            )
-            config.user = "user"
-
     if not args.disk and args.split is None:
         # Default to split if the flash method requires it
         flasher = pmb.config.flashers.get(deviceinfo.flash_method, {})
@@ -400,20 +331,6 @@ def install(args: PmbArgs) -> None:
             " different cipher with 'pmbootstrap install --cipher=..."
             " --fde --android-recovery-zip'."
         )
-
-    # Don't install locally compiled packages and package signing keys
-    if not args.install_local_pkgs:
-        # Implies that we don't build outdated packages (overriding the answer
-        # in 'pmbootstrap init')
-        config.build_pkgs_on_install = False
-
-        # Safest way to avoid installing local packages is having none
-        if list((config.work / "packages").glob("*")):
-            raise ValueError(
-                "--no-local-pkgs specified, but locally built"
-                " packages found. Consider 'pmbootstrap zap -p'"
-                " to delete them."
-            )
 
     # Verify that the root filesystem is supported by current pmaports branch
     pmb.install.get_root_filesystem(args)

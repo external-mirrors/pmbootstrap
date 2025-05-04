@@ -60,19 +60,15 @@ def partitions_mount(device: str, layout: PartitionLayout, disk: Path | None) ->
         pmb.helpers.mount.bind_file(source, target)
 
 
-def partition(layout: PartitionLayout, size_boot: int, size_reserve: int) -> None:
+def partition(layout: PartitionLayout, size_boot: int) -> None:
     """
     Partition /dev/install and create /dev/install{p1,p2,p3}:
     * /dev/installp1: boot
     * /dev/installp2: root (or reserved space)
     * /dev/installp3: (root, if reserved space > 0)
 
-    When adjusting this function, make sure to also adjust
-    ondev-prepare-internal-storage.sh in postmarketos-ondev.git!
-
     :param layout: partition layout from get_partition_layout()
     :param size_boot: size of the boot partition in MiB
-    :param size_reserve: empty partition between root and boot in MiB (pma#463)
     """
     # Convert to MB and print info
     mb_boot = f"{size_boot}M"
@@ -121,7 +117,7 @@ def partition(layout: PartitionLayout, size_boot: int, size_reserve: int) -> Non
         pmb.chroot.root(["parted", "-s", "/dev/install", *command], check=False)
 
 
-def partition_cgpt(layout: PartitionLayout, size_boot: int, size_reserve: int) -> None:
+def partition_cgpt(layout: PartitionLayout, size_boot: int) -> None:
     """
     This function does similar functionality to partition(), but this
     one is for ChromeOS devices which use special GPT. We don't follow
@@ -129,7 +125,6 @@ def partition_cgpt(layout: PartitionLayout, size_boot: int, size_reserve: int) -
 
     :param layout: partition layout from get_partition_layout()
     :param size_boot: size of the boot partition in MiB
-    :param size_reserve: empty partition between root and boot in MiB (pma#463)
     """
 
     pmb.chroot.apk.install(["cgpt"], Chroot.native(), build=False)
@@ -148,17 +143,13 @@ def partition_cgpt(layout: PartitionLayout, size_boot: int, size_reserve: int) -
 
     # Convert to MB and print info
     mb_boot = f"{size_boot}M"
-    mb_reserved = f"{size_reserve}M"
-    logging.info(
-        f"(native) partition /dev/install (boot: {mb_boot},"
-        f" reserved: {mb_reserved}, root: the rest)"
-    )
+    logging.info(f"(native) partition /dev/install (boot: {mb_boot})")
 
     boot_part_start = str(int(cgpt["kpart_start"]) + int(cgpt["kpart_size"]))
 
     # Convert to sectors
     s_boot = str(int(size_boot * 1024 * 1024 / 512))
-    s_root_start = str(int(int(boot_part_start) + int(s_boot) + size_reserve * 1024 * 1024 / 512))
+    s_root_start = str(int(int(boot_part_start) + int(s_boot)))
 
     commands = [
         ["parted", "-s", "/dev/install", "mktable", "gpt"],

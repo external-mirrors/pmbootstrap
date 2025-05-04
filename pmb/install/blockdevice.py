@@ -62,14 +62,13 @@ def mount_disk(path: Path) -> None:
 
 
 def create_and_mount_image(
-    args: PmbArgs, size_boot: int, size_root: int, size_reserve: int, split: bool = False
+    args: PmbArgs, size_boot: int, size_root: int, split: bool = False
 ) -> None:
     """
     Create a new image file, and mount it as /dev/install.
 
     :param size_boot: size of the boot partition in MiB
     :param size_root: size of the root partition in MiB
-    :param size_reserve: empty partition between root and boot in MiB (pma#463)
     :param split: create separate images for boot and root partitions
     """
 
@@ -90,7 +89,7 @@ def create_and_mount_image(
             pmb.chroot.root(["rm", img_path])
 
     # Make sure there is enough free space
-    size_mb = round(size_boot + size_reserve + size_root)
+    size_mb = round(size_boot + size_root)
     disk_data = os.statvfs(get_context().config.work)
     free = round((disk_data.f_bsize * disk_data.f_bavail) / (1024**2))
     if size_mb > free:
@@ -123,14 +122,13 @@ def create_and_mount_image(
 
 
 def create(
-    args: PmbArgs, size_boot: int, size_root: int, size_reserve: int, split: bool, disk: Path | None
+    args: PmbArgs, size_boot: int, size_root: int, split: bool, disk: Path | None
 ) -> None:
     """
     Create /dev/install (the "install blockdevice").
 
     :param size_boot: size of the boot partition in MiB
     :param size_root: size of the root partition in MiB
-    :param size_reserve: empty partition between root and boot in MiB (pma#463)
     :param split: create separate images for boot and root partitions
     :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
     """
@@ -138,4 +136,4 @@ def create(
     if disk:
         mount_disk(disk)
     else:
-        create_and_mount_image(args, size_boot, size_root, size_reserve, split)
+        create_and_mount_image(args, size_boot, size_root, split)
