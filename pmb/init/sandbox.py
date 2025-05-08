@@ -428,20 +428,43 @@ def become_user(uid: int, gid: int) -> None:
             # Fork again for UID map, bweh this is suuuper gross
             newpid = os.fork()
             if newpid == 0:
-                os.execl("/usr/bin/newuidmap", "newuidmap",
-                        str(ppid),
-                            "0",   str(uid), "1",
-                            "1",   "100000", "9999",
-                        # 12345 is the UID of the "pmos" or "build" user in our containers
-                        "12345",  "110000",     "55536")
-                        # str(uid+1), "110000", "55536")
+                os.execl(
+                    "/usr/bin/newuidmap",
+                    "newuidmap",
+                    str(ppid),
+                    "0",
+                    str(uid),
+                    "1",
+                    "1",
+                    "100000",
+                    "9999",
+                    # 12345 is the UID of the "pmos" or "build" user in our containers
+                    "12345",
+                    "110000",
+                    "1",
+                    "10000",
+                    "120000",
+                    "1",
+                )
             else:
                 os.waitpid(newpid, 0)
-            os.execl("/usr/bin/newgidmap", "newgidmap",
-                      str(ppid),
-                            "0",  str(uid), "1",
-                            "1",  "100000", "9999",
-                        "12345",  "110000",     "55536")
+            os.execl(
+                "/usr/bin/newgidmap",
+                "newgidmap",
+                str(ppid),
+                "0",
+                str(uid),
+                "1",
+                "1",
+                "100000",
+                "9999",
+                "12345",
+                "110000",
+                "1",
+                "10000",
+                "120000",
+                "1",
+            )
         except OSError as e:
             print(e.strerror, flush=True)
             os._exit(e.errno or 1)
