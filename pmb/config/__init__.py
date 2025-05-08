@@ -29,6 +29,10 @@ apk_keys_path: Path = pmb_src / "pmb/data/keys"
 # In the mount namespace this is where we mount our own binfmt_misc dir
 binfmt_misc = "/tmp/pmb_binfmt_misc"
 
+# This is the sector size we align to when creating partition tables, since
+# it works on all disks of smaller sector sizes too
+block_size = 4096
+
 # apk-tools minimum version
 # https://pkgs.alpinelinux.org/packages?name=apk-tools&branch=edge
 # Update this frequently to prevent a MITM attack with an outdated version

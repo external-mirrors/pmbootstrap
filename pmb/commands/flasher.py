@@ -5,8 +5,10 @@
 import pmb.parse.deviceinfo
 from pmb import commands
 from pmb.core.context import get_context
+from pmb.core.chroot import Chroot
 from pmb.flasher.frontend import flash_lk2nd, kernel, list_flavors, rootfs, sideload
 from pmb.helpers import logging
+import pmb.chroot
 
 
 class Flasher(commands.Command):
@@ -38,6 +40,9 @@ class Flasher(commands.Command):
         if method == "none" and action in ["boot", "flash_kernel", "flash_rootfs", "flash_lk2nd"]:
             logging.info("This device doesn't support any flash method.")
             return
+
+        # Ensure the chroot is ready
+        pmb.chroot.init(Chroot.native())
 
         if action in ["boot", "flash_kernel"]:
             kernel(

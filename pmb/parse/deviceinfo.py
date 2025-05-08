@@ -221,7 +221,7 @@ class Deviceinfo:
     flash_fastboot_max_size: str | None = ""
     flash_sparse: str | None = ""
     flash_sparse_samsung_format: str | None = ""
-    rootfs_image_sector_size: str | None = ""
+    rootfs_image_sector_size: int | None = 512
     sd_embed_firmware: str | None = ""
     sd_embed_firmware_step_size: str | None = ""
     partition_blacklist: str | None = ""

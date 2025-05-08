@@ -86,6 +86,9 @@ def build(args: PmbArgs) -> None:
         pmb.build.envkernel.package_kernel(args)
         return
 
+    # Ensure native chroot is initialized
+    pmb.chroot.init(Chroot.native())
+
     # Set src and force
     src = os.path.realpath(os.path.expanduser(args.src[0])) if args.src else None
     force = True if src else get_context().force

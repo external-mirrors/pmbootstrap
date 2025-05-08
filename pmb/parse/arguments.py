@@ -119,7 +119,7 @@ def arguments_install(subparser: argparse._SubParsersAction) -> None:
         help="create combined boot and root image file",
         dest="split",
         action="store_false",
-        default=None,
+        default=False,
     )
     group.add_argument(
         "--split", help="create separate boot and root image files", action="store_true"

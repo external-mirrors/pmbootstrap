@@ -12,6 +12,8 @@ from typing import Any, Literal, TypedDict
 from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
 
+import uuid
+
 
 class CrossCompile(enum.Enum):
     # Cross compilation isn't needed for this package:
@@ -127,7 +129,6 @@ class RunOutputTypePopen(enum.Enum):
     def has_pass_stdin(self) -> bool:
         return False
 
-
 RunOutputType = RunOutputTypeDefault | RunOutputTypePopen
 RunReturnType = str | int | subprocess.Popen
 PathString = Path | str
@@ -140,11 +141,118 @@ WithExtraRepos = Literal["default", "enabled", "disabled"]
 # future refactoring efforts easier.
 
 
-class PartitionLayout(TypedDict):
-    kernel: int | None
-    boot: int
-    reserve: int | None
-    root: int
+class DiskPartition:
+    name: str
+    size: int  # in bytes
+    filesystem: str | None
+    # offset into the disk image!
+    offset: int  # bytes
+    path: str  # e.g. /dev/install or /dev/installp1 for --split
+    _uuid: str
+
+    def __init__(self, name: str, size: int):
+        self.name = name
+        self.size = size
+        self.filesystem = None
+        self.offset = 0
+        self.path = ""
+        self._uuid = ""
+
+    @property
+    def uuid(self) -> str:
+        """
+        We generate a UUID the first time we're called. The length
+        depends on which filesystem, since FAT only supported short
+        volume IDs.
+        """
+        if self.filesystem is None:
+            raise ValueError("Can't get UUID when filesystem not set")
+
+        if self._uuid:
+            return self._uuid
+
+        if self.filesystem.startswith("fat"):
+            # FAT UUIDs are only 8 bytes and are always uppercase
+            self._uuid = ("-".join(str(uuid.uuid4()).split("-")[1:3])).upper()
+        else:
+            self._uuid = str(uuid.uuid4())
+
+        return self._uuid
+
+    @property
+    def size_mb(self) -> int:
+        return round(self.size / (1024**2))
+
+    @property
+    def partition_label(self) -> str:
+        return f"pmOS_{self.name}"
+
+    def offset_sectors(self, sector_size: int) -> int:
+        if self.offset % sector_size != 0:
+            raise ValueError(
+                f"Partition {self.name} offset not a multiple of sector size {sector_size}!"
+            )
+        return int(self.offset / sector_size)
+
+    def size_sectors(self, sector_size: int) -> int:
+        ss = int((self.size + sector_size) / sector_size)
+        # sgdisk requires aligning to 2048-sector boundaries.
+        # It conservatively rounds down but we want to round up...
+        ss = int((ss + 2047) / 2048) * 2048
+        return ss
+
+    def __str__(self) -> str:
+        return f"DiskPartition {{name: {self.name}, size: {self.size_mb}M, offset: {self.offset / 1024 / 1024}M{', path: ' + self.path if self.path else ''}{', fs: ' + self.filesystem if self.filesystem else ''}}}"
+
+class PartitionLayout(list[DiskPartition]):
+    """
+    Subclass list to provide easy accessors without relying on
+    fragile indexes while still allowing the partitions to be
+    iterated over for simplicity. This is not a good design tbh
+    """
+    path: str # path to disk image
+    split: bool # image per partition
+
+    def __init__(self, path: str, split: bool):
+        super().__init__(self)
+        # Path to the disk image
+        self.path = path
+        self.split = split
+
+    @property
+    def kernel(self):
+        """
+        Get the kernel partition (specific to Chromebooks).
+        """
+        if self[0].name != "kernel":
+            raise ValueError("First partition not kernel partition!")
+        return self[0]
+
+    @property
+    def boot(self):
+        """
+        Get the boot partition, must be the first or second if we have
+        a kernel partition
+        """
+        if self[0].name == "boot":
+            return self[0]
+        if self[0].name == "kernel" and self[1].name == "boot":
+            return self[1]
+
+        raise ValueError("First partition not boot partition!")
+
+    @property
+    def root(self):
+        """
+        Get the root partition, must be the second or third if we have
+        a kernel partition
+        """
+        if self[1].name == "root":
+            return self[1]
+        if self[0].name == "kernel" and self[2].name == "root":
+            return self[2]
+
+        raise ValueError("First partition not root partition!")
 
 
 class AportGenEntry(TypedDict):
@@ -308,3 +416,6 @@ class PmbArgs(Namespace):
     xauth: bool
     xconfig: bool
     zap: bool
+
+
+# type: ignore

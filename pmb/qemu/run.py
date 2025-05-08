@@ -20,7 +20,6 @@ import pmb.chroot
 import pmb.chroot.apk
 import pmb.chroot.other
 import pmb.config.pmaports
-import pmb.install.losetup
 from pmb.types import Env, PathString, PmbArgs, RunOutputTypeDefault
 import pmb.helpers.run
 import pmb.parse.cpuinfo

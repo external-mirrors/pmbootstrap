@@ -20,9 +20,11 @@ def mount_dev_tmpfs(chroot: Chroot = Chroot.native()) -> None:
     it.
     """
     # Do nothing when it is already mounted
-    dev = chroot / "dev"
-    if pmb.helpers.mount.ismount(dev):
-        return
+    # dev = chroot / "dev"
+    # if pmb.helpers.mount.ismount(dev):
+    #     return
+
+    logging.info(f"mount_dev_tmpfs({chroot})")
 
     # Use sandbox to set up /dev inside the chroot
     ttyname = os.ttyname(2) if os.isatty(2) else ""
@@ -32,6 +34,7 @@ def mount_dev_tmpfs(chroot: Chroot = Chroot.native()) -> None:
 
 def mount(chroot: Chroot):
     # Mount tmpfs as the chroot's /dev
+    chroot.path.mkdir(exist_ok=True)
     mount_dev_tmpfs(chroot)
 
     # Get all mountpoints

@@ -67,12 +67,14 @@ def bind_file(source: Path, destination: Path, create_folders: bool = False) -> 
         if create_folders:
             dest_dir: Path = destination.parent
             if not dest_dir.is_dir():
-                pmb.helpers.run.root(["mkdir", "-p", dest_dir])
+                os.makedirs(dest_dir, exist_ok=True)
 
-        pmb.helpers.run.root(["touch", destination])
+        with sandbox.umask(~0o644):
+            os.close(os.open(destination, os.O_CREAT | os.O_CLOEXEC | os.O_EXCL))
 
     # Mount
-    pmb.helpers.run.root(["mount", "--bind", source, destination])
+    pmb.logging.info(f"% mount --bind {source} {destination}")
+    sandbox.mount_rbind(str(source), str(destination), 0)
 
 
 def umount_all_list(prefix: Path, source: Path = Path("/proc/mounts")) -> list[Path]:
@@ -101,6 +103,7 @@ def umount_all(folder: Path) -> None:
     """Umount all folders that are mounted inside a given folder."""
     for mountpoint in umount_all_list(folder):
         if mountpoint.name != "binfmt_misc":
+            pmb.logging.info(f"% umount {mountpoint}")
             sandbox.umount2(str(mountpoint), sandbox.MNT_DETACH)
 
 
