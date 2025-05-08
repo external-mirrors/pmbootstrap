@@ -13,23 +13,6 @@ from pmb.core.context import get_context
 from pmb.init import sandbox
 
 
-def create_device_nodes(chroot: Chroot):
-    """
-    Create device nodes for null, zero, full, random, urandom in the chroot.
-    """
-    try:
-        # Create all device nodes as specified in the config
-        for dev in pmb.config.chroot_device_nodes:
-            path = chroot / "dev" / str(dev[4])
-            if not path.exists():
-                pmb.helpers.run.root(["mknod",
-                                            "-m", str(dev[0]),  # permissions
-                                            path,  # name
-                                            str(dev[1]),  # type
-                                            str(dev[2]),  # major
-                                            str(dev[3]),  # minor
-                                            ])
-
 def mount_dev_tmpfs(chroot: Chroot = Chroot.native()) -> None:
     """
     Mount tmpfs inside the chroot's dev folder to make sure we can create
@@ -37,9 +20,11 @@ def mount_dev_tmpfs(chroot: Chroot = Chroot.native()) -> None:
     it.
     """
     # Do nothing when it is already mounted
-    dev = chroot / "dev"
-    if pmb.helpers.mount.ismount(dev):
-        return
+    # dev = chroot / "dev"
+    # if pmb.helpers.mount.ismount(dev):
+    #     return
+
+    logging.info(f"mount_dev_tmpfs({chroot})")
 
     # Use sandbox to set up /dev inside the chroot
     ttyname = os.ttyname(2) if os.isatty(2) else ""
@@ -49,6 +34,7 @@ def mount_dev_tmpfs(chroot: Chroot = Chroot.native()) -> None:
 
 def mount(chroot: Chroot):
     # Mount tmpfs as the chroot's /dev
+    chroot.path.mkdir(exist_ok=True)
     mount_dev_tmpfs(chroot)
 
     # Get all mountpoints

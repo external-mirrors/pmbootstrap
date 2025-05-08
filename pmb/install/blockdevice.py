@@ -3,10 +3,10 @@
 from pmb.helpers import logging
 import os
 from pathlib import Path
-from pmb.types import PmbArgs
+from pmb.types import PmbArgs, PartitionLayout
 import pmb.helpers.mount
-import pmb.install.losetup
 import pmb.helpers.cli
+import pmb.helpers.run
 import pmb.config
 from pmb.core import Chroot
 from pmb.core.context import get_context
@@ -62,20 +62,22 @@ def mount_disk(path: Path) -> None:
 
 
 def create_and_mount_image(
-    args: PmbArgs, size_boot: int, size_root: int, split: bool = False
+    args: PmbArgs,
+    layout: PartitionLayout,
+    split: bool = False,
 ) -> None:
     """
     Create a new image file, and mount it as /dev/install.
 
-    :param size_boot: size of the boot partition in MiB
-    :param size_root: size of the root partition in MiB
+    :param size_boot: size of the boot partition in bytes
+    :param size_root: size of the root partition in bytes
     :param split: create separate images for boot and root partitions
     """
 
     # Short variables for paths
     chroot = Chroot.native()
     config = get_context().config
-    img_path_prefix = Path("/home/pmos/rootfs")
+    img_path_prefix = chroot / "home/pmos/rootfs"
     img_path_full = img_path_prefix / f"{config.device}.img"
     img_path_boot = img_path_prefix / f"{config.device}-boot.img"
     img_path_root = img_path_prefix / f"{config.device}-root.img"
@@ -85,45 +87,54 @@ def create_and_mount_image(
         outside = chroot / img_path
         if os.path.exists(outside):
             pmb.helpers.mount.umount_all(chroot / "mnt")
-            pmb.install.losetup.umount(img_path)
             pmb.chroot.root(["rm", img_path])
 
     # Make sure there is enough free space
-    size_mb = round(size_boot + size_root)
+    size_full = round(layout.boot.size + layout.root.size)
     disk_data = os.statvfs(get_context().config.work)
-    free = round((disk_data.f_bsize * disk_data.f_bavail) / (1024**2))
-    if size_mb > free:
+    free = disk_data.f_bsize * disk_data.f_bavail
+    if size_full > free:
         raise RuntimeError(
-            f"Not enough free space to create rootfs image! (free: {free}M, required: {size_mb}M)"
+            f"Not enough free space to create rootfs image! (free: {round(free / (1024**2))}M, required: {round(size_full / (1024**2))}M)"
         )
 
     # Create empty image files
-    pmb.chroot.user(["mkdir", "-p", "/home/pmos/rootfs"])
-    size_mb_full = str(size_mb) + "M"
-    size_mb_boot = str(size_boot) + "M"
-    size_mb_root = str(size_root) + "M"
-    images = {img_path_full: size_mb_full}
+    rootfs_dir = chroot / "home/pmos/rootfs"
+    rootfs_dir.mkdir(exist_ok=True)
+    os.chown(rootfs_dir, int(pmb.config.chroot_uid_user), int(pmb.config.chroot_uid_user))
     if split:
-        images = {img_path_boot: size_mb_boot, img_path_root: size_mb_root}
-    for img_path, image_size_mb in images.items():
-        logging.info(f"(native) create {img_path.name} ({image_size_mb})")
-        pmb.chroot.root(["truncate", "-s", image_size_mb, img_path])
+        images = {img_path_boot: layout.boot.size, img_path_root: layout.root.size}
+    else:
+        # Account for the partition table
+        size_full += pmb.parse.deviceinfo().boot_part_start * pmb.config.block_size
+        # Add 4 sectors for alignment and the backup header
+        size_full += pmb.config.block_size * 4
+        # Round to sector size
+        size_full = int((size_full + 512) / pmb.config.block_size) * pmb.config.block_size
+        images = {img_path_full: size_full}
+
+    for img_path, image_size in images.items():
+        img_path.unlink(missing_ok=True)
+        logging.info(f"(native) create {img_path.name} ({round(image_size / (1024**2))}M)")
+        pmb.helpers.run.user(["truncate", "-s", f"{image_size}", f"{img_path}"])
+        os.chown(img_path, int(pmb.config.chroot_uid_user), int(pmb.config.chroot_uid_user))
+        # pmb.helpers.run.root(["dd", "if=/dev/zero", f"of={img_path}", f"bs={image_size}", "count=1"])
 
     # Mount to /dev/install
-    mount_image_paths = {img_path_full: "/dev/install"}
-    if split:
-        mount_image_paths = {img_path_boot: "/dev/installp1", img_path_root: "/dev/installp2"}
+    if not split:
+        layout.boot.path = layout.root.path = layout.path = "/dev/install"
+        mount_image_paths = {img_path_full: layout.path}
+    else:
+        layout.boot.path = "/dev/installp1"
+        layout.root.path = "/dev/installp2"
+        mount_image_paths = {img_path_boot: layout.boot.path, img_path_root: layout.root.path}
 
     for img_path, mount_point in mount_image_paths.items():
-        logging.info(f"(native) mount {mount_point} ({img_path.name})")
-        pmb.install.losetup.mount(img_path, args.sector_size)
-        device = pmb.install.losetup.device_by_back_file(img_path)
-        pmb.helpers.mount.bind_file(device, Chroot.native() / mount_point)
+        # logging.info(f"(native) mount {mount_point} ({img_path.name})")
+        pmb.helpers.mount.bind_file(img_path, chroot / mount_point)
 
 
-def create(
-    args: PmbArgs, size_boot: int, size_root: int, split: bool, disk: Path | None
-) -> None:
+def create(args: PmbArgs, layout: PartitionLayout, split: bool, disk: Path | None) -> None:
     """
     Create /dev/install (the "install blockdevice").
 
@@ -136,4 +147,4 @@ def create(
     if disk:
         mount_disk(disk)
     else:
-        create_and_mount_image(args, size_boot, size_root, split)
+        create_and_mount_image(args, layout, split)

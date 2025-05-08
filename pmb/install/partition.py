@@ -5,119 +5,129 @@ from pmb.helpers import logging
 import os
 import time
 import pmb.chroot
+import pmb.chroot.apk
 import pmb.config
-import pmb.install.losetup
 from pmb.core import Chroot
 from pmb.types import PartitionLayout
 import pmb.core.dps
+from functools import lru_cache
+from pmb.core.context import get_context
+import subprocess
 
 
-# FIXME (#2324): this function drops disk to a string because it's easier
-# to manipulate, this is probably bad.
-def partitions_mount(device: str, layout: PartitionLayout, disk: Path | None) -> None:
+@lru_cache
+def get_partition_layout(partition: str, disk: str) -> tuple[int, int]:
     """
-    Mount blockdevices of partitions inside native chroot
-    :param layout: partition layout from get_partition_layout()
-    :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
+    Get the size of a partition in a disk image in bytes
     """
-    if not disk:
-        img_path = Path("/home/pmos/rootfs") / f"{device}.img"
-        disk = pmb.install.losetup.device_by_back_file(img_path)
+    out = pmb.chroot.root(
+        [
+            "fdisk",
+            "--list-details",
+            "--noauto-pt",
+            "--sector-size",
+            str(get_context().sector_size),
+            "--output",
+            "Name,Start,End",
+            disk,
+        ],
+        output_return=True,
+    ).rstrip()
 
-    logging.info(f"Mounting partitions of {disk} inside the chroot")
-
-    tries = 20
-
-    # Devices ending with a number have a "p" before the partition number,
-    # /dev/sda1 has no "p", but /dev/mmcblk0p1 has. See add_partition() in
-    # block/partitions/core.c of linux.git.
-    partition_prefix = str(disk)
-    if str.isdigit(disk.name[-1:]):
-        partition_prefix = f"{disk}p"
-
-    found = False
-    for i in range(tries):
-        if os.path.exists(f"{partition_prefix}1"):
-            found = True
+    start_end: list[str] | None = None
+    for line in out.splitlines():
+        # FIXME: really ugly matching lmao
+        if line.startswith(partition):
+            start_end = list(
+                filter(lambda x: bool(x), line.replace(f"{partition} ", "").strip().split(" "))
+            )
             break
-        logging.debug(f"NOTE: ({i + 1}/{tries}) failed to find the install partition. Retrying...")
-        time.sleep(0.1)
+    if not start_end:
+        raise ValueError(f"Can't find partition {partition} in {disk}")
 
-    if not found:
-        raise RuntimeError(
-            f"Unable to find the first partition of {disk}, "
-            f"expected it to be at {partition_prefix}1!"
-        )
+    start = int(start_end[0])
+    end = int(start_end[1])
 
-    partitions = [layout["boot"], layout["root"]]
-
-    if layout["kernel"]:
-        partitions += [layout["kernel"]]
-
-    for i in partitions:
-        source = Path(f"{partition_prefix}{i}")
-        target = Chroot.native() / "dev" / f"installp{i}"
-        pmb.helpers.mount.bind_file(source, target)
+    return (start, end)
 
 
-def partition(layout: PartitionLayout, size_boot: int) -> None:
+def partition(layout: PartitionLayout) -> None:
     """
-    Partition /dev/install and create /dev/install{p1,p2,p3}:
-    * /dev/installp1: boot
-    * /dev/installp2: root (or reserved space)
-    * /dev/installp3: (root, if reserved space > 0)
+    Partition /dev/install with boot and root partitions
+
+    NOTE: this function modifies "layout" to set the offset properties
+    of each partition, these offsets are then used when formatting
+    and populating the partitions so that we can access the disk image
+    directly without loop mounting.
 
     :param layout: partition layout from get_partition_layout()
-    :param size_boot: size of the boot partition in MiB
     """
+    # Install sgdisk, gptfdisk is also useful for debugging
+    pmb.chroot.apk.install(["sgdisk", "gptfdisk"], Chroot.native(), build=False, quiet=True)
+
+    deviceinfo = pmb.parse.deviceinfo()
+
     # Convert to MB and print info
-    mb_boot = f"{size_boot}M"
-    mb_reserved = f"{size_reserve}M"
-    mb_root_start = f"{size_boot + size_reserve}M"
-    logging.info(
-        f"(native) partition /dev/install (boot: {mb_boot},"
-        f" reserved: {mb_reserved}, root: the rest)"
+    logging.info(f"(native) partition /dev/install (boot: {layout.boot.size_mb}M)")
+
+    boot_offset_sectors = deviceinfo.boot_part_start or "2048"
+    # For MBR we use to --gpt-to-mbr flag of sgdisk
+    # FIXME: test MBR support
+    partition_type = deviceinfo.partition_type or "gpt"
+    if partition_type == "msdos":
+        partition_type = "dos"
+
+    sector_size = get_context().sector_size
+
+    boot_size_sectors = layout.boot.size_sectors(sector_size)
+    root_offset_sectors = boot_offset_sectors + boot_size_sectors + 1
+
+    # Align to 2048-sector boundaries (round UP)
+    root_offset_sectors = int((root_offset_sectors + 2047) / 2048) * 2048
+
+    arch = str(deviceinfo.arch)
+    root_type_guid = pmb.core.dps.root[arch][1]
+
+    proc = subprocess.Popen(
+        [
+            "chroot",
+            os.fspath(Chroot.native().path),
+            "sh",
+            "-c",
+            f"sfdisk --no-tell-kernel --sector-size {sector_size} {layout.path}",
+        ],
+        stdin=subprocess.PIPE,
+    )
+    proc.stdin.write(
+        (
+            f"label: {partition_type}\n"
+            f"start={boot_offset_sectors},size={boot_size_sectors},name={layout.boot.partition_label},type=U\n"
+            f"start={root_offset_sectors},size=+,name={layout.root.partition_label},type={root_type_guid}\n"
+        ).encode()
+    )
+    proc.stdin.flush()
+    proc.stdin.close()
+    while proc.poll() is None:
+        if proc.stdout is not None:
+            print(proc.stdout.readline().decode("utf-8"))
+    if proc.returncode != 0:
+        raise RuntimeError(f"Disk partitioning failed! sfdisk exited with code {proc.returncode}")
+
+    # Configure the partition offsets and final sizes based on sgdisk
+    boot_start_sect, _boot_end_sect = get_partition_layout(
+        layout.boot.partition_label, "/dev/install"
+    )
+    root_start_sect, root_end_sect = get_partition_layout(
+        layout.root.partition_label, "/dev/install"
     )
 
-    filesystem = pmb.parse.deviceinfo().boot_filesystem or "vfat"
-
-    # Actual partitioning with 'parted'. Using check=False, because parted
-    # sometimes "fails to inform the kernel". In case it really failed with
-    # partitioning, the follow-up mounting/formatting will not work, so it
-    # will stop there (see #463).
-    boot_part_start = pmb.parse.deviceinfo().boot_part_start or "2048"
-
-    partition_type = pmb.parse.deviceinfo().partition_type or "gpt"
-
-    commands = [
-        ["mktable", partition_type],
-        ["mkpart", "primary", filesystem, boot_part_start + "s", mb_boot],
-    ]
-
-    if size_reserve:
-        mb_reserved_end = f"{round(size_reserve + size_boot)}M"
-        commands += [["mkpart", "primary", mb_boot, mb_reserved_end]]
-
-    arch = str(pmb.parse.deviceinfo().arch)
-
-    commands += [
-        ["mkpart", "primary", mb_root_start, "100%"],
-        ["type", str(layout["root"]), pmb.core.dps.root[arch][1]],
-        # esp is an alias for boot on GPT
-        # setting this should be fine for msdos since we set boot later
-        ["set", str(layout["boot"]), "esp", "on"],
-        ["type", str(layout["boot"]), pmb.core.dps.boot["esp"][1]],
-    ]
-
-    # Some devices still use MBR and will not work with only esp set
-    if partition_type.lower() == "msdos":
-        commands += [["set", str(layout["boot"]), "boot", "on"]]
-
-    for command in commands:
-        pmb.chroot.root(["parted", "-s", "/dev/install", *command], check=False)
+    layout.boot.offset = boot_start_sect * sector_size
+    layout.root.offset = root_start_sect * sector_size
+    layout.root.size = (root_end_sect - root_start_sect) * sector_size
 
 
-def partition_cgpt(layout: PartitionLayout, size_boot: int) -> None:
+# FIXME: sgdisk?
+def partition_cgpt(layout: PartitionLayout, size_boot: int = 0) -> None:
     """
     This function does similar functionality to partition(), but this
     one is for ChromeOS devices which use special GPT. We don't follow

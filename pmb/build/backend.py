@@ -34,7 +34,7 @@ def override_source(
         return
 
     # Mount source in chroot
-    mount_path = "/mnt/pmbootstrap/source-override/"
+    mount_path = "mnt/pmbootstrap/source-override/"
     mount_path_outside = chroot / mount_path
     pmb.helpers.mount.bind(src, mount_path_outside, umount=True)
 

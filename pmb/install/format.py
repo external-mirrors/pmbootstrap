@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pmb.helpers import logging
 import pmb.chroot
+import pmb.chroot.apk
 from pmb.core import Chroot
 from pmb.types import PartitionLayout, PmbArgs, PathString
 import os
-import tempfile
+from pathlib import Path
 
 
 def install_fsprogs(filesystem: str) -> None:
@@ -16,33 +17,89 @@ def install_fsprogs(filesystem: str) -> None:
     pmb.chroot.apk.install([fsprogs], Chroot.native())
 
 
-def format_and_mount_boot(args: PmbArgs, device: str, boot_label: str) -> None:
+def format_and_mount_boot(layout: PartitionLayout) -> None:
     """
     :param device: boot partition on install block device (e.g. /dev/installp1)
-    :param boot_label: label of the root partition (e.g. "pmOS_boot")
 
     When adjusting this function, make sure to also adjust
     ondev-prepare-internal-storage.sh in postmarketos-ondev.git!
     """
-    mountpoint = "/mnt/install/boot"
-    filesystem = pmb.parse.deviceinfo().boot_filesystem or "ext2"
+    pmb.chroot.apk.install(["mtools"], Chroot.native(), build=False, quiet=True)
+    deviceinfo = pmb.parse.deviceinfo()
+    filesystem = deviceinfo.boot_filesystem or "ext2"
+    layout.boot.filesystem = filesystem
+    offset_sectors = deviceinfo.boot_part_start
+    offset_bytes = layout.boot.offset
+    boot_path = "/mnt/rootfs/boot"
     install_fsprogs(filesystem)
-    logging.info(f"(native) format {device} (boot, {filesystem}), mount to {mountpoint}")
+    logging.info(f"(native) format {layout.boot.path} (boot, {filesystem})")
+    # mkfs.fat takes offset in sectors! wtf...
     if filesystem == "fat16":
-        pmb.chroot.root(["mkfs.fat", "-F", "16", "-n", boot_label, device])
+        pmb.chroot.root(
+            [
+                "mkfs.fat",
+                "-F",
+                "16",
+                "-i",
+                layout.boot.uuid,
+                "--offset",
+                str(offset_sectors),
+                "-n",
+                layout.boot.partition_label,
+                layout.boot.path,
+            ]
+        )
     elif filesystem == "fat32":
-        pmb.chroot.root(["mkfs.fat", "-F", "32", "-n", boot_label, device])
+        pmb.chroot.root(
+            [
+                "mkfs.fat",
+                "-F",
+                "32",
+                "-i",
+                layout.boot.uuid,
+                "--offset",
+                str(offset_sectors),
+                "-n",
+                layout.boot.partition_label,
+                layout.boot.path,
+            ]
+        )
     elif filesystem == "ext2":
-        pmb.chroot.root(["mkfs.ext2", "-F", "-q", "-L", boot_label, device])
+        pmb.chroot.root(
+            [
+                "mkfs.ext2",
+                "-d",
+                boot_path,
+                "-U",
+                layout.boot.uuid,
+                "-F",
+                "-q",
+                "-E",
+                f"offset={offset_bytes}",
+                "-L",
+                layout.boot.partition_label,
+                layout.boot.path,
+                f"{round(layout.boot.size / 1024)}k",
+            ]
+        )
     elif filesystem == "btrfs":
-        pmb.chroot.root(["mkfs.btrfs", "-f", "-q", "-L", boot_label, device])
+        raise ValueError("BTRFS not yet supported with new sandbox")
+        pmb.chroot.root(["mkfs.btrfs", "-f", "-q", "-L", layout.boot.partition_label, layout.boot.path])
     else:
         raise RuntimeError("Filesystem " + filesystem + " is not supported!")
-    pmb.chroot.root(["mkdir", "-p", mountpoint])
-    pmb.chroot.root(["mount", device, mountpoint])
+
+    # Copy in the filesystem
+    if filesystem.startswith("fat"):
+        contents = [
+            path.relative_to(Chroot.native().path)
+            for path in (Chroot.native() / boot_path).glob("*")
+        ]
+        pmb.chroot.root(
+            ["mcopy", "-i", f"{layout.boot.path}@@{offset_bytes}", "-s", *contents, "::"]
+        )
 
 
-def format_luks_root(args: PmbArgs, device: str) -> None:
+def format_luks_root(args: PmbArgs, layout: PartitionLayout, device: str) -> None:
     """
     :param device: root partition on install block device (e.g. /dev/installp2)
     """
@@ -63,6 +120,8 @@ def format_luks_root(args: PmbArgs, device: str) -> None:
         "--iter-time",
         args.iter_time,
         "--use-random",
+        "--offset",
+        str(layout.root.offset),
         device,
     ]
     open_cmd = ["cryptsetup", "luksOpen"]
@@ -87,24 +146,6 @@ def format_luks_root(args: PmbArgs, device: str) -> None:
 
     if not (Chroot.native() / mountpoint).exists():
         raise RuntimeError("Failed to open cryptdevice!")
-
-
-def get_root_filesystem(args: PmbArgs) -> str:
-    ret = args.filesystem or pmb.parse.deviceinfo().root_filesystem or "ext4"
-    pmaports_cfg = pmb.config.pmaports.read_config()
-
-    supported = pmaports_cfg.get("supported_root_filesystems", "ext4")
-    supported_list = supported.split(",")
-
-    if ret not in supported_list:
-        raise ValueError(
-            f"Root filesystem {ret} is not supported by your"
-            " currently checked out pmaports branch. Update your"
-            " branch ('pmbootstrap pull'), change it"
-            " ('pmbootstrap init'), or select one of these"
-            f" filesystems: {', '.join(supported_list)}"
-        )
-    return ret
 
 
 def prepare_btrfs_subvolumes(args: PmbArgs, device: str, mountpoint: str) -> None:
@@ -160,54 +201,73 @@ def prepare_btrfs_subvolumes(args: PmbArgs, device: str, mountpoint: str) -> Non
     pmb.chroot.root(["chattr", "+C", f"{mountpoint}/var"])
 
 
-def format_and_mount_root(
-    args: PmbArgs, device: str, root_label: str, disk: PathString | None
-) -> None:
+def format_and_mount_root(args: PmbArgs, layout: PartitionLayout) -> None:
     """
-    :param device: root partition on install block device (e.g. /dev/installp2)
-    :param root_label: label of the root partition (e.g. "pmOS_root")
-    :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
+    :param layout: disk image layout
     """
     # Format
     if not args.rsync:
-        filesystem = get_root_filesystem(args)
+        filesystem = layout.root.filesystem
+        layout.root.filesystem = filesystem
+        rootfs = Path("/mnt/rootfs")
+
+        # Bind mount an empty path over /boot so we don't include it in the root partition
+        # FIXME: better way to check if running with --single-partition
+        if len(layout) > 1:
+            empty_dir = Path("/tmp/empty")
+            pmb.mount.bind(empty_dir, Chroot.native() / rootfs / "boot")
+
+        if filesystem != "ext4":
+            raise RuntimeError(
+                "Only EXT4 supports offset parameter for writing directly to disk image!"
+            )
 
         if filesystem == "ext4":
             # Some downstream kernels don't support metadata_csum (#1364).
             # When changing the options of mkfs.ext4, also change them in the
             # recovery zip code (see 'grep -r mkfs\.ext4')!
-            mkfs_root_args = ["mkfs.ext4", "-O", "^metadata_csum", "-F", "-q", "-L", root_label]
-            if not disk:
-                # pmb#2568: tell mkfs.ext4 to make a filesystem with enough
-                # indoes that we don't run into "out of space" errors
-                mkfs_root_args = [*mkfs_root_args, "-i", "16384"]
+            mkfs_root_args = [
+                "mkfs.ext4",
+                "-d",
+                rootfs,
+                "-O",
+                "^metadata_csum",
+                "-F",
+                "-q",
+                "-L",
+                layout.root.partition_label,
+                "-U",
+                layout.root.uuid,
+            ]
+            # pmb#2568: tell mkfs.ext4 to make a filesystem with enough
+            # indoes that we don't run into "out of space" errors
+            mkfs_root_args = [*mkfs_root_args, "-i", "16384"]
+            if not layout.split:
+                mkfs_root_args = [*mkfs_root_args, "-E", f"offset={layout.root.offset}"]
         elif filesystem == "f2fs":
-            mkfs_root_args = ["mkfs.f2fs", "-f", "-l", root_label]
+            mkfs_root_args = ["mkfs.f2fs", "-f", "-l", layout.root.partition_label]
         elif filesystem == "btrfs":
-            mkfs_root_args = ["mkfs.btrfs", "-f", "-L", root_label]
+            mkfs_root_args = ["mkfs.btrfs", "-f", "-L", layout.root.partition_label]
         else:
             raise RuntimeError(f"Don't know how to format {filesystem}!")
 
         install_fsprogs(filesystem)
-        logging.info(f"(native) format {device} (root, {filesystem})")
-        pmb.chroot.root([*mkfs_root_args, device])
+        logging.info(f"(native) format {layout.root.path} (root, {filesystem})")
+        pmb.chroot.root([*mkfs_root_args, layout.root.path, f"{round(layout.root.size / 1024)}k"])
 
-    # Mount
-    mountpoint = "/mnt/install"
-    logging.info("(native) mount " + device + " to " + mountpoint)
-    pmb.chroot.root(["mkdir", "-p", mountpoint])
-    pmb.chroot.root(["mount", device, mountpoint])
+        # Unmount the empty dir we mounted over /boot
+        pmb.mount.umount_all(Chroot.native() / rootfs / "boot")
 
-    if not args.rsync and filesystem == "btrfs":
-        # Make flat btrfs subvolume layout
-        prepare_btrfs_subvolumes(args, device, mountpoint)
+    # FIXME: btrfs borked
+    # if not args.rsync and filesystem == "btrfs":
+    #     # Make flat btrfs subvolume layout
+    #     prepare_btrfs_subvolumes(args, device, mountpoint)
 
 
 def format(
     args: PmbArgs,
     layout: PartitionLayout | None,
-    boot_label: str,
-    root_label: str,
+    rootfs: Path,
     disk: PathString | None,
 ) -> None:
     """
@@ -216,17 +276,13 @@ def format(
     :param root_label: label of the root partition (e.g. "pmOS_root")
     :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
     """
-    if layout:
-        root_dev = f"/dev/installp{layout['root']}"
-        boot_dev = f"/dev/installp{layout['boot']}"
-    else:
-        root_dev = "/dev/install"
-        boot_dev = None
+    # FIXME: do this elsewhere?
+    pmb.mount.bind(rootfs, Chroot.native().path / "mnt/rootfs")
 
-    if args.full_disk_encryption:
-        format_luks_root(args, root_dev)
-        root_dev = "/dev/mapper/pm_crypt"
+    # FIXME: probably broken because luksOpen uses loop under the hood, needs testing...
+    # root_dev = "/dev/mapper/pm_crypt"
 
-    format_and_mount_root(args, root_dev, root_label, disk)
-    if boot_dev:
-        format_and_mount_boot(args, boot_dev, boot_label)
+    format_and_mount_root(args, layout)
+    # FIXME: better way to check if we are running with --single-partition
+    if len(layout) > 1:
+        format_and_mount_boot(layout)

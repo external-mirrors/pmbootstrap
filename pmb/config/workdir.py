@@ -86,9 +86,6 @@ def chroot_check_channel(chroot: Chroot) -> bool:
     """Check the chroot channel against the current channel. Returns
     True if the chroot should be zapped (both that it needs zapping and
     the user has auto_zap_misconfigured_chroots enabled), False otherwise."""
-    if chroot.type == ChrootType.IMAGE:
-        return False
-
     config = get_context().config
     path = config.work / "workdir.cfg"
     msg_again = (

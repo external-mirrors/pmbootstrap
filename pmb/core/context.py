@@ -31,6 +31,9 @@ class Context:
     ccache: bool = False
     go_mod_cache: bool = False
 
+    # Disk image sector size (not filesystem block size!)
+    sector_size: int | None = None
+
     config: Config
 
     def __init__(self, config: Config):
