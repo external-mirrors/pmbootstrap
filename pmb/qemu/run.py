@@ -23,7 +23,6 @@ import pmb.chroot.other
 import pmb.chroot.initfs
 import pmb.config
 import pmb.config.pmaports
-import pmb.install.losetup
 from pmb.types import Env, PathString, PmbArgs
 import pmb.helpers.run
 import pmb.parse.cpuinfo

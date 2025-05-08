@@ -7,7 +7,6 @@ from contextlib import closing
 
 import pmb.chroot
 import pmb.helpers.mount
-import pmb.install.losetup
 from pmb.core import Chroot, ChrootType
 from pmb.core.context import get_context
 
@@ -69,9 +68,6 @@ def shutdown(only_install_related: bool = False) -> None:
     # Umount installation-related paths (order is important!)
     pmb.helpers.mount.umount_all(chroot / "mnt/install")
     shutdown_cryptsetup_device("pm_crypt")
-
-    # Umount all losetup mounted images
-    pmb.install.losetup.detach_all()
 
     # Remove "in-pmbootstrap" marker from all chroots. This marker indicates
     # that pmbootstrap has set up all mount points etc. to run programs inside

@@ -93,6 +93,18 @@ def init(args: PmbArgs) -> PmbArgs:
     pmb.helpers.logging.init(context.log, args.verbose, context.details_to_stdout)
     pmb.helpers.logging.debug(f"Pmbootstrap v{pmb.__version__} (Python {sys.version})")
 
+    # Now we go round-about to set context based on deviceinfo hahaha
+    if args.action != "config":
+        context.sector_size = context.sector_size or pmb.parse.deviceinfo().rootfs_image_sector_size
+    if context.sector_size is None:
+        context.sector_size = 512
+
+    valid_sector_size = [512, 2048, 4096]
+    if context.sector_size not in valid_sector_size:
+        raise ValueError(
+            f"Invalid sector size from cmdline or deviceinfo file! Must be one of {valid_sector_size} but got {context.sector_size}"
+        )
+
     # Initialization code which may raise errors
     if args.action not in [
         "init",

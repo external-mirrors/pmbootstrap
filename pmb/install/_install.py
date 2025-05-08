@@ -32,6 +32,7 @@ import pmb.install.ui
 import pmb.install
 from pmb.core import Chroot, ChrootType
 from pmb.core.context import get_context
+from pmb.types import DiskPartition
 
 # Keep track of the packages we already visited in get_recommends() to avoid
 # infinite recursion
@@ -45,17 +46,17 @@ def get_subpartitions_size(chroot: Chroot) -> tuple[int, int]:
 
     :param suffix: the chroot suffix, e.g. "rootfs_qemu-amd64"
     :returns: (boot, root) the size of the boot and root
-              partition as integer in MiB
+              partition as integer in bytes
     """
     config = get_context().config
-    boot = int(config.boot_size)
+    boot = int(config.boot_size) * 1024 * 1024
 
     # Estimate root partition size, then add some free space. The size
     # calculation is not as trivial as one may think, and depending on the
     # file system etc it seems to be just impossible to get it right.
-    root = pmb.helpers.other.folder_size(chroot.path) / 1024
+    root = pmb.helpers.other.folder_size(chroot.path) * 1024
     root *= 1.20
-    root += 50 + int(config.extra_space)
+    root += 50 + int(config.extra_space) * 1024 * 1024
     return (boot, round(root))
 
 
@@ -111,73 +112,23 @@ def get_kernel_package(config: Config) -> list[str]:
     return ["device-" + config.device + "-kernel-" + config.kernel]
 
 
-def copy_files_from_chroot(args: PmbArgs, chroot: Chroot) -> None:
-    """
-    Copy all files from the rootfs chroot to /mnt/install, except
-    for the home folder (because /home will contain some empty
-    mountpoint folders).
-
-    :param suffix: the chroot suffix, e.g. "rootfs_qemu-amd64"
-    """
-    # Mount the device rootfs
-    logging.info(f"(native) copy {chroot} to /mnt/install/")
-    mountpoint = mount_device_rootfs(chroot)
-    mountpoint_outside = Chroot.native() / mountpoint
-
-    # Remove empty qemu-user binary stub (where the binary was bind-mounted)
-    arch_qemu = pmb.parse.deviceinfo().arch.qemu()
-    qemu_binary = mountpoint_outside / f"usr/bin/qemu-{arch_qemu}-static"
-    if os.path.exists(qemu_binary):
-        pmb.helpers.run.root(["rm", qemu_binary])
-
-    # Remove apk progress fifo
-    fifo = chroot / "tmp/apk_progress_fifo"
-    if os.path.exists(fifo):
-        pmb.helpers.run.root(["rm", fifo])
-
-    # Get all folders inside the device rootfs (except for home)
-    folders: list[str] = []
-    for path in mountpoint_outside.glob("*"):
-        if path.name == "home":
-            continue
-        folders.append(path.name)
-
-    # Update or copy all files
-    if args.rsync:
-        pmb.chroot.apk.install(["rsync"], Chroot.native())
-        rsync_flags = "-a"
-        if args.verbose:
-            rsync_flags += "vP"
-        pmb.chroot.root(
-            ["rsync", rsync_flags, "--delete", *folders, "/mnt/install/"], working_dir=mountpoint
-        )
-        pmb.chroot.root(["rm", "-rf", "/mnt/install/home"])
-    else:
-        pmb.chroot.root(["cp", "-a", *folders, "/mnt/install/"], working_dir=mountpoint)
-
-    # Log how much space and inodes we have used
-    pmb.chroot.user(["df", "-h", "/mnt/install"])
-    pmb.chroot.user(["df", "-i", "/mnt/install"])
-
-
-def create_home_from_skel(filesystem: str, user: str) -> None:
+def create_home_from_skel(filesystem: str, user: str, rootfs: Path) -> None:
     """
     Create /home/{user} from /etc/skel
     """
-    rootfs = Chroot.native() / "mnt/install"
     # In btrfs, home subvol & home dir is created in format.py
     if filesystem != "btrfs":
-        pmb.helpers.run.root(["mkdir", rootfs / "home"])
+        (rootfs / "home").mkdir(exist_ok=True)
 
-    home = rootfs / "home" / user
+    user_home = rootfs / "home" / user
     if (rootfs / "etc/skel").exists():
-        pmb.helpers.run.root(["cp", "-a", (rootfs / "etc/skel"), home])
+        pmb.helpers.run.root(["cp", "-a", (rootfs / "etc/skel"), user_home])
     else:
-        pmb.helpers.run.root(["mkdir", home])
-    pmb.helpers.run.root(["chown", "-R", "10000", home])
+        user_home.mkdir(exist_ok=True)
+    pmb.helpers.run.root(["chown", "-R", "10000:10000", user_home])
 
 
-def configure_apk(args: PmbArgs) -> None:
+def configure_apk(args: PmbArgs, rootfs: Path) -> None:
     """
     Copy over all official keys, and the keys used to compile local packages
     (unless --no-local-pkgs is set). Then copy the corresponding APKINDEX files
@@ -187,11 +138,9 @@ def configure_apk(args: PmbArgs) -> None:
     keys_dir = pmb.config.apk_keys_path
 
     # Official keys + local keys
-    if args.install_local_pkgs:
-        keys_dir = get_context().config.work / "config_apk_keys"
+    keys_dir = get_context().config.work / "config_apk_keys"
 
     # Copy over keys
-    rootfs = Chroot.native() / "mnt/install"
     for key in keys_dir.glob("*.pub"):
         pmb.helpers.run.root(["cp", key, rootfs / "etc/apk/keys/"])
 
@@ -202,11 +151,10 @@ def configure_apk(args: PmbArgs) -> None:
     for f in index_files:
         pmb.helpers.run.root(["cp", f, rootfs / "var/cache/apk/"])
 
-    # Disable pmbootstrap repository
-    pmb.chroot.root(
-        ["sed", "-i", r"/\/mnt\/pmbootstrap\/packages/d", "/mnt/install/etc/apk/repositories"]
+    # Populate repositories
+    open(rootfs / "etc/apk/repositories", "w").write(
+        open(Chroot.native() / "etc/apk/repositories").read()
     )
-    pmb.helpers.run.user(["cat", rootfs / "etc/apk/repositories"])
 
 
 def set_user(config: Config) -> None:
@@ -298,7 +246,7 @@ def setup_login(args: PmbArgs, config: Config, chroot: Chroot) -> None:
         pmb.chroot.root(["passwd", "-l", "root"], chroot)
 
 
-def copy_ssh_keys(config: Config) -> None:
+def copy_ssh_keys(config: Config, rootfs: Path) -> None:
     """
     If requested, copy user's SSH public keys to the device if they exist
     """
@@ -329,19 +277,18 @@ def copy_ssh_keys(config: Config) -> None:
         outfile.write(f"{key}")
     outfile.close()
 
-    target = Chroot.native() / "mnt/install/home/" / config.user / ".ssh"
-    pmb.helpers.run.root(["mkdir", target])
+    target = rootfs / "home/" / config.user / ".ssh"
+    target.mkdir(exist_ok=True)
     pmb.helpers.run.root(["chmod", "700", target])
     pmb.helpers.run.root(["cp", authorized_keys, target / "authorized_keys"])
     pmb.helpers.run.root(["rm", authorized_keys])
     pmb.helpers.run.root(["chown", "-R", "10000:10000", target])
 
 
-def setup_keymap(config: Config) -> None:
+def setup_keymap(config: Config, chroot: Chroot) -> None:
     """
     Set the keymap with the setup-keymap utility if the device requires it
     """
-    chroot = Chroot(ChrootType.ROOTFS, config.device)
     deviceinfo = pmb.parse.deviceinfo(device=config.device)
     if not deviceinfo.keymaps or deviceinfo.keymaps.strip() == "":
         logging.info("NOTE: No valid keymap specified for device")
@@ -609,8 +556,8 @@ def generate_binary_list(args: PmbArgs, chroot: Chroot, step: int) -> list[tuple
             )
         # Insure that embedding the firmware will not overrun the
         # first partition
-        boot_part_start = pmb.parse.deviceinfo().boot_part_start or "2048"
-        max_size = (int(boot_part_start) * 512) - (offset * step)
+        boot_part_start = pmb.parse.deviceinfo().boot_part_start
+        max_size = (boot_part_start * pmb.config.block_size) - (offset * step)
         binary_size = os.path.getsize(binary_path)
         if binary_size > max_size:
             raise RuntimeError(
@@ -725,7 +672,7 @@ def sanity_check_disk_size(args: PmbArgs) -> None:
     with open(sysfs) as handle:
         raw = handle.read()
 
-    # Size is in 512-byte blocks
+    # Size is in 512-byte blocks some of the time...
     size = int(raw.strip())
     human = f"{size / 2 / 1024 / 1024:.2f} GiB"
 
@@ -741,70 +688,62 @@ def sanity_check_disk_size(args: PmbArgs) -> None:
             raise RuntimeError("Aborted.")
 
 
-def get_partition_layout(kernel: bool) -> PartitionLayout:
+def get_partition_layout(chroot: Chroot, kernel: bool, split: bool, single_partition: bool) -> PartitionLayout:
     """
     :param kernel: create a separate kernel partition before all other
                    partitions, e.g. for the ChromeOS devices with cgpt
     :returns: the partition layout, e.g. without reserve and kernel:
               {"kernel": None, "boot": 1, "reserve": None, "root": 2}
     """
-    ret: PartitionLayout = {
-        "kernel": None,
-        "boot": 1,
-        "reserve": None,
-        "root": 2,
-    }
-
+    layout: PartitionLayout = PartitionLayout("/dev/install", split)
+    
     if kernel:
-        ret["kernel"] = 1
-        ret["boot"] += 1
-        ret["root"] += 1
+        layout.append(DiskPartition("kernel", pmb.parse.deviceinfo().cgpt_kpart_size))
 
-    if reserve:
-        ret["reserve"] = ret["root"]
-        ret["root"] += 1
-    return ret
+    (size_boot, size_root) = get_subpartitions_size(chroot)
 
+    if single_partition:
+        if kernel:
+            # FIXME: check this way earlier!
+            raise RuntimeError("--single-partition is not supported on Chromebooks, sorry!")
+        layout.append(DiskPartition("root", size_root))
+        return layout
 
-def get_uuid(args: PmbArgs, partition: Path) -> str:
-    """
-    Get UUID of a partition
+    layout.append(DiskPartition("boot", size_boot))
+    layout.append(DiskPartition("root", size_root))
 
-    :param partition: block device for getting UUID from
-    """
-    return pmb.chroot.root(
-        [
-            "blkid",
-            "-s",
-            "UUID",
-            "-o",
-            "value",
-            partition,
-        ],
-        output_return=True,
-    ).rstrip()
+    if split:
+        layout.boot.path = "/dev/installp1"
+        layout.root.path = "/dev/installp2"
+    else:
+        # Both partitions are in the same disk image and we access
+        # them with offsets
+        layout.boot.path = "/dev/install"
+        layout.root.path = "/dev/install"
+
+    return layout
 
 
-def create_crypttab(args: PmbArgs, layout: PartitionLayout | None, chroot: Chroot) -> None:
+def get_uuid(args: PmbArgs, disk: Path, partition: str) -> str:
+    pass
+
+
+def create_crypttab(args: PmbArgs, layout: PartitionLayout, disk: Path, chroot: Chroot) -> None:
     """
     Create /etc/crypttab config
 
     :param layout: partition layout from get_partition_layout() or None
     :param suffix: of the chroot, which crypttab will be created to
     """
-    if layout:
-        root_dev = Path(f"/dev/installp{layout['root']}")
-    else:
-        root_dev = Path("/dev/install")
 
-    luks_uuid = get_uuid(args, root_dev)
+    luks_uuid = layout.root.uuid
     crypttab = f"root UUID={luks_uuid} none luks\n"
 
     (chroot / "tmp/crypttab").open("w").write(crypttab)
     pmb.chroot.root(["mv", "/tmp/crypttab", "/etc/crypttab"], chroot)
 
 
-def create_fstab(args: PmbArgs, layout: PartitionLayout | None, chroot: Chroot) -> None:
+def create_fstab(args: PmbArgs, layout: PartitionLayout, disk: Path, chroot: Chroot) -> None:
     """
     Create /etc/fstab config
 
@@ -812,15 +751,8 @@ def create_fstab(args: PmbArgs, layout: PartitionLayout | None, chroot: Chroot) 
     :param chroot: of the chroot, which fstab will be created to
     """
 
-    if layout:
-        boot_dev = Path(f"/dev/installp{layout['boot']}")
-        root_dev = Path(f"/dev/installp{layout['root']}")
-    else:
-        boot_dev = None
-        root_dev = Path("/dev/install")
-
     root_mount_point = (
-        "/dev/mapper/root" if args.full_disk_encryption else f"UUID={get_uuid(args, root_dev)}"
+        "/dev/mapper/root" if args.full_disk_encryption else f"UUID={layout.root.uuid}"
     )
     root_filesystem = pmb.install.get_root_filesystem(args)
 
@@ -842,8 +774,9 @@ def create_fstab(args: PmbArgs, layout: PartitionLayout | None, chroot: Chroot) 
 {root_mount_point} / {root_filesystem} defaults 0 0
 """.lstrip()
 
-    if boot_dev:
-        boot_mount_point = f"UUID={get_uuid(args, boot_dev)}"
+    # FIXME: need a better way to check if we have a boot partition...
+    if len(layout) > 1:
+        boot_mount_point = f"UUID={layout.boot.uuid}"
         boot_options = "nodev,nosuid,noexec"
         boot_filesystem = pmb.parse.deviceinfo().boot_filesystem or "ext2"
         if boot_filesystem in ("fat16", "fat32"):
@@ -853,7 +786,26 @@ def create_fstab(args: PmbArgs, layout: PartitionLayout | None, chroot: Chroot) 
 
     with (chroot / "tmp/fstab").open("w") as f:
         f.write(fstab)
+    print(fstab)
     pmb.chroot.root(["mv", "/tmp/fstab", "/etc/fstab"], chroot)
+
+
+def get_root_filesystem(args: PmbArgs) -> str:
+    ret = args.filesystem or pmb.parse.deviceinfo().root_filesystem or "ext4"
+    pmaports_cfg = pmb.config.pmaports.read_config()
+
+    supported = pmaports_cfg.get("supported_root_filesystems", "ext4")
+    supported_list = supported.split(",")
+
+    if ret not in supported_list:
+        raise ValueError(
+            f"Root filesystem {ret} is not supported by your"
+            " currently checked out pmaports branch. Update your"
+            " branch ('pmbootstrap pull'), change it"
+            " ('pmbootstrap init'), or select one of these"
+            f" filesystems: {', '.join(supported_list)}"
+        )
+    return ret
 
 
 def install_system_image(
@@ -861,14 +813,11 @@ def install_system_image(
     chroot: Chroot,
     step: int,
     steps: int,
-    boot_label: str = "pmOS_boot",
-    root_label: str = "pmOS_root",
     split: bool = False,
     single_partition: bool = False,
     disk: Path | None = None,
 ) -> None:
     """
-    :param size_reserve: empty partition between root and boot in MiB (pma#463)
     :param suffix: the chroot suffix, where the rootfs that will be installed
                    on the device has been created (e.g. "rootfs_qemu-amd64")
     :param step: next installation step
@@ -880,42 +829,47 @@ def install_system_image(
     """
     config = get_context().config
     device = chroot.name
+    deviceinfo = pmb.parse.deviceinfo()
     # Partition and fill image file/disk block device
     logging.info(f"*** ({step}/{steps}) PREPARE INSTALL BLOCKDEVICE ***")
     pmb.helpers.mount.umount_all(chroot.path)
-    (size_boot, size_root) = get_subpartitions_size(chroot)
-    if not single_partition:
-        layout = get_partition_layout(
-            size_reserve, bool(pmb.parse.deviceinfo().cgpt_kpart and args.install_cgpt)
-        )
-    else:
-        layout = None
+    layout = get_partition_layout(chroot,
+        bool(deviceinfo.cgpt_kpart and args.install_cgpt),
+        split,
+        single_partition
+    )
+    logging.info(f"split: {split}")
+    logging.info("Using partition layout:")
+    logging.info(", ".join([str(x) for x in layout]))
     if not args.rsync:
-        pmb.install.blockdevice.create(args, size_boot, size_root, split, disk)
-        if not split and layout:
-            if pmb.parse.deviceinfo().cgpt_kpart and args.install_cgpt:
-                pmb.install.partition_cgpt(layout, size_boot)
+        pmb.install.blockdevice.create(args, layout, split, disk)
+        if not split and not single_partition:
+            if deviceinfo.cgpt_kpart and args.install_cgpt:
+                pmb.install.partition_cgpt(layout)
             else:
-                pmb.install.partition(layout, size_boot)
+                pmb.install.partition(layout)
+        else:
+            layout.root.offset = 0
+            if not single_partition:
+                layout.boot.offset = 0
 
-    # Inform kernel about changed partition table in case parted couldn't
-    pmb.chroot.root(["partprobe", "/dev/install"], check=False)
+    # if not split and not single_partition:
+    #     assert layout  # Initialized above for not single_partition case (mypy needs this)
+    #     pmb.install.partitions_mount(device, layout, disk)
 
-    if not split and not single_partition:
-        assert layout  # Initialized above for not single_partition case (mypy needs this)
-        pmb.install.partitions_mount(device, layout, disk)
-
-    pmb.install.format(args, layout, boot_label, root_label, disk)
+    layout.root.filesystem = get_root_filesystem(args)
+    layout.boot.filesystem = deviceinfo.boot_filesystem or "ext2"
 
     # Since we shut down the chroot we need to mount it again
     pmb.chroot.mount(chroot)
 
     # Create /etc/fstab and /etc/crypttab
     logging.info("(native) create /etc/fstab")
-    create_fstab(args, layout, chroot)
+    # FIXME: don't hardcode /dev/install everywhere!
+    create_fstab(args, layout, "/dev/install", chroot)
     if args.full_disk_encryption:
         logging.info("(native) create /etc/crypttab")
-        create_crypttab(args, layout, chroot)
+        create_crypttab(args, layout, "/dev/install", chroot)
 
     # Run mkinitfs to pass UUIDs to cmdline
     logging.info(f"({chroot}) mkinitfs")
@@ -927,11 +881,13 @@ def install_system_image(
     pmb.chroot.remove_mnt_pmbootstrap(chroot)
 
     # Just copy all the files
-    logging.info(f"*** ({step + 1}/{steps}) FILL INSTALL BLOCKDEVICE ***")
-    copy_files_from_chroot(args, chroot)
-    create_home_from_skel(args.filesystem, config.user)
-    configure_apk(args)
-    copy_ssh_keys(config)
+    logging.info(f"*** ({step + 1}/{steps}) FORMAT AND COPY BLOCKDEVICE ***")
+    create_home_from_skel(args.filesystem, config.user, chroot.path)
+    configure_apk(args, chroot.path)
+    copy_ssh_keys(config, chroot.path)
+
+    # The formatting step also copies files into the disk image
+    pmb.install.format(args, layout, chroot.path, disk)
 
     # Don't try to embed firmware and cgpt on split images since there's no
     # place to put it and it will end up in /dev of the chroot instead
@@ -947,7 +903,7 @@ def install_system_image(
     # Convert rootfs to sparse using img2simg
     sparse = args.sparse
     if sparse is None:
-        sparse = pmb.parse.deviceinfo().flash_sparse == "true"
+        sparse = deviceinfo.flash_sparse == "true"
 
     if sparse and not split and not disk:
         workdir = Path("/home/pmos/rootfs")
@@ -959,7 +915,7 @@ def install_system_image(
         pmb.chroot.user(["mv", "-f", sys_image_sparse, sys_image], working_dir=workdir)
 
         # patch sparse image for Samsung devices if specified
-        samsungify_strategy = pmb.parse.deviceinfo().flash_sparse_samsung_format
+        samsungify_strategy = deviceinfo.flash_sparse_samsung_format
         if samsungify_strategy:
             logging.info("(native) convert sparse image into Samsung's sparse image format")
             pmb.chroot.apk.install(["sm-sparse-image-tool"], Chroot.native())
@@ -1277,7 +1233,7 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
     setup_login(args, config, chroot)
 
     # Set the keymap if the device requires it
-    setup_keymap(config)
+    setup_keymap(config, chroot)
 
     # Set timezone
     setup_timezone(chroot, config.timezone)
@@ -1305,8 +1261,6 @@ def install(args: PmbArgs) -> None:
     if not args.android_recovery_zip and args.disk:
         sanity_check_disk(args)
         sanity_check_disk_size(args)
-    if args.on_device_installer:
-        sanity_check_ondev_version(args)
 
     # --single-partition implies --no-split. There is nothing to split if
     # there is only a single partition.
@@ -1343,7 +1297,6 @@ def install(args: PmbArgs) -> None:
     else:
         install_system_image(
             args,
-            0,
             chroot,
             step,
             steps,
