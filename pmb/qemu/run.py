@@ -419,10 +419,6 @@ def run(args: PmbArgs) -> None:
         )
     arch = pmb.parse.deviceinfo().arch
 
-    # Make sure the rootfs image isn't mounted
-    pmb.mount.umount_all(Chroot(ChrootType.IMAGE, "").path)
-    pmb.install.losetup.detach_all()
-
     img_path = system_image(device)
     img_path_2nd = None
     if args.second_storage:

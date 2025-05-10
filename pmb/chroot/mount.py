@@ -1,6 +1,5 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.core.chroot import ChrootType
 from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.helpers import logging
 import os
@@ -8,40 +7,28 @@ from pathlib import Path
 import pmb.chroot.binfmt
 import pmb.config
 import pmb.helpers.run
-import pmb.install.losetup
 import pmb.helpers.mount
 from pmb.core import Chroot
 from pmb.core.context import get_context
 from pmb.init import sandbox
 
 
-def mount_chroot_image(chroot: Chroot) -> None:
-    """Mount an IMAGE type chroot, to modify an existing rootfs image. This
-    doesn't support split images yet!"""
-    # Make sure everything is nicely unmounted just to be super safe
-    # this is definitely overkill
-    pmb.chroot.shutdown()
-    pmb.install.losetup.detach_all()
-
-    chroot_native = Chroot.native()
-    pmb.chroot.init(chroot_native)
-
-    loopdev = pmb.install.losetup.mount(
-        Path("/") / Path(chroot.name).relative_to(chroot_native.path)
-    )
-    pmb.helpers.mount.bind_file(loopdev, chroot_native / "dev/install")
-    # Set up device mapper bits
-    pmb.helpers.run.root(["kpartx", "-u", loopdev])
-    chroot.path.mkdir(exist_ok=True)
-    loopdev_basename = os.path.basename(loopdev)
-    # # The name of the IMAGE chroot is the path to the rootfs image
-    pmb.helpers.run.root(["mount", f"/dev/mapper/{loopdev_basename}p2", chroot.path])
-    pmb.helpers.run.root(["mount", f"/dev/mapper/{loopdev_basename}p1", chroot.path / "boot"])
-
-    pmb.config.workdir.chroot_save_init(chroot)
-
-    logging.info(f"({chroot}) mounted {chroot.name}")
-
+def create_device_nodes(chroot: Chroot):
+    """
+    Create device nodes for null, zero, full, random, urandom in the chroot.
+    """
+    try:
+        # Create all device nodes as specified in the config
+        for dev in pmb.config.chroot_device_nodes:
+            path = chroot / "dev" / str(dev[4])
+            if not path.exists():
+                pmb.helpers.run.root(["mknod",
+                                            "-m", str(dev[0]),  # permissions
+                                            path,  # name
+                                            str(dev[1]),  # type
+                                            str(dev[2]),  # major
+                                            str(dev[3]),  # minor
+                                            ])
 
 def mount_dev_tmpfs(chroot: Chroot = Chroot.native()) -> None:
     """
@@ -60,12 +47,7 @@ def mount_dev_tmpfs(chroot: Chroot = Chroot.native()) -> None:
     devop.execute("/", str(chroot.path))
 
 
-def mount(chroot: Chroot) -> None:
-    if chroot.type == ChrootType.IMAGE and not pmb.mount.ismount(chroot.path):
-        mount_chroot_image(chroot)
-
-    if not chroot.path.exists():
-        os.mkdir(str(chroot.path))
+def mount(chroot: Chroot):
     # Mount tmpfs as the chroot's /dev
     mount_dev_tmpfs(chroot)
 

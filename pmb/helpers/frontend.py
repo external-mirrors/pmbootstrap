@@ -66,14 +66,11 @@ def _parse_flavor(device: str, autoinstall: bool = True) -> str:
 
 def _parse_suffix(args: PmbArgs) -> Chroot:
     deviceinfo = pmb.parse.deviceinfo()
-    if getattr(args, "image", None):
-        rootfs = Chroot.native() / f"home/pmos/rootfs/{deviceinfo.codename}.img"
-        return Chroot(ChrootType.IMAGE, str(rootfs))
     if getattr(args, "rootfs", None):
         return Chroot(ChrootType.ROOTFS, get_context().config.device)
     elif args.buildroot:
         if args.buildroot == "device":
-            return Chroot.buildroot(deviceinfo.arch)
+            return Chroot.buildroot(pmb.parse.deviceinfo().arch)
         else:
             return Chroot.buildroot(Arch.from_str(args.buildroot))
     elif args.suffix:
@@ -150,17 +147,10 @@ def chroot(args: PmbArgs) -> None:
     # Suffix
     chroot = _parse_suffix(args)
     user = args.user
-    if (
-        user
-        and chroot != Chroot.native()
-        and chroot.type not in [ChrootType.BUILDROOT, ChrootType.IMAGE]
-    ):
+    if user and chroot != Chroot.native() and chroot.type != ChrootType.BUILDROOT:
         raise RuntimeError("--user is only supported for native or buildroot_* chroots.")
     if args.xauth and chroot != Chroot.native():
         raise RuntimeError("--xauth is only supported for native chroot.")
-
-    if chroot.type == ChrootType.IMAGE:
-        pmb.chroot.mount(chroot)
 
     # apk: check minimum version, install packages
     pmb.chroot.apk.check_min_version(chroot)

@@ -1051,11 +1051,6 @@ def get_parser() -> argparse.ArgumentParser:
         default="tui",
     )
     chroot.add_argument(
-        "--image",
-        help="Mount the rootfs image and treat it like a normal chroot.",
-        action="store_true",
-    )
-    chroot.add_argument(
         "--usb",
         help="Make USB devices accessible inside the chroot.",
         action="store_true",
