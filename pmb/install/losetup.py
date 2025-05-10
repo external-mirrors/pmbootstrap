@@ -48,6 +48,11 @@ def mount(img_path: Path, _sector_size: int | None = None) -> Path:
             losetup_cmd += ["-b", str(int(sector_size))]
 
         pmb.chroot.root(losetup_cmd, check=False)
+        try:
+            device_by_back_file(img_path)
+            return
+        except RuntimeError:
+            pass
 
         try:
             return device_by_back_file(img_path)
@@ -100,6 +105,5 @@ def detach_all() -> None:
     work = get_context().config.work
     for loopdevice in losetup["loopdevices"]:
         if Path(loopdevice["back-file"]).is_relative_to(work):
-            pmb.helpers.run.root(["kpartx", "-d", loopdevice["name"]], check=False)
-            pmb.helpers.run.root(["losetup", "-d", loopdevice["name"]])
+            pmb.chroot.root(["losetup", "-d", loopdevice["name"]])
     return
