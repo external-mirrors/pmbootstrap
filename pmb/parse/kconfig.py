@@ -259,6 +259,11 @@ def check(
         if must_exist:
             raise e
         return None
+    # No exception is thrown if the aport isn't found and must_exit=False,
+    # so just return
+    if aport is None and not must_exist:
+        return None
+
     apkbuild = pmb.parse.apkbuild(aport / "APKBUILD")
     pkgver = apkbuild["pkgver"]
 
