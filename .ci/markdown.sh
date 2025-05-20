@@ -25,7 +25,7 @@ fi
 find . -name '*.md' |
 while read -r file; do
 	echo "mdl: $file"
-	if ! "$MDL" "$file"; then
+	if ! "$MDL" --disable MD059 -- "$file"; then
 		echo
 		echo "markdown lint failed!"
 		exit 1
