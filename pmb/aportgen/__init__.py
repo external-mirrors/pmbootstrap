@@ -62,7 +62,10 @@ def properties(pkgname: str) -> tuple[str, str, AportGenEntry]:
 
 
 def generate(
-    pkgname: str, fork_alpine: bool = False, fork_alpine_retain_branch: bool = False
+    pkgname: str,
+    fork_alpine: bool = False,
+    fork_alpine_retain_branch: bool = False,
+    device_category: pmb.helpers.devices.DeviceCategory | None = None,
 ) -> None:
     options: AportGenEntry
 
@@ -71,7 +74,10 @@ def generate(
     else:
         prefix, folder, options = properties(pkgname)
     config = get_context().config
-    path_target = pkgrepo_default_path() / folder / pkgname
+    if device_category:
+        path_target = pkgrepo_default_path() / folder / str(device_category) / pkgname
+    else:
+        path_target = pkgrepo_default_path() / folder / pkgname
 
     # Confirm overwrite
     if options["confirm_overwrite"] and os.path.exists(path_target):
@@ -80,9 +86,9 @@ def generate(
             raise RuntimeError("Aborted.")
 
     aportgen = config.work / "aportgen"
-
     if os.path.exists(aportgen):
         pmb.helpers.run.user(["rm", "-r", aportgen])
+
     if fork_alpine:
         upstream = pmb.aportgen.core.get_upstream_aport(
             pkgname, retain_branch=fork_alpine_retain_branch
@@ -96,7 +102,7 @@ def generate(
             case "busybox-static":
                 pmb.aportgen.busybox_static.generate(pkgname)
             case "device":
-                pmb.aportgen.device.generate(pkgname)
+                pmb.aportgen.device.generate(pkgname, device_category)
             case "gcc":
                 pmb.aportgen.gcc.generate(pkgname)
             case "grub-efi":
