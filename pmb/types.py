@@ -210,14 +210,17 @@ class PartitionLayout(list[DiskPartition]):
     fragile indexes while still allowing the partitions to be
     iterated over for simplicity. This is not a good design tbh
     """
-    path: str # path to disk image
-    split: bool # image per partition
 
-    def __init__(self, path: str, split: bool):
+    path: str  # path to disk image
+    split: bool  # image per partition
+    fde: bool
+
+    def __init__(self, path: str, split: bool, fde: bool):
         super().__init__(self)
         # Path to the disk image
         self.path = path
         self.split = split
+        self.fde = fde
 
     @property
     def kernel(self):

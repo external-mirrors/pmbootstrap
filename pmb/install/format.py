@@ -101,53 +101,54 @@ def format_and_mount_boot(layout: PartitionLayout) -> None:
         )
 
 
-def format_luks_root(args: PmbArgs, layout: PartitionLayout, device: str) -> None:
+def format_luks_root(args: PmbArgs, layout: PartitionLayout) -> None:
     """
     :param device: root partition on install block device (e.g. /dev/installp2)
     """
-    mountpoint = "/dev/mapper/pm_crypt"
+    device = layout.path
 
-    logging.info(f"(native) format {device} (root, luks), mount to {mountpoint}")
-    logging.info(" *** TYPE IN THE FULL DISK ENCRYPTION PASSWORD (TWICE!) ***")
+    logging.info("(native) Encrypting root filesystem!")
+    if not os.environ.get("PMB_FDE_PASSWORD", None):
+        logging.info(" *** TYPE IN THE FULL DISK ENCRYPTION PASSWORD (TWICE!) ***")
 
     # Avoid cryptsetup warning about missing locking directory
     pmb.chroot.root(["mkdir", "-p", "/run/cryptsetup"])
 
+    # FIXME: this /should/ work but we get:
+    # Device /dev/install contains broken LUKS metadata. Aborting operation.
+    # sooo
     format_cmd = [
         "cryptsetup",
-        "luksFormat",
+        "reencrypt",
         "-q",
+        "--encrypt",
         "--cipher",
         args.cipher,
         "--iter-time",
         args.iter_time,
         "--use-random",
+        "--reduce-device-size",
+        "32M",
+        "--force-offline-reencrypt",
         "--offset",
-        str(layout.root.offset),
+        str(layout.root.offset_sectors(512)),
         device,
     ]
-    open_cmd = ["cryptsetup", "luksOpen"]
 
     path_outside = None
     fde_key = os.environ.get("PMB_FDE_PASSWORD", None)
     if fde_key:
         # Write passphrase to a temp file, to avoid printing it in any log
-        path = tempfile.mktemp(dir="/tmp")
-        path_outside = Chroot.native() / path
+        path_outside = Chroot.native() / "tmp/fde_key"
         with open(path_outside, "w", encoding="utf-8") as handle:
             handle.write(f"{fde_key}")
-        format_cmd += [str(path)]
-        open_cmd += ["--key-file", str(path)]
+        format_cmd += [str(path_outside.relative_to(Chroot.native().path))]
 
     try:
         pmb.chroot.root(format_cmd, output=RunOutputTypeDefault.INTERACTIVE)
-        pmb.chroot.root([*open_cmd, device, "pm_crypt"], output=RunOutputTypeDefault.INTERACTIVE)
     finally:
         if path_outside:
             os.unlink(path_outside)
-
-    if not (Chroot.native() / mountpoint).exists():
-        raise RuntimeError("Failed to open cryptdevice!")
 
 
 def prepare_btrfs_subvolumes(args: PmbArgs, device: str, mountpoint: str) -> None:
@@ -263,6 +264,10 @@ def format_and_mount_root(args: PmbArgs, layout: PartitionLayout) -> None:
 
         install_fsprogs(filesystem)
         logging.info(f"(native) format {layout.root.path} (root, {filesystem})")
+        rootfs_size = round(layout.root.size / 1024)
+        # Leave some empty space for LUKS
+        if layout.fde:
+            rootfs_size -= 64 * 1024
         pmb.chroot.root([*mkfs_root_args, layout.root.path, f"{round(layout.root.size / 1024)}k"])
 
         # Unmount the empty dir we mounted over /boot
@@ -296,3 +301,6 @@ def format(
     # FIXME: better way to check if we are running with --single-partition
     if len(layout) > 1:
         format_and_mount_boot(layout)
+
+    if args.full_disk_encryption:
+        format_luks_root(args, layout)

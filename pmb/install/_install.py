@@ -741,15 +741,17 @@ def sanity_check_disk_size(args: PmbArgs) -> None:
         raise RuntimeError("Aborted.")
 
 
-def get_partition_layout(chroot: Chroot, kernel: bool, split: bool, single_partition: bool) -> PartitionLayout:
+def get_partition_layout(
+    chroot: Chroot, kernel: bool, split: bool, single_partition: bool, fde: bool
+) -> PartitionLayout:
     """
     :param kernel: create a separate kernel partition before all other
                    partitions, e.g. for the ChromeOS devices with cgpt
     :returns: the partition layout, e.g. without reserve and kernel:
               {"kernel": None, "boot": 1, "reserve": None, "root": 2}
     """
-    layout: PartitionLayout = PartitionLayout("/dev/install", split)
-    
+    layout: PartitionLayout = PartitionLayout("/dev/install", split, fde)
+
     if kernel:
         layout.append(DiskPartition("kernel", pmb.parse.deviceinfo().cgpt_kpart_size))
 
@@ -889,7 +891,8 @@ def install_system_image(
     layout = get_partition_layout(chroot,
         bool(deviceinfo.cgpt_kpart and args.install_cgpt),
         split,
-        single_partition
+        single_partition,
+        args.full_disk_encryption,
     )
     logging.info(f"split: {split}")
     logging.info("Using partition layout:")
