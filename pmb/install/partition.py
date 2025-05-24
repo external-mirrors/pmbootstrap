@@ -20,6 +20,7 @@ def get_partition_layout(partition: str, disk: str) -> tuple[int, int]:
     """
     Get the size of a partition in a disk image in bytes
     """
+    # FIXME: use sfdisk -J to get JSON output which is nicer :)
     out = pmb.chroot.root(
         [
             "fdisk",
