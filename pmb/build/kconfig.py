@@ -178,10 +178,12 @@ def _init(pkgname: str, arch: Arch | None) -> tuple[str, Arch, Any, Chroot, Env]
         arch = get_arch(apkbuild)
 
     cross = pmb.build.autodetect.crosscompile(apkbuild, arch)
+    logging.debug(f"Using cross: {cross.name}")
     chroot = cross.build_chroot(arch)
     hostspec = arch.alpine_triple()
 
     # Set up build tools and makedepends
+    pmb.chroot.init(chroot)
     pmb.build.init(chroot)
     if cross:
         pmb.build.init_compiler(get_context(), [], cross, arch)
@@ -196,7 +198,7 @@ def _init(pkgname: str, arch: Arch | None) -> tuple[str, Arch, Any, Chroot, Env]
         "ARCH": arch.kernel(),
     }
 
-    if cross:
+    if cross.enabled():
         env["CROSS_COMPILE"] = f"{hostspec}-"
         env["CC"] = f"{hostspec}-gcc"
 
