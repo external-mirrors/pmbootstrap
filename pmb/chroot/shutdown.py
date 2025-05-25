@@ -63,10 +63,8 @@ def shutdown(only_install_related: bool = False) -> None:
     kill_adb()
     kill_sccache()
 
-    chroot = Chroot.native()
-
     # Umount installation-related paths (order is important!)
-    pmb.helpers.mount.umount_all(chroot / "mnt/install")
+    # pmb.helpers.mount.umount_all(chroot / "mnt/install")
     shutdown_cryptsetup_device("pm_crypt")
 
     # Remove "in-pmbootstrap" marker from all chroots. This marker indicates
@@ -74,26 +72,7 @@ def shutdown(only_install_related: bool = False) -> None:
     # the chroots, but we want it gone afterwards (e.g. when the chroot
     # contents get copied to a rootfs / installer image, or if creating an
     # android recovery zip from its contents).
-    for marker in get_context().config.work.glob("chroot_*/in-pmbootstrap"):
+    for marker in get_context().config.localdir.glob("chroot_*/in-pmbootstrap"):
         pmb.helpers.run.root(["rm", marker])
-
-    # Umount device rootfs and installer chroots
-    if only_install_related:
-        for chroot_type in [ChrootType.ROOTFS, ChrootType.INSTALLER]:
-            chroot = Chroot(chroot_type, get_context().config.device)
-            if chroot.path.exists():
-                pmb.helpers.mount.umount_all(chroot.path)
-        return
-
-    # Umount all folders inside work dir
-    # The folders are explicitly iterated over, so folders symlinked inside
-    # work dir get umounted as well (used in test_pkgrel_bump.py, #1595)
-    for path in get_context().config.work.glob("*"):
-        pmb.helpers.mount.umount_all(path)
-
-    # Clean up the rest
-    for arch in Arch.supported():
-        if arch.cpu_emulation_required():
-            pmb.chroot.binfmt.unregister(arch)
 
     logging.debug("Shutdown complete")
