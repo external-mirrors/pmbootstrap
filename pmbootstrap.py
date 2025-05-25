@@ -8,6 +8,9 @@ import pmb
 import os
 from pmb.init import sandbox
 
+# Sanitise environment a bit
+os.environ["SHELL"] = "/bin/sh" if os.path.exists("/bin/sh") else "/bin/bash"
+
 original_uid = os.geteuid()
 
 sandbox.acquire_privileges(become_root=False)
