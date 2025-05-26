@@ -1,0 +1,23 @@
+pkgname=linux-lts
+pkgver=6.12.4
+pkgrel=0
+pkgdesc="FAKE linux-lts package"
+url="https://postmarketos.org"
+arch="noarch"
+license="GPL-3.0-or-later"
+makedepends=""
+# Several of these dependencies come from alpine - base, as the upstream
+# recommendation to not depend on openrc has been to copy them here:
+# https: // gitlab.alpinelinux.org/alpine/aports/-/merge_requests/71686#note_435428
+depends="
+	"
+
+prepare() {
+	default_prepare
+}
+
+package() {
+	echo "$pkgname" > $pkgdir/fake-$pkgname
+}
+
+sha512sums=""
