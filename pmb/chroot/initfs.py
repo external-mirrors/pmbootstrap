@@ -90,6 +90,7 @@ def frontend(args: PmbArgs) -> None:
     # Find the appropriate kernel flavor
     context = get_context()
     chroot = Chroot.rootfs(context.config.device)
+    pmb.chroot.init(chroot)
     flavor = pmb.chroot.other.kernel_flavor_installed(chroot)
     deviceinfo = pmb.parse.deviceinfo()
 
