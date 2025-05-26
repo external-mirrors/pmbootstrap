@@ -148,10 +148,10 @@ def pmb_args(config_file, mock_context, logfile):
 
     init_args(args)
 
-    print(f"WORK: {get_context().config.work}")
+    print(f"WORK: {get_context().config.cache}")
 
     # Sanity check
-    assert ".pytest_tmp" in get_context().config.work.parts
+    assert ".pytest_tmp" in get_context().config.cache.parts
 
 
 @pytest.fixture

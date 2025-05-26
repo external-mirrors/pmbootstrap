@@ -175,6 +175,12 @@ def random_valid_deviceinfo(tmp_path):
     info["codename"] = tmp_path.name[7:]
     info["chassis"] = random.choice(deviceinfo_chassis_types)
     info["arch"] = random.choice(["armhf", "aarch64", "x86_64"])
+    # FIXME: we can't keep adding properties here manually as we make more of them
+    # discrete types..
+    if "rootfs_image_sector_size" in info:
+        info["rootfs_image_sector_size"] = random.choice([512, 2048, 4096])
+    if "boot_part_start" in info:
+        info["boot_part_start"] = random.choice([0, 2048, 4096])
 
     # Now write it all out to a file
     with open(path, "w") as f:
