@@ -5,7 +5,6 @@ from pathlib import Path, PurePath
 import pmb.helpers
 from pmb.core import Chroot
 from pmb.types import PathString
-import pmb.helpers.run
 from pmb.init import sandbox
 
 
@@ -40,13 +39,9 @@ def bind(
             return
 
     # Check/create folders
-    for path in [source, destination]:
-        if os.path.exists(path):
-            continue
-        if create_folders:
-            pmb.helpers.run.root(["mkdir", "-p", path])
-        else:
-            raise RuntimeError(f"Mount failed, folder does not exist: {path}")
+    if create_folders:
+        for path in [source, destination]:
+            Path(path).mkdir(exist_ok=True)
 
     # Actually mount the folder
     sandbox.mount_rbind(str(source), str(destination))
