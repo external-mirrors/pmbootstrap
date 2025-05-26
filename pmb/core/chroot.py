@@ -23,6 +23,7 @@ class ChrootType(enum.Enum):
 class Chroot:
     __type: ChrootType
     __name: str
+    __channel: str | None
 
     def __init__(self, suffix_type: ChrootType, name: str | Arch | None = "") -> None:
         # We use the native chroot as the buildroot when building for the host arch
@@ -32,6 +33,7 @@ class Chroot:
 
         self.__type = suffix_type
         self.__name = str(name or "")
+        self.__channel = None
 
         self.__validate()
 
@@ -138,6 +140,20 @@ class Chroot:
     @property
     def name(self) -> str:
         return self.__name
+
+    # FIXME: this feels unoptimised and hacky, we ought to know the channel
+    # at the point where the chroot is created.
+    @property
+    def channel(self) -> str:
+        """Release channel this chroot is using"""
+        if not (self.path / "etc/os-release").exists():
+            raise RuntimeError(f"({self}) Can't determine channel for unitialised chroot")
+
+        for line in (self.path / "etc/os-release").open().readlines():
+            if line.startswith("VERSION="):
+                return line.removeprefix('VERSION="')[:-2]
+
+        raise RuntimeError(f"({self}) Unable to determine release channel")
 
     @staticmethod
     def native() -> Chroot:
