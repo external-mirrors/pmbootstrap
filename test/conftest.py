@@ -31,10 +31,13 @@ def config_file(tmp_path_factory: TempPathFactory, request: FixtureRequest) -> P
         flavour = request.param
 
     out_file = tmp_path / "pmbootstrap_v3.cfg"
-    workdir = tmp_path / "work"
-    workdir.mkdir()
+    workdir = tmp_path / "cache"
+    if not (workdir / "git").exists():
+        (workdir / "git").mkdir(exist_ok=True, parents=True)
+        # Copy our test pmaports to the workdir
+        shutil.copytree(Path("./test/data/pmaports"), (workdir / "cache/git/pmaports"))
 
-    configs = {"default": f"aports = {workdir / 'cache_git' / 'pmaports'}", "no-repos": "aports = "}
+    configs = {"default": f"aports = {workdir / 'cache/git/pmaports'}", "no-repos": "aports = "}
 
     file = _testdir / "pmbootstrap_v3.cfg"
     print(f"CONFIG: {out_file}")
