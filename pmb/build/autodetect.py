@@ -84,7 +84,7 @@ def crosscompile(apkbuild: Apkbuild, arch: Arch) -> CrossCompile:
     """Decide the type of compilation necessary to build a given APKBUILD."""
     if not get_context().cross:
         return CrossCompile.QEMU_ONLY
-    if not arch.cpu_emulation_required():
+    if not arch.cpu_emulation_required() or arch == Arch.native():
         return CrossCompile.UNNECESSARY
     if "pmb:cross-native" in apkbuild["options"]:
         return CrossCompile.CROSS_NATIVE
