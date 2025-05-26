@@ -93,4 +93,13 @@ def remove_mnt_pmbootstrap(chroot: Chroot) -> None:
         return
 
     for path in [*mnt_dir.glob("*"), mnt_dir]:
-        pmb.helpers.run.root(["rmdir", path])
+        path.rmdir()
+
+    if mnt_dir.exists():
+        raise RuntimeError("Failed to remove /work!")
+
+
+def umount(chroot: Chroot) -> None:
+    """Unmount all bind mounts inside a chroot."""
+    if chroot.path.exists():
+        pmb.helpers.mount.umount_all(chroot.path)
