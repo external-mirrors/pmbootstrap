@@ -1,35 +1,11 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pmb.core.arch import Arch
 from pmb.helpers import logging
-import socket
-from contextlib import closing
 
 import pmb.chroot
 import pmb.helpers.mount
-from pmb.core import Chroot, ChrootType
+from pmb.core import Chroot
 from pmb.core.context import get_context
-
-
-def kill_adb() -> None:
-    """
-    Kill adb daemon if it's running.
-    """
-    port = 5038
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-        if sock.connect_ex(("127.0.0.1", port)) == 0:
-            pmb.chroot.root(["adb", "-P", str(port), "kill-server"])
-
-
-def kill_sccache() -> None:
-    """
-    Kill sccache daemon if it's running. Unlike ccache it automatically spawns
-    a daemon when you call it and exits after some time of inactivity.
-    """
-    port = 4226
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-        if sock.connect_ex(("127.0.0.1", port)) == 0:
-            pmb.chroot.root(["sccache", "--stop-server"])
 
 
 def shutdown_cryptsetup_device(name: str) -> None:
@@ -59,10 +35,6 @@ def shutdown_cryptsetup_device(name: str) -> None:
 
 
 def shutdown(only_install_related: bool = False) -> None:
-    # Stop daemons
-    kill_adb()
-    kill_sccache()
-
     # Umount installation-related paths (order is important!)
     # pmb.helpers.mount.umount_all(chroot / "mnt/install")
     shutdown_cryptsetup_device("pm_crypt")
