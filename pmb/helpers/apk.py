@@ -70,10 +70,7 @@ def update_repository_list(
 
     # Update the file
     logging.debug(f"({root.name}) update /etc/apk/repositories")
-    if path.exists():
-        pmb.helpers.run.root(["rm", path])
-    for line in lines_new:
-        pmb.helpers.run.root(["sh", "-c", f"echo {shlex.quote(line)} >> {path}"])
+    path.open("w").write("\n".join(lines_new) + "\n")
     update_repository_list(
         root,
         user_repository=user_repository,

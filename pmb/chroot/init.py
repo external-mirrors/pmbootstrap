@@ -1,10 +1,11 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import enum
-import filecmp
+from pathlib import Path
 from pmb.meta import Cache
 from pmb.helpers import logging
 import os
+import shutil
 
 import pmb.chroot
 import pmb.config
@@ -39,8 +40,7 @@ def copy_resolv_conf(chroot: Chroot) -> None:
     host = "/etc/resolv.conf"
     resolv_path = chroot / host
     if os.path.exists(host):
-        if not resolv_path.exists() or not filecmp.cmp(host, resolv_path):
-            pmb.helpers.run.root(["cp", host, resolv_path])
+        shutil.copy(host, resolv_path)
     else:
         pmb.helpers.run.root(["touch", resolv_path])
 
