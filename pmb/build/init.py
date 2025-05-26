@@ -49,7 +49,8 @@ def init(chroot: Chroot = Chroot.native()) -> bool:
 
     # Initialize chroot, install packages
     pmb.chroot.init(Chroot.native())
-    pmb.chroot.init(chroot)
+    if chroot != Chroot.native():
+        pmb.chroot.init(chroot)
     init_abuild_minimal(chroot)
 
     # Generate package signing keys
