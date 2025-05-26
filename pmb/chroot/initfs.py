@@ -115,6 +115,7 @@ def ls(suffix: Chroot, deviceinfo: Deviceinfo, extra: bool = False) -> None:
 def frontend(args: PmbArgs) -> None:
     context = get_context()
     chroot = Chroot.rootfs(context.config.device)
+    pmb.chroot.init(chroot)
     deviceinfo = pmb.parse.deviceinfo()
 
     # Handle initfs actions
