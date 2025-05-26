@@ -78,7 +78,7 @@ def apk_mocks(monkeypatch) -> dict | None:
 
 
 def create_apk(pkgname: str, arch: Arch) -> Path:
-    apk_file = get_context().config.work / "packages" / "edge" / arch / f"{pkgname}-5.5-r0.apk"
+    apk_file = get_context().config.cache / "packages" / "edge" / arch / f"{pkgname}-5.5-r0.apk"
     apk_file.parent.mkdir(parents=True, exist_ok=True)
     apk_file.touch()
     return apk_file

@@ -8,26 +8,26 @@ from pmb.core.context import get_context
 from pmb.core.chroot import Chroot, ChrootType
 
 
-def test_valid_chroots(pmb_args, mock_devices_find_path):
+def test_valid_chroots(pmb_args, mock_devices_find_path, foreign_arch):
     """Test that Chroot objects work as expected"""
 
-    work = get_context().config.work
+    localdir = get_context().config.work
 
     chroot = Chroot.native()
     assert chroot.type == ChrootType.NATIVE
     assert chroot.name == ""
     assert chroot.arch in Arch.supported()
     assert not chroot.exists()  # Shouldn't be created
-    assert chroot.path == work / "chroot_native"
+    assert chroot.path == localdir / "chroot_native"
     assert str(chroot) == "native"
 
-    chroot = Chroot.buildroot(Arch.aarch64)
+    chroot = Chroot.buildroot(foreign_arch)
     assert chroot.type == ChrootType.BUILDROOT
-    assert chroot.name == "aarch64"
-    assert chroot.arch == Arch.aarch64
+    assert chroot.name == f"{foreign_arch}"
+    assert chroot.arch == foreign_arch
     assert not chroot.exists()  # Shouldn't be created
-    assert chroot.path == work / "chroot_buildroot_aarch64"
-    assert str(chroot) == "buildroot_aarch64"
+    assert chroot.path == localdir / f"chroot_buildroot_{foreign_arch}"
+    assert str(chroot) == f"buildroot_{foreign_arch}"
 
     # FIXME: implicily assumes that we're mocking the qemu-amd64 deviceinfo
     chroot = Chroot(ChrootType.ROOTFS, "qemu-amd64")
@@ -35,7 +35,7 @@ def test_valid_chroots(pmb_args, mock_devices_find_path):
     assert chroot.name == "qemu-amd64"
     assert chroot.arch == Arch.x86_64
     assert not chroot.exists()  # Shouldn't be created
-    assert chroot.path == work / "chroot_rootfs_qemu-amd64"
+    assert chroot.path == localdir / "chroot_rootfs_qemu-amd64"
     assert str(chroot) == "rootfs_qemu-amd64"
 
 

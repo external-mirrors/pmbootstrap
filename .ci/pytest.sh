@@ -10,6 +10,9 @@ if [ "$(id -u)" = 0 ]; then
 		openssl \
 		py3-pytest \
 		py3-pytest-cov \
+		kpartx \
+		losetup \
+		android-tools \
 		sudo
 	exec su "${TESTUSER:-build}" -c "sh -e $0"
 fi

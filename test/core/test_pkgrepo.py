@@ -22,7 +22,7 @@ def test_pkgrepo_pmaports(pmaports, monkeypatch):
     pkgrepo_paths.cache_disable()
     pkgrepo_default_path.cache_disable()
 
-    paths = pkgrepo_paths()
+    paths = pkgrepo_paths(with_extra_repos="disabled")
     print(f"[master] pkgrepo_paths: {paths}")
     assert len(paths) == 1
     assert "pmaports" in paths[0].name
@@ -32,9 +32,6 @@ def test_pkgrepo_pmaports(pmaports, monkeypatch):
     assert default_path.name == "pmaports"
 
     # Test extra-repos
-    paths = pkgrepo_paths(with_extra_repos="disabled")
-    assert len(paths) == 1
-
     paths = pkgrepo_paths(with_extra_repos="enabled")
     assert len(paths) == 2
 
