@@ -21,7 +21,7 @@ import pmb.config.pmaports
 from pmb.helpers.locale import get_xkb_layout
 from pmb.parse.deviceinfo import Deviceinfo
 from pmb.core import Config
-from pmb.types import Env, PartitionLayout, PmbArgs
+from pmb.types import PartitionLayout, PmbArgs
 import pmb.helpers.devices
 from pmb.helpers.mount import mount_device_rootfs
 import pmb.helpers.run

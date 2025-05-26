@@ -84,7 +84,9 @@ def format_and_mount_boot(layout: PartitionLayout) -> None:
         )
     elif filesystem == "btrfs":
         raise ValueError("BTRFS not yet supported with new sandbox")
-        pmb.chroot.root(["mkfs.btrfs", "-f", "-q", "-L", layout.boot.partition_label, layout.boot.path])
+        pmb.chroot.root(
+            ["mkfs.btrfs", "-f", "-q", "-L", layout.boot.partition_label, layout.boot.path]
+        )
     else:
         raise RuntimeError("Filesystem " + filesystem + " is not supported!")
 

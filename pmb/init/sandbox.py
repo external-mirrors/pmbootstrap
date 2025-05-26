@@ -102,7 +102,13 @@ libc.syscall.restype = ctypes.c_long
 libc.unshare.argtypes = (ctypes.c_int,)
 libc.statfs.argtypes = (ctypes.c_char_p, ctypes.c_void_p)
 libc.eventfd.argtypes = (ctypes.c_int, ctypes.c_int)
-libc.mount.argtypes = (ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_ulong, ctypes.c_char_p)
+libc.mount.argtypes = (
+    ctypes.c_char_p,
+    ctypes.c_char_p,
+    ctypes.c_char_p,
+    ctypes.c_ulong,
+    ctypes.c_char_p,
+)
 libc.pivot_root.argtypes = (ctypes.c_char_p, ctypes.c_char_p)
 libc.umount2.argtypes = (ctypes.c_char_p, ctypes.c_int)
 libc.capget.argtypes = (ctypes.c_void_p, ctypes.c_void_p)
@@ -195,13 +201,22 @@ def cap_permitted_to_ambient() -> None:
     with open("/proc/sys/kernel/cap_last_cap", "rb") as f:
         last_cap = int(f.read())
 
-    libc.prctl.argtypes = (ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong)
+    libc.prctl.argtypes = (
+        ctypes.c_int,
+        ctypes.c_ulong,
+        ctypes.c_ulong,
+        ctypes.c_ulong,
+        ctypes.c_ulong,
+    )
 
     for cap in range(ctypes.sizeof(ctypes.c_uint64) * 8):
         if cap > last_cap:
             break
 
-        if effective & (1 << cap) and libc.prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, cap, 0, 0) < 0:
+        if (
+            effective & (1 << cap)
+            and libc.prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, cap, 0, 0) < 0
+        ):
             oserror("prctl")
 
 
@@ -365,7 +380,9 @@ def mount_rbind(src: str, dst: str, attrs: int = 0) -> None:
                 ctypes.c_void_p,
                 ctypes.c_size_t,
             )
-            r = libc.syscall(NR_mount_setattr, fd, b"", flags, ctypes.addressof(attr), MOUNT_ATTR_SIZE_VER0)
+            r = libc.syscall(
+                NR_mount_setattr, fd, b"", flags, ctypes.addressof(attr), MOUNT_ATTR_SIZE_VER0
+            )
 
         if r < 0:
             oserror("mount_setattr", src)
@@ -388,7 +405,9 @@ def mount_rbind(src: str, dst: str, attrs: int = 0) -> None:
                 ctypes.c_char_p,
                 ctypes.c_uint,
             )
-            r = libc.syscall(NR_move_mount, fd, b"", AT_FDCWD, dst.encode(), MOVE_MOUNT_F_EMPTY_PATH)
+            r = libc.syscall(
+                NR_move_mount, fd, b"", AT_FDCWD, dst.encode(), MOVE_MOUNT_F_EMPTY_PATH
+            )
 
         if r < 0:
             oserror("move_mount", dst)
@@ -649,7 +668,9 @@ class FSOperation:
 
 
 class BindOperation(FSOperation):
-    def __init__(self, src: str, dst: str, *, readonly: bool, required: bool, relative: bool) -> None:
+    def __init__(
+        self, src: str, dst: str, *, readonly: bool, required: bool, relative: bool
+    ) -> None:
         self.src = src
         self.readonly = readonly
         self.required = required
@@ -759,7 +780,9 @@ class TmpfsOperation(FSOperation):
         with umask(~0o755):
             os.makedirs(dst, exist_ok=True)
 
-        options = "" if any(dst.endswith(suffix) for suffix in ("/tmp", "/var/tmp")) else "mode=0755"
+        options = (
+            "" if any(dst.endswith(suffix) for suffix in ("/tmp", "/var/tmp")) else "mode=0755"
+        )
         mount("tmpfs", dst, "tmpfs", 0, options)
 
 
@@ -829,7 +852,9 @@ class OverlayOperation(FSOperation):
     def execute(self, oldroot: str, newroot: str) -> None:
         lowerdirs = tuple(chase(oldroot, p) for p in self.lowerdirs)
         upperdir = (
-            chase(oldroot, self.upperdir) if self.upperdir and self.upperdir != "tmpfs" else self.upperdir
+            chase(oldroot, self.upperdir)
+            if self.upperdir and self.upperdir != "tmpfs"
+            else self.upperdir
         )
         workdir = chase(oldroot, self.workdir) if self.workdir else None
         dst = chase(newroot, self.dst)
@@ -991,7 +1016,9 @@ def main() -> None:
     upperdir = ""
     workdir = ""
     chdir = None
-    become_root = suppress_chown = suppress_sync = unshare_net = unshare_ipc = suspend = pack_fds = False
+    become_root = suppress_chown = suppress_sync = unshare_net = unshare_ipc = suspend = (
+        pack_fds
+    ) = False
 
     ttyname = os.ttyname(2) if os.isatty(2) else ""
 
@@ -1039,7 +1066,9 @@ def main() -> None:
         elif arg == "--overlay-workdir":
             workdir = argv.pop()
         elif arg == "--overlay":
-            fsops.append(OverlayOperation(tuple(reversed(lowerdirs)), upperdir, workdir, argv.pop()))
+            fsops.append(
+                OverlayOperation(tuple(reversed(lowerdirs)), upperdir, workdir, argv.pop())
+            )
             upperdir = ""
             workdir = ""
             lowerdirs = []

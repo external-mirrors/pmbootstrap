@@ -1,9 +1,7 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from pathlib import Path
 from pmb.helpers import logging
 import os
-import time
 import pmb.chroot
 import pmb.chroot.apk
 import pmb.config
