@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
+import argparse
 from pmb.types import PmbArgs
 from pmb.helpers import frontend
 
@@ -51,7 +52,7 @@ unmigrated_commands = [
 ]
 
 
-def run_command(args: PmbArgs) -> None:
+def run_command(args: PmbArgs, parser: argparse.ArgumentParser) -> None:
     # Handle deprecated command format
     if args.action in unmigrated_commands:
         getattr(frontend, args.action)(args)
@@ -105,4 +106,5 @@ def run_command(args: PmbArgs) -> None:
         case _:
             raise NotImplementedError(f"Command '{args.action}' is not implemented.")
 
+    command.parse(parser)
     command.run()
