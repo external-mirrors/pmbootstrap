@@ -82,11 +82,11 @@ def zap(
     if pkgs_local:
         patterns += ["packages"]
     if http:
-        patterns += ["cache_http"]
+        patterns += ["http"]
     if distfiles:
-        patterns += ["cache_distfiles"]
+        patterns += ["distfiles"]
     if rust:
-        patterns += ["cache_rust"]
+        patterns += ["rust"]
     if netboot:
         patterns += ["images_netboot"]
 
@@ -96,7 +96,7 @@ def zap(
     # Delete everything matching the patterns
     for pattern in patterns:
         logging.debug(f"Deleting {pattern}")
-        pattern = os.path.realpath(f"{get_context().config.work}/{pattern}")
+        pattern = os.path.realpath(f"{get_context().config.cache}/{pattern}")
         matches = glob.glob(pattern)
         for match in matches:
             if not confirm or pmb.helpers.cli.confirm(f"Remove {match}?"):
@@ -119,7 +119,7 @@ def zap(
 
 def zap_pkgs_local_mismatch(confirm: bool = True, dry: bool = False) -> None:
     channel = pmb.config.pmaports.read_config()["channel"]
-    if not os.path.exists(f"{get_context().config.work}/packages/{channel}"):
+    if not os.path.exists(f"{get_context().config.cache}/packages/{channel}"):
         return
 
     question = (
@@ -130,7 +130,7 @@ def zap_pkgs_local_mismatch(confirm: bool = True, dry: bool = False) -> None:
         return
 
     reindex = False
-    for apkindex_path in (get_context().config.work / "packages" / channel).glob(
+    for apkindex_path in (get_context().config.cache / "packages" / channel).glob(
         "*/APKINDEX.tar.gz"
     ):
         # Delete packages without same version in aports
@@ -143,7 +143,7 @@ def zap_pkgs_local_mismatch(confirm: bool = True, dry: bool = False) -> None:
 
             # Apk path
             apk_path_short = f"{arch}/{pkgname}-{version}.apk"
-            apk_path = f"{get_context().config.work}/packages/{channel}/{apk_path_short}"
+            apk_path = f"{get_context().config.cache}/packages/{channel}/{apk_path_short}"
             if not os.path.exists(apk_path):
                 logging.info(f"WARNING: Package mentioned in index not found: {apk_path_short}")
                 continue
@@ -175,7 +175,7 @@ def zap_pkgs_local_mismatch(confirm: bool = True, dry: bool = False) -> None:
 
 def zap_pkgs_online_mismatch(confirm: bool = True, dry: bool = False) -> None:
     # Check whether we need to do anything
-    paths = list(get_context().config.work.glob("cache_apk_*"))
+    paths = list(get_context().config.cache.glob("apk_*"))
     if not len(paths):
         return
     if confirm and not pmb.helpers.cli.confirm("Remove outdated binary packages?"):

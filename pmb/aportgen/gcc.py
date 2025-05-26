@@ -24,7 +24,7 @@ def generate(pkgname: str) -> None:
         based_on = "main/gcc6 (from postmarketOS)"
     else:
         raise ValueError(f"Invalid prefix '{prefix}', expected gcc, gcc4 or gcc6.")
-    pmb.helpers.run.user(["cp", "-r", upstream, context.config.work / "aportgen"])
+    pmb.helpers.run.user(["cp", "-r", upstream, context.config.cache / "aportgen"])
 
     # Rewrite APKBUILD
     fields = {

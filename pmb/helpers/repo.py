@@ -60,10 +60,10 @@ def urls(
 ) -> list[str]:
     """Get a list of repository URLs, as they are in /etc/apk/repositories.
 
-    :param user_repository: add /mnt/pmbootstrap/packages
+    :param user_repository: add /cache/packages
     :param mirrors_exclude: mirrors to exclude (see pmb.core.config.Mirrors) or true to exclude
                             all mirrors and only return the local repos
-    :returns: list of mirror strings, like ["/mnt/pmbootstrap/packages",
+    :returns: list of mirror strings, like ["/cache/packages",
                                             "http://...", ...]
     """
     ret: list[str] = []
@@ -141,11 +141,11 @@ def apkindex_files(
     # Local user repository (for packages compiled with pmbootstrap)
     if user_repository:
         for channel in pmb.config.pmaports.all_channels():
-            ret.append(get_context().config.work / "packages" / channel / arch / "APKINDEX.tar.gz")
+            ret.append(get_context().config.cache / "packages" / channel / arch / "APKINDEX.tar.gz")
 
     # Resolve the APKINDEX.$HASH.tar.gz files
     for url in urls(False, exclude_mirrors):
-        ret.append(get_context().config.work / f"cache_apk_{arch}" / apkindex_hash(url))
+        ret.append(get_context().config.cache / f"apk_{arch}" / apkindex_hash(url))
 
     return ret
 
@@ -181,7 +181,7 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
         for arch in architectures:
             # APKINDEX file name from the URL
             url_full = f"{url}/{arch}/APKINDEX.tar.gz"
-            cache_apk_outside = get_context().config.work / f"cache_apk_{arch}"
+            cache_apk_outside = get_context().config.cache / f"apk_{arch}"
             apkindex = cache_apk_outside / f"{apkindex_hash(url)}"
 
             # Find update reason, possibly skip non-existing or known 404 files
@@ -258,5 +258,5 @@ def alpine_apkindex_path(repo: str = "main", arch: Arch | None = None) -> Path:
     # Find it on disk
     channel_cfg = pmb.config.pmaports.read_config_channel()
     repo_link = f"{get_context().config.mirrors['alpine']}{channel_cfg['mirrordir_alpine']}/{repo}"
-    cache_folder = get_context().config.work / (f"cache_apk_{arch}")
+    cache_folder = get_context().config.cache / (f"apk_{arch}")
     return cache_folder / apkindex_hash(repo_link)

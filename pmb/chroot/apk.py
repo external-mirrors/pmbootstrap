@@ -89,7 +89,7 @@ def packages_get_locally_built_apks(package_list: list[str], arch: Arch) -> list
     :param arch: architecture that the locally built packages should have
     :returns: Pair of lists, the first is the input packages with local apks removed.
               the second is a list of apk file paths that are valid inside the chroots, e.g.
-              ["/mnt/pmbootstrap/packages/x86_64/hello-world-1-r6.apk", ...]
+              ["/cache/packages/x86_64/hello-world-1-r6.apk", ...]
     """
     channels: list[str] = pmb.config.pmaports.all_channels()
     local: list[Path] = []
@@ -108,7 +108,7 @@ def packages_get_locally_built_apks(package_list: list[str], arch: Arch) -> list
         # this will have weird behaviour if you build gnome-shell for edge and
         # then checkout out the systemd branch... But there isn't
         for channel in channels:
-            apk_path = get_context().config.work / "packages" / channel / arch / apk_file
+            apk_path = get_context().config.cache / "packages" / channel / arch / apk_file
             if apk_path.exists():
                 local.append(apk_path)
                 break
@@ -173,7 +173,7 @@ def install_run_apk(
     # FIXME: use /mnt/pmb… until MR 2351 is reverted (pmb#2388)
     user_repo: list[PathString] = []
     for channel in pmb.config.pmaports.all_channels():
-        user_repo += ["--repository", context.config.work / "packages" / channel]
+        user_repo += ["--repository", context.config.cache / "packages" / channel]
 
     for i, command in enumerate(commands):
         command = [*user_repo, *command]

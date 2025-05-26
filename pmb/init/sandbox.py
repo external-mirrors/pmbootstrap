@@ -862,9 +862,9 @@ class OverlayOperation(FSOperation):
             with umask(~mode):
                 os.mkdir(f"{dst}/upper", mode=mode)
             with umask(~0o755):
-                os.mkdir(f"{dst}/work")
+                os.mkdir(f"{dst}/cache")
 
-            options += [f"upperdir={dst}/upper", f"workdir={dst}/work"]
+            options += [f"upperdir={dst}/upper", f"workdir={dst}/cache"]
         else:
             if upperdir:
                 options += [f"upperdir={upperdir}"]

@@ -112,7 +112,7 @@ def generate_apkbuild(pkgname: str, deviceinfo: Deviceinfo, patches: list[str]) 
         """
 
     # Write the file
-    with (get_context().config.work / "aportgen/APKBUILD").open("w", encoding="utf-8") as hndl:
+    with (get_context().config.cache / "aportgen/APKBUILD").open("w", encoding="utf-8") as hndl:
         for line in content.rstrip().split("\n"):
             hndl.write(line[8:].replace(" " * 4, "\t") + "\n")
 
@@ -120,7 +120,7 @@ def generate_apkbuild(pkgname: str, deviceinfo: Deviceinfo, patches: list[str]) 
 def generate(pkgname: str) -> None:
     device = "-".join(pkgname.split("-")[1:])
     deviceinfo = pmb.parse.deviceinfo(device)
-    work = get_context().config.work
+    work = get_context().config.cache
 
     # Symlink commonly used patches
     pmb.helpers.run.user(["mkdir", "-p", work / "aportgen"])

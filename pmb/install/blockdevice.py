@@ -91,7 +91,7 @@ def create_and_mount_image(
 
     # Make sure there is enough free space
     size_full = round(layout.boot.size + layout.root.size)
-    disk_data = os.statvfs(get_context().config.work)
+    disk_data = os.statvfs(get_context().config.cache)
     free = disk_data.f_bsize * disk_data.f_bavail
     if size_full > free:
         raise RuntimeError(
