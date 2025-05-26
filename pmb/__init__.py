@@ -63,7 +63,7 @@ def main(*, original_uid: int) -> int:
     args: PmbArgs
     try:
         # Parse arguments, set up logging
-        args = parse.arguments()
+        args, parser = parse.arguments()
         context = get_context()
         os.umask(0o22)
 
@@ -107,7 +107,7 @@ def main(*, original_uid: int) -> int:
 
         # Run the function with the action's name (in pmb/helpers/frontend.py)
         if args.action:
-            run_command(args)
+            run_command(args, parser)
         else:
             logging.info("Run pmbootstrap -h for usage information.")
 

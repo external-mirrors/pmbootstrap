@@ -1262,9 +1262,10 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def arguments() -> PmbArgs:
+def arguments() -> tuple[PmbArgs, argparse.ArgumentParser]:
     # FIXME: It would be nice to not use cast here, but I don't know what else we could do.
-    args = cast(PmbArgs, get_parser().parse_args())
+    parser = get_parser()
+    args = cast(PmbArgs, parser.parse_args())
 
     if getattr(args, "fork_alpine_retain_branch", False):
         # fork_alpine_retain_branch largely matches the behaviour of fork_alpine, so
@@ -1283,4 +1284,4 @@ def arguments() -> PmbArgs:
         gomodcache = bool(getattr(args, "src", None))
         setattr(args, "go_mod_cache", gomodcache)
 
-    return args
+    return args, parser
