@@ -14,9 +14,24 @@ os.environ["SHELL"] = "/bin/sh" if os.path.exists("/bin/sh") else "/bin/bash"
 original_uid = os.geteuid()
 
 sandbox.acquire_privileges(become_root=False)
-# Unshare mount namespace
-sandbox.unshare(sandbox.CLONE_NEWNS)
-# sandbox.seccomp_suppress(chown=True)
+# Unshare mount and PID namespaces. We create a new PID namespace so
+# that any log-running daemons (e.g. adbd, sccache) will be killed when
+# pmbootstrap exits
+sandbox.unshare(sandbox.CLONE_NEWNS | sandbox.CLONE_NEWPID)
+
+# We are now PID 1 in a new PID namespace. We don't want to run all our
+# logic as PID 1 since subprocess.Popen() seemingly causes our PID to
+# change. So we fork now, the child process continues and we just wait
+# around and propagate the exit code.
+# This is all kinda hacky, we should integrate this with the acquire_privileges()
+# implementation since it's already doing similar fork shenanigans, we could
+# save a call to fork() this way. But for now it's fine.
+pid = os.fork()
+if pid > 0:
+    # We are PID 1! let's hang out
+    pid, wstatus = os.waitpid(pid, 0)
+    exitcode = os.waitstatus_to_exitcode(wstatus)
+    os._exit(exitcode)
 
 # print("Caps: ")
 # with open("/proc/self/status", "rb") as f:
