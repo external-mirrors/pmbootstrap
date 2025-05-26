@@ -1,7 +1,6 @@
 # Copyright 2023 Johannes Marbach, Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-import shlex
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal

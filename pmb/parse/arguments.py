@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 from collections.abc import Sequence
-import os
 from pathlib import Path
 import sys
 from typing import Any, cast
