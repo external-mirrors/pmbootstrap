@@ -101,9 +101,12 @@ def umount_all_list(prefix: Path, source: Path = Path("/proc/mounts")) -> list[P
 
 def umount_all(folder: Path) -> None:
     """Umount all folders that are mounted inside a given folder."""
-    for mountpoint in umount_all_list(folder):
+    all_mountpoints = umount_all_list(folder)
+    if all_mountpoints:
+        pmb.logging.info(f"% umount -R {folder}")
+
+    for mountpoint in all_mountpoints:
         if mountpoint.name != "binfmt_misc":
-            pmb.logging.info(f"% umount {mountpoint}")
             sandbox.umount2(str(mountpoint), sandbox.MNT_DETACH)
 
 
