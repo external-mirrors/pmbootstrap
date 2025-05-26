@@ -32,3 +32,7 @@ class Test(commands.Command):
     def run(self) -> None:
         if self.action == "apkindex_parse_all":
             apkindex_parse_all()
+        elif self.action == "repl":
+            import code
+
+            code.interact(local=locals())
