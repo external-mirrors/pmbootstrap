@@ -9,10 +9,12 @@ import pmb.chroot
 import pmb.config
 import pmb.helpers.pmaports
 import pmb.helpers.run
+from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
+from pmb.types import RunOutputTypeDefault
 
 
 def folder_size(path: Path) -> int:
@@ -79,6 +81,24 @@ def migrate_success(work: Path, version: int) -> None:
     work.joinpath("version").write_text(str(version) + "\n")
 
 
+# Migrate a path if it exists, create parent dirs in dest
+def migrate_path(src: Path, dest: Path, as_root: bool = True):
+    if not src.is_dir():
+        return
+
+    logging.info(f"Migrating {src.name} to {dest}")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+
+    # Permissions are all weird due to how we manage chroots
+    # so we do this as root by default
+    func = pmb.helpers.run.root
+
+    if not as_root:
+        func = pmb.helpers.run.user
+
+    func(["mv", src, str(dest)], output=RunOutputTypeDefault.STDOUT, check=True)
+
+
 def migrate_work_folder() -> None:
     # Read current version
     context = get_context()
@@ -86,6 +106,7 @@ def migrate_work_folder() -> None:
     suffix: str | None = None
     current_with_suffix = ""
     path = context.config.work / "version"
+
     if os.path.exists(path):
         # pmb 2.3.x added a suffix due to conflicting work versions
         # We need to be able to handle that going forward
@@ -151,12 +172,51 @@ def migrate_work_folder() -> None:
         migrate_success(context.config.work, 8)
         current = 8
 
+    if current == 8:
+        # Ask for confirmation
+        logging.info("Changelog:")
+        logging.info("* Split workdir into separate common cache and working environment")
+        logging.info("Migration will do the following:")
+        logging.info("* Move pmaports to the new path (unless using a custom path)")
+        logging.info("* Zap all chroots, local packages and caches")
+        logging.info("* Split the old workdir structure into separate work and cache dirs")
+        logging.info("pmbootstraps cache now lives in ~/.cache/pmbootstrap")
+        if not pmb.helpers.cli.confirm():
+            raise RuntimeError("Aborted.")
+
+        pmb.chroot.zap()
+
+        migrate_path(
+            context.config.work / "cache_git/pmaports", context.config.aports[-1], as_root=False
+        )
+        migrate_path(context.config.work / "cache_git", context.config.cache / "git", as_root=False)
+        migrate_path(context.config.work / "config_abuild", context.config.cache / "abuild-config")
+        migrate_path(context.config.work / "cache_rust", context.config.cache / "rust")
+        migrate_path(context.config.work / "cache_http", context.config.cache / "http")
+        migrate_path(context.config.work / "cache_distfiles", context.config.cache / "distfiles")
+        migrate_path(context.config.work / "cache_go", context.config.cache / "go")
+        migrate_path(context.config.work / "cache_appstream", context.config.cache / "appstream")
+        migrate_path(context.config.work / "config_apk_keys", context.config.cache / "keys")
+        migrate_path(context.config.work / "cache_sccache", context.config.cache / "sccache")
+
+        # Move arch-specific apk and ccache
+        for arch in Arch.supported():
+            migrate_path(
+                context.config.work / f"cache_apk_{arch}", context.config.cache / f"apk_{arch}"
+            )
+            migrate_path(
+                context.config.work / f"cache_ccache_{arch}",
+                context.config.cache / f"ccache_{arch}",
+            )
+
+        current = 9
+
     # Can't migrate, user must delete it
     if current != required:
         raise NonBugError(
             "Sorry, we can't migrate that automatically. Please"
             " run 'pmbootstrap shutdown', then delete your"
-            " current work folder manually ('sudo rm -rf "
+            " current workdir manually ('sudo rm -rf "
             f"{context.config.work}') and start over with 'pmbootstrap"
             " init'. All your binary packages and caches will"
             " be lost."

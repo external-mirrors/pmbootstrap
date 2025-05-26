@@ -193,7 +193,7 @@ def generate_apkbuild(
         """
 
     # Write the file
-    with (get_context().config.work / "aportgen/APKBUILD").open("w", encoding="utf-8") as hndl:
+    with (get_context().config.cache / "aportgen/APKBUILD").open("w", encoding="utf-8") as hndl:
         for line in content.rstrip().split("\n"):
             hndl.write(line[8:].replace(" " * 4, "\t") + "\n")
 
@@ -204,7 +204,7 @@ def generate(pkgname: str, device_category: pmb.helpers.devices.DeviceCategory) 
         deviceinfo = pmb.parse.deviceinfo(device)
     except NonBugError:  # device not found
         deviceinfo = None
-    work = get_context().config.work
+    work = get_context().config.cache
 
     pmb.helpers.run.user(["mkdir", "-p", work / "aportgen"])
 

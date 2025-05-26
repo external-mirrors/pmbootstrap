@@ -61,10 +61,10 @@ def get_repos_from_config(
     """
     Get a list of repository URLs, as they are in /etc/apk/repositories.
 
-    :param user_repository: add /mnt/pmbootstrap/packages
+    :param user_repository: add /work/packages
     :param mirrors_exclude: mirrors to exclude (see pmb.core.config.Mirrors) or true to exclude
                             all mirrors and only return the local repos
-    :returns: list of mirror strings, like ["/mnt/pmbootstrap/packages",
+    :returns: list of mirror strings, like ["/work/packages",
                                             "http://...", ...]
     """
     ret: list[str] = []
@@ -151,7 +151,7 @@ def apkindex_files(
     ret.extend(
         file
         for url in get_repos_from_config(None, exclude_mirrors)
-        if (file := get_context().config.work / f"cache_apk_{arch}" / apkindex_hash(url)).exists()
+        if (file := get_context().config.cache / f"apk_{arch}" / apkindex_hash(url)).exists()
     )
 
     return ret
@@ -190,7 +190,7 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
         for architecture in architectures:
             # APKINDEX file name from the URL
             url_full = f"{url}/{architecture}/APKINDEX.tar.gz"
-            cache_apk_outside = get_context().config.work / f"cache_apk_{architecture}"
+            cache_apk_outside = get_context().config.cache / f"apk_{architecture}"
             apkindex = cache_apk_outside / f"{apkindex_hash(url)}"
 
             # Find update reason, possibly skip non-existing or known 404 files
@@ -271,5 +271,5 @@ def alpine_apkindex_path(repo: str = "main", arch: Arch | None = None) -> Path:
     # Find it on disk
     channel_cfg = pmb.config.pmaports.read_config_channel()
     repo_link = f"{get_context().config.mirrors['alpine']}{channel_cfg['mirrordir_alpine']}/{repo}"
-    cache_folder = get_context().config.work / (f"cache_apk_{arch}")
+    cache_folder = get_context().config.cache / (f"apk_{arch}")
     return cache_folder / apkindex_hash(repo_link)

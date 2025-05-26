@@ -53,7 +53,7 @@ def copy_to_buildpath(
 
 def abuild_overrides(apkbuild: Path) -> None:
     """Override some abuild functions by patching the APKBUILD file."""
-    if apkbuild.is_relative_to(get_context().config.work / "cache_git"):
+    if apkbuild.is_relative_to(get_context().config.cache / "git"):
         raise ValueError(f"Refusing to patch file in pmaports repo: {apkbuild}")
 
     # Patch the APKBUILD file
@@ -152,7 +152,7 @@ def index_repo(arch: Arch | None = None) -> None:
     for path in paths:
         if path.is_dir():
             path_channel, path_arch = path.parts[-2:]
-            path_repo_chroot = Path("/mnt/pmbootstrap/packages") / path_channel / path_arch
+            path_repo_chroot = Path("/work/packages") / path_channel / path_arch
             logging.debug(f"(native) index {path_channel}/{path_arch} repository")
             description = str(datetime.datetime.now())
             commands = [
@@ -180,26 +180,10 @@ def configure_abuild(chroot: Chroot, verify: bool = False) -> None:
     :param verify: internally used to test if changing the config has worked.
     """
     jobs = get_context().config.jobs
-    path = chroot / "etc/abuild.conf"
-    prefix = "export JOBS="
-    with path.open(encoding="utf-8") as handle:
-        for line in handle:
-            if not line.startswith(prefix):
-                continue
-            if line != (prefix + str(jobs) + "\n"):
-                if verify:
-                    raise RuntimeError(
-                        f"Failed to configure abuild: {path}"
-                        "\nTry to delete the file"
-                        "(or zap the chroot)."
-                    )
-                pmb.chroot.root(
-                    ["sed", "-i", "-e", f"s/^{prefix}.*/{prefix}{jobs}/", "/etc/abuild.conf"],
-                    chroot,
-                )
-                configure_abuild(chroot, True)
-            return
-    pmb.chroot.root(["sed", "-i", f"$ a\\{prefix}{jobs}", "/etc/abuild.conf"], chroot)
+
+    # Use the global distfiles cache
+    pmb.chroot.root(["sh", "-c", "echo SRCDEST=/cache/distfiles >> /etc/abuild.conf"], chroot)
+    pmb.chroot.root(["sh", "-c", f"echo JOBS={jobs} >> /etc/abuild.conf"], chroot)
 
 
 def configure_ccache(chroot: Chroot = Chroot.native(), verify: bool = False) -> None:
@@ -211,7 +195,7 @@ def configure_ccache(chroot: Chroot = Chroot.native(), verify: bool = False) -> 
     # Check if the settings have been set already
     arch = chroot.arch
     config = get_context().config
-    path = config.work / f"cache_ccache_{arch}" / "ccache.conf"
+    path = config.cache / f"ccache_{arch}" / "ccache.conf"
     if os.path.exists(path):
         with open(path, encoding="utf-8") as handle:
             for line in handle:

@@ -35,7 +35,7 @@ def scp_abuild_key(user: str, host: str, port: str) -> None:
     :param host: target device ssh hostname
     :param port: target device ssh port
     """
-    keys = list((get_context().config.work / "config_abuild").glob("*.pub"))
+    keys = list((get_context().config.cache / "config_abuild").glob("*.pub"))
     key = keys[0]
     key_name = os.path.basename(key)
 

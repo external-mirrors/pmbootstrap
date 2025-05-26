@@ -96,26 +96,29 @@ def zap(
             f"Failed to shut down all chroots. Ensure they're not doing any work and you're not chrooted into any. ({exception})"
         ) from exception
 
-    # Deletion patterns for folders inside get_context().config.work
-    patterns = []
+    # Deletion patterns for folders inside get_context().config.cache
+    cache = get_context().config.cache
+    work = get_context().config.work
+
+    patterns: list[tuple[Path, str]] = []
     if pkgs_local:
-        patterns += ["packages"]
+        patterns += [(work, "packages")]
     if http:
-        patterns += ["cache_http"]
+        patterns += [(cache, "http")]
     if distfiles:
-        patterns += ["cache_distfiles"]
+        patterns += [(cache, "distfiles")]
     if rust:
-        patterns += ["cache_rust"]
+        patterns += [(cache, "rust")]
     if netboot:
-        patterns += ["images_netboot"]
+        patterns += [(cache, "images_netboot")]
 
     for chroot in Chroot.glob():
         del_chroot(chroot, confirm, dry)
 
     # Delete everything matching the patterns
-    for pattern in patterns:
+    for dir_, pattern in patterns:
         logging.debug(f"Deleting {pattern}")
-        pattern = os.path.realpath(f"{get_context().config.work}/{pattern}")
+        pattern = os.path.realpath(f"{dir_}/{pattern}")
         matches = glob.glob(pattern)
         for match in matches:
             if not confirm or pmb.helpers.cli.confirm(f"Remove {match}?"):
@@ -192,7 +195,7 @@ def zap_pkgs_local_mismatch(confirm: bool = True, dry: bool = False) -> None:
 
 def zap_pkgs_online_mismatch(confirm: bool = True, dry: bool = False) -> None:
     # Check whether we need to do anything
-    paths = list(get_context().config.work.glob("cache_apk_*"))
+    paths = list(get_context().config.cache.glob("apk_*"))
     if not len(paths):
         return
     if confirm and not pmb.helpers.cli.confirm("Remove outdated binary packages?"):

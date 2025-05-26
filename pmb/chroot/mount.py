@@ -145,6 +145,7 @@ def mount(chroot: Chroot) -> None:
     channel = pmb.config.pmaports.read_config(pkgrepo_default_path())["channel"]
     mountpoints: dict[Path, Path] = {}
     for src_template, target_template in pmb.config.chroot_mount_bind.items():
+        src_template = src_template.replace("$CACHE", os.fspath(get_context().config.cache))
         src_template = src_template.replace("$WORK", os.fspath(get_context().config.work))
         src_template = src_template.replace("$ARCH", str(arch))
         src_template = src_template.replace("$CHANNEL", channel)
@@ -184,17 +185,18 @@ def mount_native_into_foreign(chroot: Chroot) -> None:
 
 def remove_mnt_pmbootstrap(chroot: Chroot) -> None:
     """
-    Safely remove /mnt/pmbootstrap directories from the chroot, without
+    Safely remove /cache directories from the chroot, without
     running rm -r as root and potentially removing data inside the
     mountpoint in case it was still mounted (bug in pmbootstrap, or user
     ran pmbootstrap 2x in parallel). This is similar to running 'rm -r -d',
     but we don't assume that the host's rm has the -d flag (busybox does
     not).
     """
-    mnt_dir = chroot / "mnt/pmbootstrap"
+    for d in ["work", "cache"]:
+        mnt_dir = chroot / d
 
-    if not mnt_dir.exists():
-        return
+        if not mnt_dir.exists():
+            return
 
-    for path in [*mnt_dir.glob("*"), mnt_dir]:
-        pmb.helpers.run.root(["rmdir", path])
+        for path in [*mnt_dir.glob("*"), mnt_dir]:
+            pmb.helpers.run.root(["rmdir", path])

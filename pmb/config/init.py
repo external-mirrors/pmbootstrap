@@ -936,14 +936,34 @@ def frontend(args: PmbArgs) -> None:
     # Work folder (needs to be first, so we can create chroots early)
     config = get_context().config
 
+    work_exists = False
+    local = args.local or get_context().local
+
+    # For a local workdir, don't prompt for work / pmaports paths and use
+    # well-known defaults instead.
+    if local:
+        cwd = Path(os.getcwd())
+        config.work = cwd / ".pmb"
+        config.aports = [cwd / "pmaports"]
+        args.config = cwd / "pmbootstrap.conf"
+
+        config.work.mkdir(mode=0o700, parents=True, exist_ok=True)
+
     using_default_pmaports = config.aports[-1].is_relative_to(config.work)
+
+    if not local:
+        config.work, work_exists = ask_for_work_path(config.work)
+
+    # Create the cache/git dir, so it is owned by the host system's user
+    # (otherwise pmb.helpers.mount.bind would create it as root)
+    (config.cache / "git").mkdir(mode=0o700, parents=True, exist_ok=True)
 
     config.work, work_exists = ask_for_work_path(config.work)
 
     # If the work dir changed then we need to update the pmaports path
     # to be relative to the new workdir
     if using_default_pmaports:
-        config.aports = [config.work / "cache_git/pmaports"]
+        config.aports = [config.work / "pmaports"]
 
     config.aports[-1] = ask_for_pmaports_path(config.aports[-1])
 

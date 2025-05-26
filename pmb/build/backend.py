@@ -35,7 +35,7 @@ def override_source(
         return
 
     # Mount source in chroot
-    mount_path = "/mnt/pmbootstrap/source-override/"
+    mount_path = "work/source-override/"
     mount_path_outside = chroot / mount_path
     pmb.helpers.mount.bind(src, mount_path_outside, umount=True)
 
@@ -244,7 +244,7 @@ def run_abuild(
         [
             ["mkdir", "-p", "/home/pmos/packages"],
             ["rm", "-f", "/home/pmos/packages/pmos"],
-            ["ln", "-sf", f"/mnt/pmbootstrap/packages/{channel}", "/home/pmos/packages/pmos"],
+            ["ln", "-sf", f"/work/packages/{channel}", "/home/pmos/packages/pmos"],
         ],
         buildchroot,
     )

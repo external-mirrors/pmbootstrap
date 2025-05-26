@@ -86,7 +86,7 @@ def packages_get_locally_built_apks(package_list: Collection[str], arch: Arch) -
     :param arch: architecture that the locally built packages should have
     :returns: a dict mapping pkgname to apk file path for each locally built
               package found, e.g.
-              {"hello-world": Path("/mnt/pmbootstrap/packages/edge/x86_64/hello-world-1-r6.apk")}
+              {"hello-world": Path("/work/packages/edge/x86_64/hello-world-1-r6.apk")}
     """
     channels: list[str] = pmb.config.pmaports.all_channels()
     local: dict[str, Path] = {}
