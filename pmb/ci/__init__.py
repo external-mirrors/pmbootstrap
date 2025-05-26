@@ -6,9 +6,13 @@ from pmb.helpers import logging
 import os
 from pathlib import Path
 from typing import TypedDict
+import pmb.build
 import pmb.chroot
+import pmb.chroot.run
 from pmb.types import Env
 import pmb.helpers.cli
+import pmb.helpers.run
+import pmb.helpers.mount
 from pmb.core import Chroot
 
 
@@ -180,19 +184,29 @@ def run_scripts(topdir: Path, scripts: dict[str, CiScriptDescriptor]) -> None:
         script_path = f".ci/{script_name}.sh"
         logging.info(f"*** ({step}/{steps}) RUNNING CI SCRIPT: {script_path} [{where}] ***")
 
-        if "native" in script["options"]:
-            rc = pmb.helpers.run.user([script_path], topdir, output="tui")
-            continue
-        else:
-            # Run inside pmbootstrap chroot
-            if not repo_copied:
-                copy_git_repo_to_chroot(topdir)
-                repo_copied = True
+        chroot = Chroot.native()
+        if chroot.exists():
+            pmb.chroot.del_chroot(chroot.path)
 
-            env: Env = {"TESTUSER": "pmos"}
-            rc = pmb.chroot.root(
-                [script_path], check=False, env=env, working_dir=Path("/home/pmos/ci"), output="tui"
-            )
+        # if "native" in script["options"]:
+        #     # We're in a use namespace, so the "id == 0" checks in scripts won't work.
+        #     # Therefore we still need to run them in a chroot
+        #     chroot = Chroot.native()
+        #     pmb.chroot.init(chroot)
+        #     pmb.build.init_abuild_minimal(chroot)
+        #     pmb.helpers.mount.bind(Path.cwd(), chroot / "project")
+        #     rc = pmb.chroot.run.root([script_path], chroot, Path("/project"), env={"TESTUSER": "root"}, output="tui")
+        #     continue
+        # else:
+        # Run inside pmbootstrap chroot
+        if not repo_copied:
+            copy_git_repo_to_chroot(topdir)
+            repo_copied = True
+
+        env: Env = {"TESTUSER": "pmos"}
+        rc = pmb.chroot.root(
+            [script_path], check=False, env=env, working_dir=Path("/home/pmos/ci"), output="tui"
+        )
         if rc:
             logging.error(f"ERROR: CI script failed: {script_name}")
             exit(1)
