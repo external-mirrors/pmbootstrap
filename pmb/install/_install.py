@@ -9,6 +9,7 @@ import shlex
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+import shutil
 
 import pmb.build
 import pmb.chroot
@@ -191,14 +192,15 @@ def configure_apk(args: PmbArgs, rootfs: Path) -> None:
 
     # Copy over keys
     for key in keys_dir.glob("*.pub"):
-        pmb.helpers.run.root(["cp", key, rootfs / "etc/apk/keys/"])
+        shutil.copy(key, rootfs / "etc/apk/keys/")
 
     # Copy over the corresponding APKINDEX files from cache
     index_files = pmb.helpers.repo.apkindex_files(
         arch=pmb.parse.deviceinfo().arch, user_repository=False
     )
+
     for f in index_files:
-        pmb.helpers.run.root(["cp", f, rootfs / "var/cache/apk/"])
+        shutil.copy(f, rootfs / "var/cache/apk/")
 
     # Populate repositories
     open(rootfs / "etc/apk/repositories", "w").write(
@@ -226,7 +228,11 @@ def set_user(config: Config) -> None:
     groups += pmb.install.ui.get_groups(config)
 
     for group in groups:
-        pmb.chroot.root(["addgroup", "-S", group], chroot, check=False)
+        # Create system group
+        pmb.chroot.rootm(
+            [["addgroup", "-S", group], ["addgroup", config.user, group]], chroot, check=False
+        )
+        # Add user to the group
         pmb.chroot.root(["addgroup", config.user, group], chroot)
 
 
