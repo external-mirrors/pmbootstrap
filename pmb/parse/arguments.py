@@ -3,7 +3,6 @@
 import argparse
 from collections.abc import Sequence
 import contextlib
-import os
 from pathlib import Path
 import sys
 from typing import Any, cast
