@@ -59,6 +59,9 @@ def rootm(
         msg += f"cd {working_dir}; "
     msg += "; ".join([" ".join(cmd_str) for cmd_str in cmd_strs])
 
+    if not chroot.is_mounted():
+        raise RuntimeError(f"({chroot}) is not mounted, can't run command: {msg}")
+
     # Merge env with defaults into env_all
     env_all: Env = {
         "CHARSET": "UTF-8",
