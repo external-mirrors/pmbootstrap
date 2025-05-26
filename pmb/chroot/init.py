@@ -145,11 +145,11 @@ def init(chroot: Chroot) -> None:
         pmb.chroot.root(["adduser", "-s", "/bin/sh", "-D", "pmos", "-u", pmb.config.chroot_uid_user], chroot)
 
         # Create the links (with subfolders if necessary)
-        for target, link_name in pmb.config.chroot_home_symlinks.items():
-            link_dir = os.path.dirname(link_name)
-            if not os.path.exists(chroot / link_dir):
-                pmb.chroot.user(["mkdir", "-p", link_dir], chroot)
-            if not os.path.exists(chroot / target):
-                pmb.chroot.root(["mkdir", "-p", target], chroot)
-            pmb.chroot.user(["ln", "-s", target, link_name], chroot)
-            pmb.chroot.root(["chown", "pmos:pmos", target], chroot)
+        for src_template, link_name in pmb.config.chroot_home_symlinks.items():
+            target = Path(src_template.replace("$ARCH", str(arch)))
+            (chroot / link_name).parent.mkdir(exist_ok=True, parents=True)
+            (chroot / target).mkdir(exist_ok=True, parents=True)
+            (chroot / link_name).symlink_to(target, target_is_directory=True)
+            shutil.chown(
+                chroot / target, int(pmb.config.chroot_uid_user), int(pmb.config.chroot_uid_user)
+            )
