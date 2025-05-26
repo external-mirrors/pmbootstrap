@@ -179,6 +179,12 @@ def random_valid_deviceinfo(tmp_path: Path) -> Path:
     info["initfs_compression"] = random.choice(
         ["zstd", "zstd:best", "lz4", "lzma", "gzip", "gzip:fast", "none"]
     )
+    # FIXME: we can't keep adding properties here manually as we make more of them
+    # discrete types..
+    if "rootfs_image_sector_size" in info:
+        info["rootfs_image_sector_size"] = random.choice([512, 2048, 4096])
+    if "boot_part_start" in info:
+        info["boot_part_start"] = random.choice([0, 2048, 4096])
 
     # Now write it all out to a file
     with open(path, "w") as f:

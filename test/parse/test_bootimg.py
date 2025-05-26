@@ -44,6 +44,9 @@ def progs() -> dict[str, str]:
 
 @pytest.fixture
 def bootimg(progs: dict[str, str], tmp_path: Path) -> Callable:
+    if Path("/in-pmbootstrap").exists():
+        pytest.skip("Nested chroot unsupported")
+
     path: Path = tmp_path / "boot.img"
     cmd = [
         progs["mkbootimg"],

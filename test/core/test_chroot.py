@@ -11,14 +11,14 @@ from pmb.core.chroot import Chroot, ChrootType
 def test_valid_chroots(pmb_args: None, mock_devices_find_path: None) -> None:
     """Test that Chroot objects work as expected"""
 
-    work = get_context().config.work
+    localdir = get_context().config.work
 
     chroot = Chroot.native()
     assert chroot.type == ChrootType.NATIVE
     assert chroot.name == ""
     assert chroot.arch in Arch.supported()
     assert not chroot.exists()  # Shouldn't be created
-    assert chroot.path == work / "chroot_native"
+    assert chroot.path == localdir / "chroot_native"
     assert str(chroot) == "native"
 
     # Don't create an aarch64 buildroot on aarch64
@@ -43,7 +43,7 @@ def test_valid_chroots(pmb_args: None, mock_devices_find_path: None) -> None:
     assert chroot.name == "qemu-amd64"
     assert chroot.arch == Arch.x86_64
     assert not chroot.exists()  # Shouldn't be created
-    assert chroot.path == work / "chroot_rootfs_qemu-amd64"
+    assert chroot.path == localdir / "chroot_rootfs_qemu-amd64"
     assert str(chroot) == "rootfs_qemu-amd64"
 
 

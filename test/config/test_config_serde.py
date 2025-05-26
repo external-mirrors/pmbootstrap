@@ -25,4 +25,4 @@ def test_load(config_file: Path) -> None:
     assert config.ui == "gnome"
     assert config.providers == {}
     assert config.mirrors["pmaports"] is not None
-    assert ".pytest_tmp" in config.work.parts
+    assert ".pytest_tmp" in config.cache.parts
