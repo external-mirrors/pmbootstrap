@@ -347,7 +347,7 @@ def apkbuild(path: Path, check_pkgver: bool = True, check_pkgname: bool = True) 
         path = path / "APKBUILD"
 
     if not path.exists():
-        raise FileNotFoundError(f"{path.relative_to(get_context().config.work)} not found!")
+        raise FileNotFoundError(f"{path.relative_to(get_context().config.cache)} not found!")
 
     # Read the file and check line endings
     lines = read_file(path)

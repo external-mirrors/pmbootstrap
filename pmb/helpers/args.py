@@ -32,7 +32,7 @@ import pmb.helpers.args
         with "pmbootstrap init".
 
        Examples:
-       args.aports ("$WORK/cache_git/pmaports", override with --aports)
+       args.aports ("$WORK/git/pmaports", override with --aports)
        args.device ("samsung-i9100", "qemu-amd64" etc.)
        get_context().config.work ("/home/user/.local/var/pmbootstrap", override with --work)
 

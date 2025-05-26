@@ -56,21 +56,22 @@ def mark_in_chroot(chroot: Chroot = Chroot.native()) -> None:
         pmb.helpers.run.root(["touch", in_chroot_file])
 
 
-def init_keys() -> None:
+def init_keys(chroot: Chroot) -> None:
     """
     All Alpine and postmarketOS repository keys are shipped with pmbootstrap.
-    Copy them into $WORK/config_apk_keys, which gets mounted inside the various
+    Copy them into $WORK/keys, which gets mounted inside the various
     chroots as /etc/apk/keys.
 
     This is done before installing any package, so apk can verify APKINDEX
     files of binary repositories even though alpine-keys/postmarketos-keys are
     not installed yet.
     """
+    target = chroot / "etc/apk/keys/"
+    target.mkdir(exist_ok=True, parents=True)
     for key in pmb.config.apk_keys_path.glob("*.pub"):
-        target = get_context().config.work / "config_apk_keys" / key.name
-        if not target.exists():
-            # Copy as root, so the resulting files in chroots are owned by root
-            pmb.helpers.run.root(["cp", key, target])
+        shutil.copy(key, target)
+    for key in (get_context().config.cache / "keys").glob("*.pub"):
+        shutil.copy(key, target)
 
 
 def init_usr_merge(chroot: Chroot) -> None:
@@ -98,6 +99,13 @@ def warn_if_chroots_outdated() -> None:
         logging.warning(
             f"WARNING: {msg} older than {days_warn} days. Consider running 'pmbootstrap zap'."
         )
+
+
+def setup_cache_path(chroot: Chroot):
+    # Set up the apk cache to point to the working cache
+    cache_target = chroot / "etc/apk/cache"
+    if not cache_target.is_symlink():
+        cache_target.symlink_to(f"/cache/apk_{chroot.arch}")
 
 
 @Cache("chroot")
@@ -132,9 +140,10 @@ def init(chroot: Chroot, usr_merge: UsrMerge = UsrMerge.AUTO) -> None:
     pmb.chroot.mount(chroot)
     mark_in_chroot(chroot)
     if chroot.exists():
-        copy_resolv_conf(chroot)
         pmb.helpers.apk.update_repository_list(chroot.path)
+        copy_resolv_conf(chroot)
         warn_if_chroots_outdated()
+        setup_cache_path(chroot)
         return
 
     # Fetch apk.static
@@ -143,9 +152,11 @@ def init(chroot: Chroot, usr_merge: UsrMerge = UsrMerge.AUTO) -> None:
     logging.info(f"({chroot}) Creating chroot")
 
     # Initialize /etc/apk/keys/, resolv.conf, repositories
-    init_keys()
-    copy_resolv_conf(chroot)
+    init_keys(chroot)
+    # Also creates /etc
     pmb.helpers.apk.update_repository_list(chroot.path)
+    copy_resolv_conf(chroot)
+    setup_cache_path(chroot)
 
     pmb.config.workdir.chroot_save_init(chroot)
 

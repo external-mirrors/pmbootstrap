@@ -37,7 +37,7 @@ class Context:
     config: Config
 
     def __init__(self, config: Config):
-        self.log = config.work / "log.txt"
+        self.log = config.cache / "log.txt"
         self.config = config
 
 

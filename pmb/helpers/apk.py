@@ -49,13 +49,13 @@ def update_repository_list(
             for line in handle:
                 lines_old.append(line[:-1])
     else:
-        pmb.helpers.run.root(["mkdir", "-p", path.parent])
+        path.parent.mkdir(exist_ok=True, parents=True)
 
     user_repo_dir: Path | None
     if isinstance(user_repository, Path):
         user_repo_dir = user_repository
     else:
-        user_repo_dir = Path("/mnt/pmbootstrap/packages") if user_repository else None
+        user_repo_dir = Path("/cache/packages") if user_repository else None
 
     # Up to date: Save cache, return
     lines_new = pmb.helpers.repo.urls(
@@ -93,8 +93,8 @@ def _prepare_fifo() -> Path:
               path of the fifo as needed by cat to read from it (always
               relative to the host)
     """
-    pmb.helpers.run.root(["mkdir", "-p", get_context().config.work / "tmp"])
-    fifo = get_context().config.work / "tmp/apk_progress_fifo"
+    pmb.helpers.run.root(["mkdir", "-p", get_context().config.cache / "tmp"])
+    fifo = get_context().config.cache / "tmp/apk_progress_fifo"
     if os.path.exists(fifo):
         pmb.helpers.run.root(["rm", "-f", fifo])
 
@@ -164,9 +164,9 @@ def _prepare_cmd(command: Sequence[PathString], chroot: Chroot | None) -> list[s
     # Our _apk_with_progress() wrapper also need --no-progress, since all that does is
     # prevent apk itself from rendering progress bars. We instead want it to tell us
     # the progress so we can render it. So we always set --no-progress.
-    _command: list[str] = [str(config.work / "apk.static"), "--no-progress"]
+    _command: list[str] = [str(config.cache / "apk.static"), "--no-progress"]
     if chroot:
-        cache_dir = config.work / f"cache_apk_{chroot.arch}"
+        cache_dir = config.cache / f"apk_{chroot.arch}"
         _command.extend(
             [
                 "--root",
@@ -182,7 +182,7 @@ def _prepare_cmd(command: Sequence[PathString], chroot: Chroot | None) -> list[s
             _command.extend(["--cache-dir", str(cache_dir)])
 
         local_repos = pmb.helpers.repo.urls(
-            user_repository=config.work / "packages", mirrors_exclude=True
+            user_repository=config.cache / "packages", mirrors_exclude=True
         )
         for repo in local_repos:
             _command.extend(["--repository", repo])
@@ -233,8 +233,8 @@ def run(command: Sequence[PathString], chroot: Chroot, with_progress: bool = Tru
 
 def cache_clean(arch: Arch) -> None:
     """Clean the APK cache for a specific architecture."""
-    work = get_context().config.work
-    cache_dir = work / f"cache_apk_{arch}"
+    work = get_context().config.cache
+    cache_dir = work / f"apk_{arch}"
     if not cache_dir.exists():
         return
 
@@ -257,7 +257,7 @@ def cache_clean(arch: Arch) -> None:
         (tmproot / "lib/apk/db/installed").touch(exist_ok=True)
         (tmproot / "lib/apk/db/triggers").touch(exist_ok=True)
 
-        (tmproot / "etc/apk/keys").symlink_to(work / "config_apk_keys")
+        (tmproot / "etc/apk/keys").symlink_to(work / "keys")
 
         # Our fake rootfs needs a valid repositories file for apk
         # to have something to compare the cache against

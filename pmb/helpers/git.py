@@ -30,7 +30,7 @@ def get_path(name_repo: str) -> Path:
     :returns: full path to repository
     """
     if name_repo == "aports_upstream":
-        return get_context().config.work / "cache_git" / name_repo
+        return get_context().config.cache / "git" / name_repo
     return pkgrepo_path(name_repo)
 
 
@@ -55,7 +55,7 @@ def clone(name_repo: str) -> None:
 
         # Create parent dir and clone
         logging.info(f"Clone git repository: {url}")
-        (get_context().config.work / "cache_git").mkdir(exist_ok=True)
+        (get_context().config.cache / "git").mkdir(exist_ok=True)
         pmb.helpers.run.user(command, output="stdout")
 
     # FETCH_HEAD does not exist after initial clone. Create it, so

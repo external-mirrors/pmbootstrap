@@ -150,7 +150,7 @@ def extract(version: str, apk_path: Path) -> None:
         )
 
     # Move it to the right path
-    target_path = get_context().config.work / "apk.static"
+    target_path = get_context().config.cache / "apk.static"
     shutil.move(temp_path, target_path)
 
 

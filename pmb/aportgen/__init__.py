@@ -77,7 +77,7 @@ def generate(pkgname: str, fork_alpine: bool, fork_alpine_retain_branch: bool = 
         if not pmb.helpers.cli.confirm("Continue and overwrite?"):
             raise RuntimeError("Aborted.")
 
-    aportgen = config.work / "aportgen"
+    aportgen = config.cache / "aportgen"
 
     if os.path.exists(aportgen):
         pmb.helpers.run.user(["rm", "-r", aportgen])

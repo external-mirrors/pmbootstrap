@@ -50,7 +50,7 @@ class Config:
     # This is a class variable that gets treated as an instance variable. It's wrong, but since we
     # only ever have one config (for now?) it doesn't cause any issues. Would be good to fix though.
     aports: list[Path] = [  # noqa: RUF012
-        Path(os.path.expanduser("~") + "/.local/var/pmbootstrap/cache_git/pmaports")
+        Path(os.path.expanduser("~") + "/.local/var/pmbootstrap/cache/git/pmaports")
     ]
     boot_size: int = 256
     build_default_device_arch: bool = False
@@ -83,6 +83,7 @@ class Config:
     ui_extras: bool = False
     user: str = "user"
     work: Path = Path(os.path.expanduser("~") + "/.local/var/pmbootstrap")
+    cache: Path = Path(os.path.expanduser("~") + "/.local/var/pmbootstrap/cache")
     # automatically zap chroots that are for the wrong channel
     auto_zap_misconfigured_chroots: AutoZapConfig = AutoZapConfig.NO
 

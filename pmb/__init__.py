@@ -46,7 +46,7 @@ def print_log_hint() -> None:
     context = get_context(allow_failure=True)
     if context and context.details_to_stdout:
         return
-    log = context.log if context else Config().work / "log.txt"
+    log = context.log if context else Config().cache / "log.txt"
     # Hints about the log file (print to stdout only)
     log_hint = "Run 'pmbootstrap log' for details."
     if not os.path.exists(log):
@@ -104,7 +104,7 @@ def main(*, original_uid: int) -> int:
 
         # Migrate work folder if necessary
         if args.action not in ["shutdown", "zap", "log"]:
-            other.migrate_work_folder()
+            other.migrate_localdir()
 
         # Run the function with the action's name (in pmb/helpers/frontend.py)
         if args.action:
