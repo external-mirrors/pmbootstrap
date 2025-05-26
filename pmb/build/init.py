@@ -5,6 +5,7 @@ from pmb.core.context import Context
 from pmb.helpers import logging
 import os
 import pathlib
+import shutil
 
 import pmb.config
 import pmb.chroot
@@ -52,16 +53,15 @@ def init(chroot: Chroot = Chroot.native()) -> bool:
     init_abuild_minimal(chroot)
 
     # Generate package signing keys
-    if not os.path.exists(get_context().config.work / "config_abuild/abuild.conf"):
+    if not os.path.exists(get_context().config.cache / "abuild-config/abuild.conf"):
         logging.info(f"({chroot}) generate abuild keys")
         pmb.chroot.user(
             ["abuild-keygen", "-n", "-q", "-a"], chroot, env={"PACKAGER": "pmos <pmos@local>"}
         )
 
         # Copy package signing key to /etc/apk/keys
-        for key in (chroot / "mnt/pmbootstrap/abuild-config").glob("*.pub"):
-            key = key.relative_to(chroot.path)
-            pmb.chroot.root(["cp", key, "/etc/apk/keys/"], chroot)
+        for key in (get_context().config.cache / "abuild-config").glob("*.pub"):
+            shutil.copy(key, chroot / "etc/apk/keys")
 
     apk_arch = chroot.arch
 

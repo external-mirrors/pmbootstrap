@@ -101,7 +101,7 @@ def generate(
         if not pmb.helpers.cli.confirm("Continue and overwrite?"):
             raise RuntimeError("Aborted.")
 
-    aportgen = config.work / "aportgen"
+    aportgen = config.cache / "aportgen"
 
     if os.path.exists(aportgen):
         pmb.helpers.run.user(["rm", "-r", aportgen])

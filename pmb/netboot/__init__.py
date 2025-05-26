@@ -22,7 +22,7 @@ def start_nbd_server(device: str, replace: bool, ip: str = "172.16.42.2", port: 
     chroot = Chroot.native()
     pmb.chroot.init(chroot)
 
-    rootfs_path = Path("/mnt/pmbootstrap/netboot") / f"{device}.img"
+    rootfs_path = Path("/cache/netboot") / f"{device}.img"
     if not (chroot / rootfs_path).exists() or replace:
         rootfs_path2 = Path("/home/pmos/rootfs") / f"{device}.img"
         if not (chroot / rootfs_path2).exists():
@@ -35,7 +35,7 @@ def start_nbd_server(device: str, replace: bool, ip: str = "172.16.42.2", port: 
             return
         pmb.chroot.root(["cp", rootfs_path2, rootfs_path])
         logging.info(
-            f"NOTE: Copied device image to {get_context().config.work}"
+            f"NOTE: Copied device image to {get_context().config.cache}"
             f'/images_netboot/. The image will persist "pmbootstrap '
             f'zap" for your convenience. Use "pmbootstrap netboot '
             f'serve --help" for more options.'

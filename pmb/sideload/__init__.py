@@ -24,7 +24,7 @@ def scp_abuild_key(args: PmbArgs, user: str, host: str, port: str) -> None:
     :param host: target device ssh hostname
     :param port: target device ssh port"""
 
-    keys = list((get_context().config.work / "config_abuild").glob("*.pub"))
+    keys = list((get_context().config.cache / "config_abuild").glob("*.pub"))
     key = keys[0]
     key_name = os.path.basename(key)
 
@@ -122,7 +122,7 @@ def sideload(
         channel = pmb.config.pmaports.read_config(base_aports)["channel"]
 
         apk_file = f"{pkgname}-{data_repo.version}.apk"
-        host_path = context.config.work / "packages" / channel / arch / apk_file
+        host_path = context.config.cache / "packages" / channel / arch / apk_file
 
         if not host_path.is_file():
             to_build.append(pkgname)

@@ -46,13 +46,13 @@ def check_grsec() -> None:
     )
 
 
-def migrate_success(work: Path, version: int) -> None:
+def migrate_success(localdir: Path, version: int) -> None:
     logging.info("Migration to version " + str(version) + " done")
-    with open(work / "version", "w") as handle:
+    with open(localdir / "version", "w") as handle:
         handle.write(str(version) + "\n")
 
 
-def migrate_work_folder() -> None:
+def migrate_localdir() -> None:
     # Read current version
     context = get_context()
     current = 0
@@ -130,7 +130,7 @@ def migrate_work_folder() -> None:
         raise NonBugError(
             "Sorry, we can't migrate that automatically. Please"
             " run 'pmbootstrap shutdown', then delete your"
-            " current work folder manually ('sudo rm -rf "
+            " current localdir manually ('sudo rm -rf "
             f"{context.config.work}') and start over with 'pmbootstrap"
             " init'. All your binary packages and caches will"
             " be lost."

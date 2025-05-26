@@ -153,24 +153,13 @@ chroot_path = ":".join(
 host_path = os.environ["PATH"] + ":/usr/sbin/"
 
 # Folders that get mounted inside the chroot
-# $WORK gets replaced with get_context().config.work
+# $CACHE gets replaced with get_context().config.cache
 # $ARCH gets replaced with the chroot architecture (eg. x86_64, armhf)
 # $CHANNEL gets replaced with the release channel (e.g. edge, v21.03)
-# Use no more than one dir after /mnt/pmbootstrap, see remove_mnt_pmbootstrap.
+# Use no more than one dir after /cache, see remove_mnt_pmbootstrap.
 chroot_mount_bind = {
     "/proc": "/proc",
-    "$WORK/cache_apk_$ARCH": "/var/cache/apk",
-    "$WORK/cache_appstream/$ARCH/$CHANNEL": "/mnt/appstream-data",
-    "$WORK/cache_ccache_$ARCH": "/mnt/pmbootstrap/ccache",
-    "$WORK/cache_distfiles": "/var/cache/distfiles",
-    "$WORK/cache_git": "/mnt/pmbootstrap/git",
-    "$WORK/cache_go": "/mnt/pmbootstrap/go",
-    "$WORK/cache_rust": "/mnt/pmbootstrap/rust",
-    "$WORK/config_abuild": "/mnt/pmbootstrap/abuild-config",
-    "$WORK/config_apk_keys": "/etc/apk/keys",
-    "$WORK/cache_sccache": "/mnt/pmbootstrap/sccache",
-    "$WORK/images_netboot": "/mnt/pmbootstrap/netboot",
-    "$WORK/packages/": "/mnt/pmbootstrap/packages",
+    "$CACHE": "/cache",
 }
 
 # Building chroots (all chroots, except for the rootfs_ chroot) get symlinks in
@@ -186,15 +175,14 @@ chroot_mount_bind = {
 # rust depends caching described above) and to cache build artifacts (GOCACHE,
 # similar to ccache).
 chroot_home_symlinks = {
-    "/mnt/pmbootstrap/abuild-config": "/home/pmos/.abuild",
-    "/mnt/pmbootstrap/ccache": "/home/pmos/.ccache",
-    "/mnt/pmbootstrap/go/gocache": "/home/pmos/.cache/go-build",
-    "/mnt/pmbootstrap/go/gomodcache": "/home/pmos/go/pkg/mod",
-    # "/mnt/pmbootstrap/packages": "/home/pmos/packages/pmos",
-    "/mnt/pmbootstrap/rust/git/db": "/home/pmos/.cargo/git/db",
-    "/mnt/pmbootstrap/rust/registry/cache": "/home/pmos/.cargo/registry/cache",
-    "/mnt/pmbootstrap/rust/registry/index": "/home/pmos/.cargo/registry/index",
-    "/mnt/pmbootstrap/sccache": "/home/pmos/.cache/sccache",
+    "/cache/abuild-config": "/home/pmos/.abuild",
+    "/cache/ccache_$ARCH": "/home/pmos/.ccache",
+    "/cache/go/gocache": "/home/pmos/.cache/go-build",
+    "/cache/go/gomodcache": "/home/pmos/go/pkg/mod",
+    "/cache/rust/git/db": "/home/pmos/.cargo/git/db",
+    "/cache/rust/registry/cache": "/home/pmos/.cargo/registry/cache",
+    "/cache/rust/registry/index": "/home/pmos/.cargo/registry/index",
+    "/cache/sccache": "/home/pmos/.cache/sccache",
 }
 
 # Age in hours that we keep the APKINDEXes before downloading them again.

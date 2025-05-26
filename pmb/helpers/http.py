@@ -69,11 +69,11 @@ def download(
     """
     # Create cache folder
     context = get_context()
-    if not os.path.exists(context.config.work / "cache_http"):
-        pmb.helpers.run.user(["mkdir", "-p", context.config.work / "cache_http"])
+    if not os.path.exists(context.config.cache / "http"):
+        pmb.helpers.run.user(["mkdir", "-p", context.config.cache / "http"])
 
     # Check if file exists in cache
-    path = context.config.work / "cache_http" / cache_file(prefix, url)
+    path = context.config.cache / "http" / cache_file(prefix, url)
     if os.path.exists(path):
         if cache:
             return path

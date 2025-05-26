@@ -102,7 +102,7 @@ def rewrite(
             lines_new += line.rstrip() + "\n"
 
     # Copy/modify lines, skip Maintainer/Contributor
-    path = get_context().config.work / "aportgen/APKBUILD"
+    path = get_context().config.cache / "aportgen/APKBUILD"
     with open(path, "r+", encoding="utf-8") as handle:
         skip_in_func = False
         for line in handle:
@@ -172,7 +172,7 @@ def get_upstream_aport(pkgname: str, arch: Arch | None = None, retain_branch: bo
     """
     # APKBUILD
     pmb.helpers.git.clone("aports_upstream")
-    aports_upstream_path = get_context().config.work / "cache_git/aports_upstream"
+    aports_upstream_path = get_context().config.cache / "git/aports_upstream"
 
     if retain_branch:
         logging.info("Not changing aports branch as --fork-alpine-retain-branch was used.")
@@ -251,7 +251,7 @@ def prepare_tempdir() -> Path:
     chroot = Chroot.native()
     pmb.chroot.init(chroot)
     tempdir = Path("/tmp/aportgen")
-    aportgen = get_context().config.work / "aportgen"
+    aportgen = get_context().config.cache / "aportgen"
     pmb.chroot.root(["rm", "-rf", tempdir], chroot)
     pmb.helpers.run.user(["mkdir", "-p", aportgen, chroot / tempdir])
 
@@ -264,7 +264,7 @@ def generate_checksums(tempdir: Path, apkbuild_path: Path) -> None:
     :param tempdir: Temporary directory as provided by prepare_tempdir().
     :param apkbuild_path: APKBUILD to generate new checksums for.
     """
-    aportgen = get_context().config.work / "aportgen"
+    aportgen = get_context().config.cache / "aportgen"
 
     pmb.build.init_abuild_minimal()
     pmb.chroot.root(["chown", "-R", "pmos:pmos", tempdir])

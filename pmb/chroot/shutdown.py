@@ -44,7 +44,7 @@ def shutdown(only_install_related: bool = False) -> None:
     # the chroots, but we want it gone afterwards (e.g. when the chroot
     # contents get copied to a rootfs / installer image, or if creating an
     # android recovery zip from its contents).
-    for marker in get_context().config.localdir.glob("chroot_*/in-pmbootstrap"):
+    for marker in get_context().config.work.glob("chroot_*/in-pmbootstrap"):
         pmb.helpers.run.root(["rm", marker])
 
     logging.debug("Shutdown complete")

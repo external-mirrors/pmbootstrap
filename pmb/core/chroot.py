@@ -78,7 +78,7 @@ class Chroot:
         return (self / "bin/sh").is_symlink()
 
     def is_mounted(self) -> bool:
-        return self.exists() and pmb.helpers.mount.ismount(self.path / "etc/apk/keys")
+        return self.exists() and (self.path / "etc/apk/cache").is_symlink()
 
     @property
     def arch(self) -> Arch:
