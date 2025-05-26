@@ -182,7 +182,8 @@ def _prepare_cmd(command: Sequence[PathString], chroot: Chroot | None) -> list[s
             user_repository=config.cache / "packages", mirrors_exclude=True
         )
         for repo in local_repos:
-            _command.extend(["--repository", repo])
+            if Path(repo).exists():
+                _command.extend(["--repository", repo])
     if get_context().offline:
         _command.append("--no-network")
 
