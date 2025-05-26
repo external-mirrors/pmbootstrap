@@ -58,6 +58,9 @@ fsops = [
 ]
 sandbox.setup_mounts(fsops)
 
+# Reset our CWD now that we're inside the mount namespace
+os.chdir(os.environ["PWD"])
+
 # A convenience wrapper for running pmbootstrap from the git repository. This
 # script is not part of the python packaging, so don't add more logic here!
 if __name__ == "__main__":
