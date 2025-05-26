@@ -834,8 +834,9 @@ def install_system_image(
     deviceinfo = pmb.parse.deviceinfo()
     # Partition and fill image file/disk block device
     logging.info(f"*** ({step}/{steps}) PREPARE INSTALL BLOCKDEVICE ***")
-    pmb.helpers.mount.umount_all(chroot.path)
-    layout = get_partition_layout(chroot,
+    pmb.chroot.umount(chroot)
+    layout = get_partition_layout(
+        chroot,
         bool(deviceinfo.cgpt_kpart and args.install_cgpt),
         split,
         single_partition,
@@ -879,8 +880,8 @@ def install_system_image(
     pmb.chroot.root(["mkinitfs"], chroot)
 
     # Clean up after running mkinitfs in chroot
-    pmb.helpers.mount.umount_all(chroot.path)
-    pmb.helpers.run.root(["rm", chroot / "in-pmbootstrap"])
+    pmb.chroot.umount(chroot)
+    (chroot / "in-pmbootstrap").unlink(missing_ok=True)
     pmb.chroot.remove_mnt_pmbootstrap(chroot)
 
     # Just copy all the files
