@@ -90,6 +90,7 @@ def frontend(args: PmbArgs) -> None:
     # Find the appropriate kernel flavor
     context = get_context()
     chroot = Chroot.rootfs(context.config.device)
+    pmb.chroot.init(chroot)
     flavor = pmb.chroot.other.kernel_flavor_installed(chroot)
 
     # Handle initfs actions
@@ -104,8 +105,9 @@ def frontend(args: PmbArgs) -> None:
     elif action == "ls":
         logging.info("*** initramfs ***")
         ls(flavor, chroot)
-        logging.info("*** initramfs-extra ***")
-        ls(flavor, chroot, True)
+        if pmb.parse.deviceinfo().create_initfs_extra:
+            logging.info("*** initramfs-extra ***")
+            ls(flavor, chroot, True)
 
     # Handle hook actions
     elif action == "hook_ls":

@@ -114,6 +114,7 @@ class Deviceinfo:
     dev_touchscreen: str | None = ""
     dev_touchscreen_calibration: str | None = ""
     append_dtb: str | None = ""
+    create_initfs_extra: str | None
 
     # bootloader
     flash_method: str = ""
