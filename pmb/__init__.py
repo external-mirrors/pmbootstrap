@@ -58,7 +58,7 @@ def print_log_hint() -> None:
     print(log_hint)
 
 
-def main(*, original_uid: int) -> int:
+def main() -> int:
     # Wrap everything to display nice error messages
 
     args: PmbArgs
@@ -73,8 +73,6 @@ def main(*, original_uid: int) -> int:
 
         # Sanity checks
         other.check_grsec()
-        if not args.as_root and original_uid == 0:
-            raise RuntimeError("Do not run pmbootstrap as root!")
 
         # Check for required programs (and find their absolute paths)
         require_programs()
