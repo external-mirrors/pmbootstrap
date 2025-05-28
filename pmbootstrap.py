@@ -11,7 +11,8 @@ from pmb.init import sandbox
 # Sanitise environment a bit
 os.environ["SHELL"] = "/bin/sh" if os.path.exists("/bin/sh") else "/bin/bash"
 
-original_uid = os.geteuid()
+if os.geteuid() == 0:
+    raise RuntimeError("pmbootstrap can't be run as root, please run it as a regular user.")
 
 sandbox.acquire_privileges(become_root=False)
 # Unshare mount and PID namespaces. We create a new PID namespace so
@@ -64,4 +65,4 @@ os.chdir(os.environ["PWD"])
 # A convenience wrapper for running pmbootstrap from the git repository. This
 # script is not part of the python packaging, so don't add more logic here!
 if __name__ == "__main__":
-    sys.exit(pmb.main(original_uid=original_uid))
+    sys.exit(pmb.main())
