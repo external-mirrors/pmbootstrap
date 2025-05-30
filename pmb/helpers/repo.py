@@ -78,7 +78,8 @@ def urls(
     # Local user repository (for packages compiled with pmbootstrap)
     if user_repository:
         for channel in pmb.config.pmaports.all_channels():
-            ret.append(str(user_repository / channel))
+            if (config.work / "packages" / channel).exists():
+                ret.append(str(user_repository / channel))
 
     if mirrors_exclude is True:
         return ret
