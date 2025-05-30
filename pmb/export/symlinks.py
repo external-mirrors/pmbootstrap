@@ -73,4 +73,4 @@ def symlinks(flavor: str, folder: Path) -> None:
             msg += " (" + info[basename] + ")"
         logging.info(msg)
 
-        pmb.helpers.file.symlink(file, link)
+        link.symlink_to(file)

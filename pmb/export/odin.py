@@ -107,7 +107,7 @@ def odin(device: str, flavor: str, folder: Path) -> None:
     # Create the symlink
     file = Chroot.native() / "home/pmos/rootfs" / odin_device_tar_md5
     link = folder / odin_device_tar_md5
-    pmb.helpers.file.symlink(file, link)
+    link.symlink_to(file)
 
     # Display a readable message
     msg = f" * {odin_device_tar_md5}"
