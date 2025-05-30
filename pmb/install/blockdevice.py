@@ -3,7 +3,7 @@
 from pmb.helpers import logging
 import os
 from pathlib import Path
-from pmb.types import PmbArgs, PartitionLayout
+from pmb.types import PartitionLayout
 import pmb.helpers.mount
 import pmb.helpers.cli
 import pmb.helpers.run
@@ -62,7 +62,6 @@ def mount_disk(path: Path) -> None:
 
 
 def create_and_mount_image(
-    args: PmbArgs,
     layout: PartitionLayout,
     split: bool = False,
 ) -> None:
@@ -134,7 +133,7 @@ def create_and_mount_image(
         pmb.helpers.mount.bind_file(img_path, chroot / mount_point)
 
 
-def create(args: PmbArgs, layout: PartitionLayout, split: bool, disk: Path | None) -> None:
+def create(layout: PartitionLayout, split: bool, disk: Path | None) -> None:
     """
     Create /dev/install (the "install blockdevice").
 
@@ -147,4 +146,4 @@ def create(args: PmbArgs, layout: PartitionLayout, split: bool, disk: Path | Non
     if disk:
         mount_disk(disk)
     else:
-        create_and_mount_image(args, layout, split)
+        create_and_mount_image(layout, split)
