@@ -750,8 +750,7 @@ def create_crypttab(args: PmbArgs, layout: PartitionLayout, disk: Path, chroot: 
     luks_uuid = layout.root.uuid
     crypttab = f"root UUID={luks_uuid} none luks\n"
 
-    (chroot / "tmp/crypttab").open("w").write(crypttab)
-    pmb.chroot.root(["mv", "/tmp/crypttab", "/etc/crypttab"], chroot)
+    (chroot / "etc/crypttab").open("w").write(crypttab)
 
 
 def create_fstab(args: PmbArgs, layout: PartitionLayout, disk: Path, chroot: Chroot) -> None:
@@ -782,10 +781,8 @@ def create_fstab(args: PmbArgs, layout: PartitionLayout, disk: Path, chroot: Chr
             boot_options += ",umask=0077,nosymfollow,codepage=437,iocharset=ascii"
         fstab += f"{boot_mount_point} /boot {boot_filesystem} {boot_options} 0 0\n"
 
-    with (chroot / "tmp/fstab").open("w") as f:
+    with (chroot / "etc/fstab").open("w") as f:
         f.write(fstab)
-    print(fstab)
-    pmb.chroot.root(["mv", "/tmp/fstab", "/etc/fstab"], chroot)
 
 
 def get_root_filesystem(args: PmbArgs) -> str:
