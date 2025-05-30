@@ -96,7 +96,7 @@ def main() -> int:
             raise NonBugError(
                 "Run 'pmbootstrap init' first to generate a config file (or use --config)."
             )
-        elif not os.path.exists(context.config.work):
+        elif not os.path.exists(context.config.cache):
             raise NonBugError("Work path not found, please run 'pmbootstrap init' to create it.")
 
         # Migrate work folder if necessary
