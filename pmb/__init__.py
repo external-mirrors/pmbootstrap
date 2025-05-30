@@ -111,7 +111,7 @@ def main() -> int:
             logging.info("Run pmbootstrap -h for usage information.")
 
         # Still active notice
-        if mount.ismount(Chroot.native() / "dev"):
+        if Chroot.native().is_mounted():
             logging.info("NOTE: chroot is still active (use 'pmbootstrap shutdown' as necessary)")
         logging.info("DONE!")
 

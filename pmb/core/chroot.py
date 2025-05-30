@@ -81,7 +81,7 @@ class Chroot:
         return (self / "bin/sh").is_symlink()
 
     def is_mounted(self) -> bool:
-        return self.exists() and (self.path / "etc/apk/cache").is_symlink()
+        return self.exists() and pmb.mount.ismount(self.path / "proc")
 
     @property
     def arch(self) -> Arch:
@@ -197,9 +197,19 @@ class Chroot:
                 yield f"chroot_{stype.value}_*"
 
     @staticmethod
-    def glob() -> Generator[Path, None, None]:
+    def glob(pat: str = "") -> Generator[Path, None, None]:
         """
-        Glob all initialized chroot directories
+        Glob all initialized chroot directories.
+        :param pat: pattern to match in chroot (e.g. "/in-pmbootstrap")
         """
         for pattern in Chroot.iter_patterns():
-            yield from Path(get_context().config.work).glob(pattern)
+            yield from Path(get_context().config.work).glob(pattern + pat)
+
+
+    @staticmethod
+    def all_active() -> Generator[Chroot, None, None]:
+        """
+        Iterate over all active chroots that have the /in-pmbootstrap flag
+        """
+        for path in Chroot.glob("/in-pmbootstrap"):
+            yield Chroot.from_str(path.parent.name.removeprefix("chroot_"))
