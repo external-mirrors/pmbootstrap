@@ -15,7 +15,7 @@ import pmb.config.pmaports
 from pmb.core import Chroot
 from pmb.core.context import get_context
 from pmb.helpers import logging
-
+from pmb.meta import Cache
 
 def chroot_save_init(suffix: Chroot) -> None:
     """Save the chroot initialization data in $WORK/workdir.cfg."""
@@ -82,6 +82,7 @@ def chroots_outdated(chroot: Chroot | None = None) -> bool | list[Chroot]:
     return False if chroot else outdated
 
 
+@Cache("chroot")
 def chroot_check_channel(chroot: Chroot) -> bool:
     """Check the chroot channel against the current channel. Returns
     True if the chroot should be zapped (both that it needs zapping and
