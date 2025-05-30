@@ -12,14 +12,6 @@ pmb.parse.apkindex module
    :undoc-members:
    :show-inheritance:
 
-pmb.parse.arguments module
---------------------------
-
-.. automodule:: pmb.parse.arguments
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pmb.parse.binfmt\_info module
 -----------------------------
 
