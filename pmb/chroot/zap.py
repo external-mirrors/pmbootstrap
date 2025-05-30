@@ -75,8 +75,6 @@ def zap(
     if pkgs_online_mismatch:
         zap_pkgs_online_mismatch(confirm, dry)
 
-    pmb.chroot.shutdown()
-
     # Deletion patterns for folders inside get_context().config.work
     patterns = []
     if pkgs_local:
@@ -109,8 +107,6 @@ def zap(
 
     # Chroots were zapped, so no repo lists exist anymore
     pmb.helpers.apk.update_repository_list.cache_clear()
-    # Let chroot.init be called again
-    pmb.chroot.init.cache_clear()
 
     # Print amount of cleaned up space
     if dry:

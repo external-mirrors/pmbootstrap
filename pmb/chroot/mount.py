@@ -80,26 +80,11 @@ def mount_native_into_foreign(chroot: Chroot) -> None:
         # pmb.helpers.run.root(["ln", "-sf", "/native/usr/bin/pigz", "/usr/local/bin/pigz"])
 
 
-def remove_mnt_pmbootstrap(chroot: Chroot) -> None:
-    """Safely remove /cache directories from the chroot, without
-    running rm -r as root and potentially removing data inside the
-    mountpoint in case it was still mounted (bug in pmbootstrap, or user
-    ran pmbootstrap 2x in parallel). This is similar to running 'rm -r -d',
-    but we don't assume that the host's rm has the -d flag (busybox does
-    not)."""
-    mnt_dir = chroot / "work"
-
-    if not mnt_dir.exists():
+def umount_all(chroot: Chroot) -> None:
+    """Unmount all bind mounts inside a chroot."""
+    if not chroot.is_mounted():
+        import warnings
+        warnings.warn(f"({chroot}) Tried to umount inactive chroot! This will become an error in the future.", DeprecationWarning)
         return
 
-    for path in [*mnt_dir.glob("*"), mnt_dir]:
-        path.rmdir()
-
-    if mnt_dir.exists():
-        raise RuntimeError("Failed to remove /cache!")
-
-
-def umount(chroot: Chroot) -> None:
-    """Unmount all bind mounts inside a chroot."""
-    if chroot.path.exists():
-        pmb.helpers.mount.umount_all(chroot.path)
+    pmb.helpers.mount.umount_all(chroot.path)
