@@ -167,7 +167,10 @@ def _install_run_apk(
     # FIXME: use /mnt/pmb… until MR 2351 is reverted (pmb#2388)
     user_repo: list[PathString] = []
     for channel in pmb.config.pmaports.all_channels():
-        user_repo += ["--repository", context.config.work / "packages" / channel]
+        channel = str(channel)
+        repo_dir = context.config.work / "packages" / channel
+        if repo_dir.exists():
+            user_repo += ["--repository", repo_dir]
 
     for i, command in enumerate(commands):
         command = [*user_repo, *command]
