@@ -136,7 +136,7 @@ def finish(
 ) -> None:
     """Various finishing tasks that need to be done after a build."""
     # Verify output file
-    out_dir = get_context().config.cache / "packages" / channel
+    out_dir = get_context().config.work / "packages" / channel
     if not (out_dir / output).exists():
         raise RuntimeError(f"Package not found after build: {(out_dir / output)}")
 
@@ -520,7 +520,7 @@ def packages(
                     f"A binary package for {name} has a newer version ({index_data.version})"
                     f" than the source ({pkgver}-{apkbuild['pkgrel']}). Please ensure your pmaports branch is up"
                     " to date and that you don't have a newer version of the package in your local"
-                    f" binary repo ({context.config.cache / 'packages' / channel / pkg_arch})."
+                    f" binary repo ({context.config.work / 'packages' / channel / pkg_arch})."
                 )
         build_queue.append(
             {

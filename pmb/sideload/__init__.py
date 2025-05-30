@@ -122,7 +122,7 @@ def sideload(
         channel = pmb.config.pmaports.read_config(base_aports)["channel"]
 
         apk_file = f"{pkgname}-{data_repo.version}.apk"
-        host_path = context.config.cache / "packages" / channel / arch / apk_file
+        host_path = context.config.work / "packages" / channel / arch / apk_file
 
         if not host_path.is_file():
             to_build.append(pkgname)

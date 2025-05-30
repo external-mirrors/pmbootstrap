@@ -139,7 +139,7 @@ def apkindex_files(
     # Local user repository (for packages compiled with pmbootstrap)
     if user_repository:
         ret.extend(
-            get_context().config.cache / "packages" / channel / arch / "APKINDEX.tar.gz"
+            get_context().config.work / "packages" / channel / arch / "APKINDEX.tar.gz"
             for channel in pmb.config.pmaports.all_channels()
         )
 

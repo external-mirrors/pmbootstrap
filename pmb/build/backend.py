@@ -226,7 +226,7 @@ def run_abuild(
             )
         pmb.mount.bind(hostchroot.path, buildchroot / "/mnt/sysroot", umount=True)
 
-    pkgdir = context.config.cache / "packages" / channel
+    pkgdir = context.config.work / "packages" / channel
     if not pkgdir.exists():
         pmb.helpers.run.root(["mkdir", "-p", pkgdir])
         pmb.helpers.run.root(

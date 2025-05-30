@@ -183,7 +183,7 @@ def run_abuild(
     # abuild and shouldn't really be done here.
     channel = pmb.config.pmaports.read_config(pmaports_path)["channel"]
     print(f"Building for channel: {channel}")
-    pkgdir = context.config.cache / "packages" / channel
+    pkgdir = context.config.work / "packages" / channel
     if not pkgdir.exists():
         pmb.helpers.run.root(["mkdir", "-p", pkgdir])
         pmb.helpers.run.root(

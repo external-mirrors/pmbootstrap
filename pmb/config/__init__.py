@@ -160,6 +160,7 @@ host_path = os.environ["PATH"] + ":/usr/sbin/"
 chroot_mount_bind = {
     "/proc": "/proc",
     "$CACHE": "/cache",
+    "$PACKAGES": "/cache/packages"
 }
 
 # Building chroots (all chroots, except for the rootfs_ chroot) get symlinks in
