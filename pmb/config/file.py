@@ -32,7 +32,10 @@ def load(path: Path) -> Config:
             continue
         # Convert strings to paths
         elif type(getattr(Config, key)) is PosixPath:
-            setattr(config, key, Path(cfg["pmbootstrap"][key]))
+            p = Path(cfg["pmbootstrap"][key])
+            if not p.is_absolute():
+                p = path.parent.resolve() / p
+            setattr(config, key, p)
         # Yeah this really sucks and there isn't a better way to do it without external
         # libraries
         elif isinstance(getattr(Config, key), list) and isinstance(
@@ -42,7 +45,13 @@ def load(path: Path) -> Config:
             if not value:
                 setattr(config, key, value)
             else:
-                setattr(config, key, [Path(p) for p in value.split(",")])
+                val = []
+                for p in value.split(","):
+                    pp = Path(p)
+                    if not pp.is_absolute():
+                        pp = path.parent.resolve() / pp
+                    val.append(pp)
+                setattr(config, key, val)
         elif isinstance(getattr(Config, key), bool):
             setattr(config, key, cfg["pmbootstrap"][key].lower() == "true")
         elif key in cfg["pmbootstrap"]:
