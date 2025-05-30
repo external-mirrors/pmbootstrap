@@ -132,7 +132,7 @@ class RepoBootstrap(commands.Command):
 
     def check_existing_pkgs(self) -> None:
         channel = pmb.config.pmaports.read_config()["channel"]
-        path = self.context.config.cache / "packages" / channel / self.arch
+        path = self.context.config.work / "packages" / channel / self.arch
 
         if glob.glob(f"{path}/*"):
             logging.info(f"Packages path: {path}")

@@ -178,7 +178,7 @@ def _prepare_cmd(command: Sequence[PathString], chroot: Chroot | None) -> list[s
             _command.extend(["--cache-dir", str(cache_dir)])
 
         local_repos = pmb.helpers.repo.urls(
-            user_repository=config.cache / "packages", mirrors_exclude=True
+            user_repository=config.work / "packages", mirrors_exclude=True
         )
         for repo in local_repos:
             if Path(repo).exists():

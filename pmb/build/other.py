@@ -144,7 +144,7 @@ def index_repo(arch: Arch | None = None) -> None:
     paths: list[Path] = []
 
     for channel in pmb.config.pmaports.all_channels():
-        pkgdir: Path = get_context().config.cache / "packages" / channel
+        pkgdir: Path = get_context().config.work / "packages" / channel
         if arch:
             paths.append(pkgdir / arch)
         else:
