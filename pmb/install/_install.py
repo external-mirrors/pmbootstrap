@@ -767,20 +767,7 @@ def create_fstab(args: PmbArgs, layout: PartitionLayout, disk: Path, chroot: Chr
     )
     root_filesystem = pmb.install.get_root_filesystem(args)
 
-    if root_filesystem == "btrfs":
-        # btrfs gets separate subvolumes for root, var and home
-        fstab = f"""
-# <file system> <mount point> <type> <options> <dump> <pass>
-{root_mount_point} / btrfs subvol=@,compress=zstd:2,ssd 0 0
-{root_mount_point} /home btrfs subvol=@home,compress=zstd:2,ssd 0 0
-{root_mount_point} /root btrfs subvol=@root,compress=zstd:2,ssd 0 0
-{root_mount_point} /srv btrfs subvol=@srv,compress=zstd:2,ssd 0 0
-{root_mount_point} /var btrfs subvol=@var,ssd 0 0
-{root_mount_point} /.snapshots btrfs subvol=@snapshots,compress=zstd:2,ssd 0 0
-""".lstrip()
-
-    else:
-        fstab = f"""
+    fstab = f"""
 # <file system> <mount point> <type> <options> <dump> <pass>
 {root_mount_point} / {root_filesystem} defaults 0 0
 """.lstrip()
