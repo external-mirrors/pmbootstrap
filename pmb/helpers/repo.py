@@ -141,7 +141,7 @@ def apkindex_files(
     # Local user repository (for packages compiled with pmbootstrap)
     if user_repository:
         for channel in pmb.config.pmaports.all_channels():
-            ret.append(get_context().config.cache / "packages" / channel / arch / "APKINDEX.tar.gz")
+            ret.append(get_context().config.work / "packages" / channel / arch / "APKINDEX.tar.gz")
 
     # Resolve the APKINDEX.$HASH.tar.gz files
     for url in urls(False, exclude_mirrors):

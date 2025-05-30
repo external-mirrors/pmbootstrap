@@ -39,12 +39,12 @@ def mount(chroot: Chroot):
 
     # Get all mountpoints
     arch = chroot.arch
-    channel = pmb.config.pmaports.read_config(pkgrepo_default_path())["channel"]
+    config = get_context().config
     mountpoints: dict[Path, Path] = {}
     for src_template, target_template in pmb.config.chroot_mount_bind.items():
-        src_template = src_template.replace("$CACHE", os.fspath(get_context().config.cache))
+        src_template = src_template.replace("$CACHE", os.fspath(config.cache))
         src_template = src_template.replace("$ARCH", str(arch))
-        src_template = src_template.replace("$CHANNEL", channel)
+        src_template = src_template.replace("$PACKAGES", os.fspath(config.work / "packages"))
         mountpoints[Path(src_template).resolve()] = Path(target_template)
 
     # Mount if necessary
