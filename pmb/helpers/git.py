@@ -10,8 +10,6 @@ from pmb.helpers import logging
 import os
 import re
 
-import pmb.build
-import pmb.chroot.apk
 import pmb.config
 import pmb.helpers.pmaports
 import pmb.helpers.run
