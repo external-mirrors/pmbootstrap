@@ -119,7 +119,7 @@ def packages_get_locally_built_apks(package_list: list[str], arch: Arch) -> list
     return local
 
 
-def install_run_apk(
+def _install_run_apk(
     to_add: list[str], to_add_local: list[Path], to_del: list[str], chroot: Chroot
 ) -> None:
     """
@@ -219,7 +219,7 @@ def install(packages: list[str], chroot: Chroot, build: bool = True, quiet: bool
 
     if not quiet:
         logging.info(f"({chroot}) install {' '.join(packages)}")
-    install_run_apk(to_add, to_add_local, to_del, chroot)
+    _install_run_apk(to_add, to_add_local, to_del, chroot)
 
 
 def installed(suffix: Chroot = Chroot.native()) -> dict[str, pmb.parse.apkindex.ApkindexBlock]:
