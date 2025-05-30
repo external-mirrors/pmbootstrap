@@ -2,10 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pmb.chroot.init import init as init, init_keys as init_keys
 from pmb.chroot.mount import (
-    mount as mount,
-    umount as umount,
     mount_native_into_foreign as mount_native_into_foreign,
-    remove_mnt_pmbootstrap as remove_mnt_pmbootstrap,
 )
 from pmb.chroot.run import (
     root as root,

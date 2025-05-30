@@ -7,6 +7,8 @@ import os
 import shutil
 
 import pmb.chroot
+import pmb.chroot.mount
+import pmb.chroot.zap
 import pmb.config
 import pmb.config.workdir
 import pmb.helpers.apk_static
@@ -87,10 +89,10 @@ def setup_cache_path(chroot: Chroot):
     # Set up the apk cache to point to the working cache
     cache_target = chroot / "etc/apk/cache"
     if not cache_target.is_symlink():
+        cache_target.parent.mkdir(parents=True, exist_ok=True)
         cache_target.symlink_to(f"/cache/apk_{chroot.arch}")
 
 
-@Cache("chroot")
 def init(chroot: Chroot) -> None:
     """
     Initialize a chroot by copying the resolv.conf and updating
@@ -105,16 +107,18 @@ def init(chroot: Chroot) -> None:
     if chroot.exists():
         zap = pmb.config.workdir.chroot_check_channel(chroot)
         if zap:
-            pmb.chroot.del_chroot(chroot.path, confirm=False)
+            pmb.chroot.zap.del_chroot(chroot.path, confirm=False)
             pmb.config.workdir.clean()
+        if pmb.helpers.file.is_older_than(chroot / "etc/apk/repositories", 300):
+            pmb.helpers.apk.update_repository_list(chroot.path)
+            warn_if_chroots_outdated()
 
-    pmb.chroot.mount(chroot)
+    pmb.chroot.mount.mount(chroot)
+    logging.info(f"({chroot}) Mounted!")
     mark_in_chroot(chroot)
+    setup_cache_path(chroot)
+    copy_resolv_conf(chroot)
     if chroot.exists():
-        pmb.helpers.apk.update_repository_list(chroot.path)
-        copy_resolv_conf(chroot)
-        warn_if_chroots_outdated()
-        setup_cache_path(chroot)
         return
 
     # Fetch apk.static
@@ -126,8 +130,6 @@ def init(chroot: Chroot) -> None:
     init_keys(chroot)
     # Also creates /etc
     pmb.helpers.apk.update_repository_list(chroot.path)
-    copy_resolv_conf(chroot)
-    setup_cache_path(chroot)
 
     pmb.config.workdir.chroot_save_init(chroot)
 
@@ -166,14 +168,25 @@ def init(chroot: Chroot) -> None:
             )
 
 
-def shutdown() -> None:
-    # Remove "in-pmbootstrap" marker from all chroots. This marker indicates
+def shutdown(chroot: Chroot) -> None:
+    """
+    Shutdown a chroot, unmounting all mountpoints and removing symlinks that
+    are only used at build time (e.g. /etc/apk/cache).
+    """
+    pmb.chroot.mount.umount_all(chroot)
+    # Remove "in-pmbootstrap" marker from the chroot. This marker indicates
     # that pmbootstrap has set up all mount points etc. to run programs inside
     # the chroots, but we want it gone afterwards (e.g. when the chroot
     # contents get copied to a rootfs / installer image, or if creating an
     # android recovery zip from its contents).
-    for marker in get_context().config.work.glob("chroot_*/in-pmbootstrap"):
-        pmb.helpers.run.root(["rm", marker])
+    try:
+        (chroot / "in-pmbootstrap").unlink()
+    except FileNotFoundError:
+        raise RuntimeError(f"({chroot}) attempted to shutdown chroot which wasn't initialised (/in-pmbootstrap marker missing).")
+
+    # Remove the /cache directory
+    (chroot / "cache").rmdir()
+    (chroot / "etc/apk/cache").unlink()
 
     logging.debug("Shutdown complete")
 

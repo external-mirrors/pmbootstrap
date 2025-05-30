@@ -880,7 +880,7 @@ def install_system_image(
     deviceinfo = pmb.parse.deviceinfo()
     # Partition and fill image file/disk block device
     logging.info(f"*** ({step}/{steps}) PREPARE INSTALL BLOCKDEVICE ***")
-    pmb.chroot.umount(chroot)
+    pmb.chroot.shutdown(chroot)
     layout = get_partition_layout(
         chroot,
         bool(deviceinfo.cgpt_kpart and args.install_cgpt),
@@ -911,7 +911,7 @@ def install_system_image(
     layout.boot.filesystem = deviceinfo.boot_filesystem or "ext2"
 
     # Since we shut down the chroot we need to mount it again
-    pmb.chroot.mount(chroot)
+    pmb.chroot.init(chroot)
 
     # Create /etc/fstab and /etc/crypttab
     logging.info("(native) create /etc/fstab")
@@ -926,9 +926,7 @@ def install_system_image(
     pmb.chroot.root(["mkinitfs"], chroot)
 
     # Clean up after running mkinitfs in chroot
-    pmb.chroot.umount(chroot)
-    (chroot / "in-pmbootstrap").unlink(missing_ok=True)
-    pmb.chroot.remove_mnt_pmbootstrap(chroot)
+    pmb.chroot.shutdown(chroot)
 
     # Just copy all the files
     logging.info(f"*** ({step + 1}/{steps}) FORMAT AND COPY BLOCKDEVICE ***")
@@ -948,7 +946,6 @@ def install_system_image(
 
     if disk:
         logging.info(f"Unmounting disk {disk} (this may take a while to sync, please wait)")
-    pmb.chroot.shutdown()
 
     # Convert rootfs to sparse using img2simg
     sparse = args.sparse
