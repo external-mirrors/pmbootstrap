@@ -30,7 +30,9 @@ def frontend(args: PmbArgs) -> None:  # FIXME: ARGS_REFACTOR
 
     # Rebuild the initramfs, just to make sure (see #69)
     if args.autoinstall:
-        pmb.chroot.initfs.build(Chroot(ChrootType.ROOTFS, config.device))
+        target_chroot = Chroot(ChrootType.ROOTFS, config.device)
+        pmb.chroot.init(target_chroot)
+        pmb.chroot.initfs.build(target_chroot)
 
     # Do the export, print all files
     logging.info(f"Export symlinks to: {target}")
