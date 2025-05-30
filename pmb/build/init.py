@@ -120,7 +120,9 @@ def init_compiler(context: Context, depends: list[str], cross: CrossCompile, arc
     elif "gcc6" in depends:
         cross_pkgs += ["gcc6-" + arch_str]
     elif arch != Arch.native():
-        cross_pkgs += ["gcc-" + arch_str, "g++-" + arch_str]
+        cross_pkgs += ["gcc-" + arch_str]
+        if "g++" in depends:
+            cross_pkgs += ["g++-" + arch_str]
     if "clang" in depends or "clang-dev" in depends:
         cross_pkgs += ["clang"]
     if cross == CrossCompile.CROSSDIRECT:
