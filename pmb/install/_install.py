@@ -964,7 +964,7 @@ def install_system_image(
 
     if disk:
         logging.info(f"Unmounting disk {disk} (this may take a while to sync, please wait)")
-    pmb.chroot.shutdown(True)
+    pmb.chroot.shutdown()
 
     # Convert rootfs to sparse using img2simg
     sparse = args.sparse

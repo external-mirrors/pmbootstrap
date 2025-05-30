@@ -164,3 +164,16 @@ def init(chroot: Chroot) -> None:
             shutil.chown(
                 chroot / target, int(pmb.config.chroot_uid_user), int(pmb.config.chroot_uid_user)
             )
+
+
+def shutdown() -> None:
+    # Remove "in-pmbootstrap" marker from all chroots. This marker indicates
+    # that pmbootstrap has set up all mount points etc. to run programs inside
+    # the chroots, but we want it gone afterwards (e.g. when the chroot
+    # contents get copied to a rootfs / installer image, or if creating an
+    # android recovery zip from its contents).
+    for marker in get_context().config.work.glob("chroot_*/in-pmbootstrap"):
+        pmb.helpers.run.root(["rm", marker])
+
+    logging.debug("Shutdown complete")
+
