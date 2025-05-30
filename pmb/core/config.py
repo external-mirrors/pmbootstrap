@@ -126,8 +126,6 @@ class Config:
                     else:
                         raise ValueError()
                 else:
-                    if key == "work" and self.cache.is_relative_to(self.work):
-                        self.cache = value / "cache"
                     super().__setattr__(key, _type(value))
             except ValueError:
                 msg = f"Invalid value for '{key}': '{value}' "
