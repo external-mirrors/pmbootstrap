@@ -57,54 +57,9 @@ def replace_apkbuild(
             f" and nothing else in: {path}"
         )
 
-
-def is_up_to_date(
-    path_sources: list[Path], path_target: Path | None = None, lastmod_target: float | None = None
-) -> bool:
-    """Check if a file is up-to-date by comparing the last modified timestamps.
-
-    (just like make does it).
-
-    :param path_sources: list of full paths to the source files
-    :param path_target: full path to the target file
-    :param lastmod_target: the timestamp of the target file. specify this as
-                           alternative to specifying path_target.
-    """
-
-    if path_target and lastmod_target:
-        raise RuntimeError("Specify path_target *or* lastmod_target, not both!")
-
-    lastmod_source = None
-    for path_source in path_sources:
-        lastmod = os.path.getmtime(path_source)
-        if not lastmod_source or lastmod > lastmod_source:
-            lastmod_source = lastmod
-
-    if path_target:
-        lastmod_target = os.path.getmtime(path_target)
-
-    if lastmod_target is None or lastmod_source is None:
-        raise AssertionError
-
-    return lastmod_target >= lastmod_source
-
-
 def is_older_than(path: Path, seconds: int) -> bool:
     """Check if a single file is older than a given amount of seconds."""
     if not os.path.exists(path):
         return True
     lastmod = os.path.getmtime(path)
     return lastmod + seconds < time.time()
-
-
-def symlink(file: Path, link: Path) -> None:
-    """Check if the symlink is already present, otherwise create it."""
-    if os.path.exists(link):
-        if os.path.islink(link) and os.path.realpath(os.readlink(link)) == os.path.realpath(file):
-            return
-        raise RuntimeError(f"File exists: {link}")
-    elif link.is_symlink():
-        link.unlink()
-
-    # Create the symlink
-    pmb.helpers.run.user(["ln", "-s", file, link])
