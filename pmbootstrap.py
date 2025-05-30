@@ -74,6 +74,9 @@ fsops = [
     ),
     # Mount binfmt_misc at /tmp/pmb_binfmt_misc
     sandbox.BinfmtOperation(pmb.config.binfmt_misc),
+    # /tmp/pmb is a tmpfs we can use for scratch data that will be removed
+    # on exit.
+    sandbox.TmpfsOperation("/tmp/pmb"),
 ]
 sandbox.setup_mounts(fsops)
 

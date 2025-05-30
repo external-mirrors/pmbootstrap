@@ -88,8 +88,8 @@ def _prepare_fifo() -> Path:
               path of the fifo as needed by cat to read from it (always
               relative to the host)
     """
-    pmb.helpers.run.root(["mkdir", "-p", get_context().config.cache / "tmp"])
-    fifo = get_context().config.cache / "tmp/apk_progress_fifo"
+    # Use the /pmb tmpfs
+    fifo = Path("/tmp/pmb/apk_progress_fifo")
     if os.path.exists(fifo):
         pmb.helpers.run.root(["rm", "-f", fifo])
 
