@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from pmb.types import PmbArgs
 
 from . import config
-from . import parse
+from .init import arguments
 from .config import init as config_init, require_programs
 from .helpers import frontend as frontend
 from .helpers import logging
@@ -64,7 +64,7 @@ def main() -> int:
     args: PmbArgs
     try:
         # Parse arguments, set up logging
-        args, parser = parse.arguments()
+        args, parser = arguments.parse()
         context = get_context()
         os.umask(0o22)
 

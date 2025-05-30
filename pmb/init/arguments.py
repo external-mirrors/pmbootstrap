@@ -1267,7 +1267,7 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def arguments() -> tuple[PmbArgs, argparse.ArgumentParser]:
+def parse() -> tuple[PmbArgs, argparse.ArgumentParser]:
     # FIXME: It would be nice to not use cast here, but I don't know what else we could do.
     parser = get_parser()
     args = cast(PmbArgs, parser.parse_args())
