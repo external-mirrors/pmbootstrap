@@ -7,6 +7,8 @@ from pmb.core.context import Context
 from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.types import PmbArgs
 import pmb.helpers.git
+from pathlib import Path
+import os
 
 
 """This file constructs the args variable, which is passed to almost all
@@ -52,6 +54,20 @@ def init(args: PmbArgs) -> PmbArgs:
     # Basic initialization
     # print(json.dumps(args.__dict__))
     # sys.exit(0)
+    if not args.config:
+        cwd = Path.cwd()
+        for i in range(len(cwd.parts)):
+            local_conf = Path(*cwd.parts[:-i], "pmbootstrap.conf")
+            # If the path isn't owned by the user then we have gone too far.
+            if local_conf.parent.owner() != os.getlogin():
+                break
+            if local_conf.exists():
+                print(f"Using local config {local_conf}")
+                args.config = local_conf
+                os.chdir(local_conf.parent)
+                break
+        if not args.config:
+            args.config = pmb.config.defaults["config"]
     config = pmb.config.load(args.config)
 
     if args.aports:

@@ -793,7 +793,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--config",
         dest="config",
         type=lambda x: Path(x),
-        default=pmb.config.defaults["config"],
+        default=None,
         help="path to pmbootstrap_v3.cfg file (default in ~/.config/)",
     )
     parser.add_argument(
