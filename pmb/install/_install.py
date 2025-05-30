@@ -855,7 +855,7 @@ def install_system_image(
     logging.info("Using partition layout:")
     logging.info(", ".join([str(x) for x in layout]))
     if not args.rsync:
-        pmb.install.blockdevice.create(args, layout, split, disk)
+        pmb.install.blockdevice.create(layout, split, disk)
         if not split and not single_partition:
             if deviceinfo.cgpt_kpart and args.install_cgpt:
                 pmb.install.partition_cgpt(layout)
