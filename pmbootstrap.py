@@ -14,6 +14,24 @@ os.environ["SHELL"] = "/bin/sh" if os.path.exists("/bin/sh") else "/bin/bash"
 if os.geteuid() == 0:
     raise RuntimeError("pmbootstrap can't be run as root, please run it as a regular user.")
 
+# FIXME: parse args before unshare(), this is really hacky
+if "install" in sys.argv and "--disk" in sys.argv:
+    from pmb.init.run import run_root
+    disk = sys.argv[sys.argv.index("--disk")+1]
+    if not os.access(disk, os.W_OK):
+        cmd = ["sudo", "chown", str(os.getlogin()), disk]
+        if "-y" in sys.argv:
+            print(f"Using sudo to chown the target disk {disk}")
+            print(f"  $ {' '.join(cmd)}")
+            run_root(cmd)
+        else:
+            print(f"The target disk '{disk}' is not writable by your user. Please run the following"
+                " command manually or press 'y' and enter your sudo password when prompted.")
+            print(f"  $ {' '.join(cmd)}")
+            ans = input("> ")
+            if ans.lower() == "y":
+                run_root(cmd)
+
 sandbox.acquire_privileges(become_root=False)
 # Unshare mount and PID namespaces. We create a new PID namespace so
 # that any log-running daemons (e.g. adbd, sccache) will be killed when
