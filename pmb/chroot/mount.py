@@ -27,7 +27,10 @@ def mount_dev_tmpfs(chroot: Chroot = Chroot.native()) -> None:
     logging.info(f"mount_dev_tmpfs({chroot})")
 
     # Use sandbox to set up /dev inside the chroot
-    ttyname = os.ttyname(2) if os.isatty(2) else ""
+    try:
+        ttyname = os.ttyname(2) if os.isatty(2) else ""
+    except FileNotFoundError:
+        ttyname = ""
     devop = sandbox.DevOperation(ttyname, "/dev")
     devop.execute("/", str(chroot.path))
 
