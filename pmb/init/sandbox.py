@@ -1020,7 +1020,10 @@ def main() -> None:
         pack_fds
     ) = False
 
-    ttyname = os.ttyname(2) if os.isatty(2) else ""
+    try:
+        ttyname = os.ttyname(2) if os.isatty(2) else ""
+    except FileNotFoundError:
+        ttyname = ""
 
     while argv:
         arg = argv.pop()
