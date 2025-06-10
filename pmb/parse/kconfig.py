@@ -11,8 +11,9 @@ import pmb.config
 import pmb.parse
 import pmb.helpers.pmaports
 import pmb.parse.kconfigcheck
+from pmb.core.arch import Arch
 from pmb.helpers.exceptions import NonBugError
-from pmb.types import PathString
+from pmb.types import Apkbuild, PathString
 
 
 def is_set(config: str, option: str) -> bool:
@@ -347,3 +348,82 @@ def check_file(
     version = extract_version(config_path)
     logging.debug(f"Check kconfig: parsed arch={arch}, version={version} from file: {config_path}")
     return check_config(config_path, arch, version, components_list, details=details)
+
+
+def create_fragment(apkbuild: Apkbuild, arch: Arch) -> str:
+    """
+    Generate a kconfig fragment based on categories and version from a kernel's
+    APKBUILD.
+
+    :param apkbuild: parsed apkbuild for kernel package
+    :param arch: target architecture
+    :returns: kconfig fragment as a string
+    """
+    pkgver = apkbuild["pkgver"]
+
+    # Extract categories from APKBUILD options
+    categories = ["default"]  # Always include default
+    for option in apkbuild["options"]:
+        if option.startswith("pmb:kconfigcheck-"):
+            category = option.split("-", 1)[1]
+            categories.append(category)
+
+    # Collect all rules from the categories
+    all_rules = {}
+    for category in categories:
+        try:
+            rules = pmb.parse.kconfigcheck.read_category(category)
+            all_rules.update(rules)
+        except Exception as e:
+            logging.warning(f"Failed to read category {category}: {e}")
+
+    fragment_lines = []
+
+    # Process each category
+    for category_key, category_rules in all_rules.items():
+        # Extract category name from "category:name" format
+        category_name = category_key.split(":", 1)[1] if ":" in category_key else category_key
+        options_added = False
+
+        for version_spec, arch_options in category_rules.items():
+            # Check if this rule applies to our kernel version
+            applies = True
+            for rule in version_spec.split(" "):
+                if not pmb.parse.version.check_string(pkgver, rule):
+                    applies = False
+                    break
+
+            if not applies:
+                continue
+
+            # Process arch-specific options
+            for arch_spec, options in arch_options.items():
+                # Check if this rule applies to arch
+                if arch_spec != "all":
+                    if str(arch) not in arch_spec.split(" "):
+                        continue
+
+                # Add category header
+                if not options_added and options:
+                    fragment_lines.append(f"# {category_name}")
+                    options_added = True
+
+                # Add each option
+                for option, value in sorted(options.items()):
+                    if isinstance(value, bool):
+                        if value:
+                            fragment_lines.append(f"CONFIG_{option}=y")
+                        else:
+                            fragment_lines.append(f"# CONFIG_{option} is not set")
+                    elif isinstance(value, str):
+                        fragment_lines.append(f'CONFIG_{option}="{value}"')
+                    elif isinstance(value, list):
+                        # For lists, join with commas
+                        joined = ",".join(value)
+                        fragment_lines.append(f'CONFIG_{option}="{joined}"')
+
+        if options_added:
+            # Padding between categories
+            fragment_lines.append("")
+
+    return "\n".join(fragment_lines)
