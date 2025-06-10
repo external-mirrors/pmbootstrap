@@ -18,7 +18,7 @@ import pmb.helpers.pmaports
 import pmb.helpers.run
 import pmb.parse
 from pmb.core import Chroot
-from pmb.types import Apkbuild, Env
+from pmb.types import Apkbuild, CrossCompile, Env
 
 
 class KConfigUI(enum.Enum):
@@ -193,7 +193,7 @@ def _init(pkgname: str, arch: Arch | None) -> tuple[str, Arch, Any, Chroot, Env]
     # Set up build tools and makedepends
     pmb.chroot.init(chroot)
     pmb.build.init(chroot)
-    if cross:
+    if cross.enabled():
         pmb.build.init_compiler(get_context(), [], cross, arch)
 
     depends = apkbuild["makedepends"] + ["gcc", "make"]
