@@ -119,9 +119,10 @@ def format_luks_root(device: str, cipher: str, iter_time: str) -> None:
     fde_key = os.environ.get("PMB_FDE_PASSWORD", None)
     if fde_key:
         # Write passphrase to a temp file, to avoid printing it in any log
-        path = tempfile.mktemp(dir="/tmp")
-        path_outside = Chroot.native() / path
-        path_outside.write_text(fde_key, encoding="utf-8")
+        fd, path = tempfile.mkstemp(dir=Chroot.native().path / "/tmp", text=True)
+        with os.fdopen(fd) as handle:
+            handle.write(f"{fde_key}")
+        os.close(fd)
         format_cmd += [str(path)]
         open_cmd += ["--key-file", str(path)]
 
