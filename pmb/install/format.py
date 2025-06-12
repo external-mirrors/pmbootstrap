@@ -1,8 +1,10 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+from pmb.core.context import get_context
 from pmb.helpers import logging
 import pmb.chroot
 import pmb.chroot.apk
+import pmb.parse
 from pmb.core import Chroot
 from pmb.types import PartitionLayout, PmbArgs, PathString
 import os
@@ -28,6 +30,7 @@ def format_and_mount_boot(layout: PartitionLayout) -> None:
     deviceinfo = pmb.parse.deviceinfo()
     filesystem = deviceinfo.boot_filesystem or "ext2"
     layout.boot.filesystem = filesystem
+    sector_size = get_context().sector_size
     offset_sectors = deviceinfo.boot_part_start
     offset_bytes = layout.boot.offset
     boot_path = "/mnt/rootfs/boot"
@@ -42,6 +45,8 @@ def format_and_mount_boot(layout: PartitionLayout) -> None:
                 "16",
                 "-i",
                 layout.boot.uuid,
+                "-S",
+                str(sector_size),
                 "--offset",
                 str(offset_sectors),
                 "-n",
@@ -57,6 +62,8 @@ def format_and_mount_boot(layout: PartitionLayout) -> None:
                 "32",
                 "-i",
                 layout.boot.uuid,
+                "-S",
+                str(sector_size),
                 "--offset",
                 str(offset_sectors),
                 "-n",

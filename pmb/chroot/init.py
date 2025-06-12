@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import enum
 from pathlib import Path
+import pmb.chroot.run
 from pmb.meta import Cache
 from pmb.helpers import logging
 import os

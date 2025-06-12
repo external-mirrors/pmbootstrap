@@ -101,6 +101,7 @@ def init(args: PmbArgs) -> PmbArgs:
     context.cross = args.cross
     context.assume_yes = getattr(args, "assume_yes", False)
     context.force = getattr(args, "force", False)
+    context.sector_size = getattr(args, "sector_size", None)
 
     # Initialize context
     pmb.core.context.set_context(context)
