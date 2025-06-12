@@ -113,7 +113,9 @@ def init(chroot: Chroot = Chroot.native()) -> bool:
 
 def init_compiler(context: Context, depends: list[str], cross: CrossCompile, arch: Arch) -> None:
     arch_str = str(arch)
-    cross_pkgs = ["ccache-cross-symlinks", "abuild"]
+    cross_pkgs = ["abuild"]
+    if context.ccache:
+        cross_pkgs.append("ccache-cross-symlinks")
     # FIXME: cleanup this logic
     if "gcc4" in depends:
         cross_pkgs += ["gcc4-" + arch_str]

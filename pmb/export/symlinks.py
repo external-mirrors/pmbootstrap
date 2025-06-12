@@ -60,6 +60,8 @@ def symlinks(folder: Path) -> None:
 
     # Iterate through all files
     for file in files:
+        if not file.exists():
+            continue
         basename = file.name
         link = folder / basename
 
