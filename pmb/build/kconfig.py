@@ -114,6 +114,14 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild) -> Path:
     if (chroot / ret / apkbuild["_outdir"] / ".config").exists():
         return ret / apkbuild["_outdir"]
 
+    # out-of-tree ($builddir)
+    guess = pmb.chroot.root(
+            ["find", "-maxdepth", "3", "-name", ".config"], chroot, Path("/home/pmos/build"), output_return=True
+        ).rstrip()
+
+    if guess:
+        return (Path("/home/pmos/build") / guess).parent
+
     # Not found
     raise RuntimeError(
         "Could not find the kernel config. Consider making a"
