@@ -102,12 +102,9 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild, must_exist: bool = True) -> 
         return old_ret
 
     # New style ($builddir)
-    cmd = f"srcdir={pmb.config.abuild_basedir}/src source APKBUILD; echo $builddir"
-    ret = Path(
-        pmb.chroot.user(
-            ["sh", "-c", cmd], chroot, Path(pmb.config.abuild_basedir), output_return=True
-        ).rstrip()
-    )
+    ret = ""
+    if "builddir" in apkbuild:
+        ret = apkbuild["builddir"]
 
     if not must_exist:
         # For fragment-based configs, check if old style exists first
