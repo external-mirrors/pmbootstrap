@@ -50,7 +50,7 @@ def copy_to_buildpath(
     if not no_override:
         abuild_overrides(build / "APKBUILD")
 
-    pmb.chroot.root(["chown", "-R", "pmos:pmos", "/home/pmos/build"], chroot)
+    pmb.chroot.root(["chown", "-R", "pmos:pmos", pmb.config.abuild_basedir], chroot)
 
 
 def abuild_overrides(apkbuild: Path) -> None:

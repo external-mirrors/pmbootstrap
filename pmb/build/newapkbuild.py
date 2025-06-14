@@ -17,7 +17,7 @@ def newapkbuild(folder: PathString, args_passed: list[str], force: bool = False)
     # Initialize build environment and build folder
     pmb.build.init()
     pmb.chroot.init(Chroot.native())
-    build = Path("/home/pmos/build")
+    build = Path(pmb.config.abuild_basedir)
     build_outside = Chroot.native() / build
     if build_outside.exists():
         pmb.chroot.root(["rm", "-r", build])
@@ -34,7 +34,7 @@ def newapkbuild(folder: PathString, args_passed: list[str], force: bool = False)
     pkgname = pmb.parse.apkbuild(source_apkbuild, False)["pkgname"]
     target = pkgrepo_default_path() / folder / pkgname
 
-    # Move /home/pmos/build/$pkgname/* to /home/pmos/build/*
+    # Move pmb.config.abuild_basedir/$pkgname/* to pmb.config.abuild_basedir/*
     for path in build_outside.glob("*/*"):
         path_inside = build / pkgname / os.path.basename(path)
         pmb.chroot.user(["mv", path_inside, build])
