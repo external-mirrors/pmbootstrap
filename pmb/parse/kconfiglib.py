@@ -986,7 +986,7 @@ class Kconfig(object):
         self.config_header = os.getenv("KCONFIG_CONFIG_HEADER", "")
         self.header_header = os.getenv("KCONFIG_AUTOHEADER_HEADER", "")
 
-        self.syms = {}
+        self.syms: dict[str, Symbol] = {}
         self.const_syms = {}
         self.defined_syms = []
         self.missing_syms = []
@@ -3199,6 +3199,9 @@ class Kconfig(object):
                 node.visibility = self._make_and(node.visibility,
                                                  self._expect_expr_and_eol())
 
+            elif t0 is _T_MODULES:
+                    pass
+
             elif t0 is _T_OPTION:
                 if self._check_token(_T_ENV):
                     if not self._check_token(_T_EQUAL):
@@ -4266,6 +4269,9 @@ class Symbol(object):
         "user_value",
         "weak_rev_dep",
     )
+
+    # tuple with number of entries followed by each Symbol
+    direct_dep: list[tuple[int, ...]]
 
     #
     # Public interface

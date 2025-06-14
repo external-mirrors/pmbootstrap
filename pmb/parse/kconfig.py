@@ -1,6 +1,8 @@
 # Copyright 2023 Attila Szollosi
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
+from queue import Queue
+from pmb.core.chroot import Chroot
 from pmb.helpers import logging
 import re
 import os
@@ -350,7 +352,59 @@ def check_file(
     return check_config(config_path, arch, version, components_list, details=details)
 
 
-def create_fragment(apkbuild: Apkbuild, arch: Arch) -> str:
+def add_missing_dependencies(apkbuild: Apkbuild, pmos_frag: OrderedDict[str, str], dotconfig: Path) -> OrderedDict[str, str]:
+    from pmb.parse import kconfiglib
+
+    os.environ["srctree"] = "." #str(Chroot.native() / apkbuild["builddir"])
+    os.environ["CC"] = "gcc"
+    os.environ["LD"] = "ld"
+    os.environ["HOSTCC"] = "gcc"
+    os.environ["ARCH"] = "arm64"
+    os.environ["SRCARCH"] = "arm64"
+    os.chdir(Chroot.native() / apkbuild["builddir"])
+    kconfig = kconfiglib.Kconfig("Kconfig", warn=False)
+    print("Loading .config...")
+    kconfig.load_config(str(Chroot.native() / dotconfig))
+    print("Finding missing dependencies!")
+
+    for (sname, sval) in pmos_frag.items():
+        if sname not in kconfig.syms:
+            print(f"symbol {sname} not found")
+            continue
+
+        sym = kconfig.syms.get(sname)
+        if not isinstance(sym, kconfiglib.Symbol):
+            print(f"sym {sname} not a Symbol? got {sym}")
+        # print(f"sym {sym.config_string} dep type {type(sym.direct_dep)}")
+        if not sym.direct_dep or not isinstance(sym.direct_dep, tuple):
+            # print(f"CONFIG_{sym.name}={sym.str_value} # no deps?")
+            continue
+
+        missing_deps: list[kconfiglib.Symbol] = []
+        dept: Queue[tuple[kconfiglib.Symbol]] = Queue()
+        dept.put(sym.direct_dep)
+        while not dept.empty():
+            next_dep = dept.get_nowait()
+            for dep in next_dep:
+                if isinstance(dep, int):
+                    continue
+                if isinstance(dep, tuple):
+                    dept.put(dep)
+                elif dep.str_value == "n":
+                    missing_deps.append(dep)
+                    # print(f"  {dep.name}={dep.str_value}")
+
+        if missing_deps and sym.str_value == "n":
+            print(f"\nCONFIG_{sym.name}={sym.str_value} # missing dependencies:")
+            for dep in missing_deps:
+                if dep.assignable:
+                    print(f"    CONFIG_{dep.name}={dep.assignable[-1]} (current: {dep.str_value})")
+                else:
+                    print(f"    # CONFIG_{dep.name} can't be assigned!")
+            # print()
+
+
+def create_fragment(apkbuild: Apkbuild, arch: Arch) -> tuple[str, dict[str, str]]:
     """
     Generate a kconfig fragment based on categories and version from a kernel's
     APKBUILD.
@@ -378,6 +432,7 @@ def create_fragment(apkbuild: Apkbuild, arch: Arch) -> str:
             logging.warning(f"Failed to read category {category}: {e}")
 
     fragment_lines = []
+    syms_dict: OrderedDict[str, str] = {}
 
     # Process each category
     for category_key, category_rules in all_rules.items():
@@ -410,6 +465,7 @@ def create_fragment(apkbuild: Apkbuild, arch: Arch) -> str:
 
                 # Add each option
                 for option, value in sorted(options.items()):
+                    syms_dict[option] = str(value)
                     if isinstance(value, bool):
                         if value:
                             fragment_lines.append(f"CONFIG_{option}=y")
@@ -426,4 +482,4 @@ def create_fragment(apkbuild: Apkbuild, arch: Arch) -> str:
             # Padding between categories
             fragment_lines.append("")
 
-    return "\n".join(fragment_lines)
+    return "\n".join(fragment_lines), syms_dict

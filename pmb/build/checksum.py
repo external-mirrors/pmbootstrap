@@ -11,10 +11,11 @@ import pmb.helpers.pmaports
 from pmb.core import Chroot
 
 
-def update(pkgname: str) -> None:
+def update(pkgname: str, skip_init: bool=False) -> None:
     """Fetch all sources and update the checksums in the APKBUILD."""
-    pmb.build.init_abuild_minimal()
-    pmb.build.copy_to_buildpath(pkgname, no_override=True)
+    if not skip_init:
+        pmb.build.init_abuild_minimal()
+        pmb.build.copy_to_buildpath(pkgname, no_override=True)
     logging.info("(native) generate checksums for " + pkgname)
     pmb.chroot.user(["abuild", "checksum"], working_dir=Path(pmb.config.abuild_basedir))
 

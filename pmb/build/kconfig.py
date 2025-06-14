@@ -104,7 +104,7 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild, must_exist: bool = True) -> 
     # New style ($builddir)
     ret = ""
     if "builddir" in apkbuild:
-        ret = apkbuild["builddir"]
+        ret = Path(apkbuild["builddir"])
 
     if not must_exist:
         # For fragment-based configs, check if old style exists first
@@ -187,7 +187,7 @@ def _make(
     config = f"config-{apkbuild['_flavor']}.{arch}"
     target = aport / config
     pmb.helpers.run.user(["cp", source, target])
-    pmb.build.checksum.update(pkgname)
+    pmb.build.checksum.update(pkgname, skip_init=True)
 
 
 def _init(pkgname: str, arch: Arch | None) -> tuple[str, Arch, Any, Chroot, Env]:
@@ -267,7 +267,7 @@ def generate_config(pkgname: str, arch: Arch | None) -> None:
         fragments += defconfig
 
     # Generate fragment based on categories for kernel, using kconfigcheck.toml
-    pmos_frag = pmb.parse.kconfig.create_fragment(apkbuild, arch)
+    pmos_frag, syms_dict = pmb.parse.kconfig.create_fragment(apkbuild, arch)
 
     # Write the pmos fragment to the kernel source tree
     outputdir = get_outputdir(pkgname, apkbuild, must_exist=False)
@@ -317,6 +317,9 @@ def generate_config(pkgname: str, arch: Arch | None) -> None:
 
     # Generate the config using all fragments
     _make(chroot, fragments, env, pkgname, arch, apkbuild, outputdir)
+
+    print("Parsing kconfig!")
+    pmb.parse.kconfig.add_missing_dependencies(apkbuild, syms_dict, outputdir / ".config")
 
     # Validate the generated config
     if not pmb.parse.kconfig.check(pkgname, details=True):
