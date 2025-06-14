@@ -355,6 +355,9 @@ def apkbuild(path: Path, check_pkgver: bool = True, check_pkgname: bool = True) 
 
     # Parse all attributes from the config
     ret = {key: "" for key in pmb.config.apkbuild_attributes}
+    # The srcdir variable will always be this for us
+    # FIXME: this should be declared somewhere and not hardcoded!
+    ret["srcdir"] = f"{pmb.config.abuild_basedir}/src"
     _parse_attributes(path, lines, pmb.config.apkbuild_attributes, ret)
 
     # Sanity check: pkgname

@@ -16,7 +16,7 @@ def update(pkgname: str) -> None:
     pmb.build.init_abuild_minimal()
     pmb.build.copy_to_buildpath(pkgname, no_override=True)
     logging.info("(native) generate checksums for " + pkgname)
-    pmb.chroot.user(["abuild", "checksum"], working_dir=Path("/home/pmos/build"))
+    pmb.chroot.user(["abuild", "checksum"], working_dir=Path(pmb.config.abuild_basedir))
 
     # Copy modified APKBUILD back
     source = Chroot.native() / "home/pmos/build/APKBUILD"
@@ -32,4 +32,4 @@ def verify(pkgname: str) -> None:
 
     # Fetch and verify sources, "fetch" alone does not verify them:
     # https://github.com/alpinelinux/abuild/pull/86
-    pmb.chroot.user(["abuild", "fetch", "verify"], working_dir=Path("/home/pmos/build"))
+    pmb.chroot.user(["abuild", "fetch", "verify"], working_dir=Path(pmb.config.abuild_basedir))

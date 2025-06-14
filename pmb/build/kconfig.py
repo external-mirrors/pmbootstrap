@@ -84,7 +84,7 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild) -> Path:
     $srcdir/build (see the discussion in #1551).
     """
     # Old style ($srcdir/build)
-    ret = Path("/home/pmos/build/src/build")
+    ret = Path(f"{pmb.config.abuild_basedir}/src/build")
     chroot = Chroot.native()
     if os.path.exists(chroot / ret / ".config"):
         logging.warning("*****")
@@ -98,10 +98,10 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild) -> Path:
         return ret
 
     # New style ($builddir)
-    cmd = "srcdir=/home/pmos/build/src source APKBUILD; echo $builddir"
+    cmd = f"srcdir={pmb.config.abuild_basedir}/src source APKBUILD; echo $builddir"
     ret = Path(
         pmb.chroot.user(
-            ["sh", "-c", cmd], chroot, Path("/home/pmos/build"), output_return=True
+            ["sh", "-c", cmd], chroot, Path(pmb.config.abuild_basedir), output_return=True
         ).rstrip()
     )
     if (chroot / ret / ".config").exists():
@@ -116,11 +116,11 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild) -> Path:
 
     # out-of-tree ($builddir)
     guess = pmb.chroot.root(
-            ["find", "-maxdepth", "3", "-name", ".config"], chroot, Path("/home/pmos/build"), output_return=True
+            ["find", "-maxdepth", "3", "-name", ".config"], chroot, Path(pmb.config.abuild_basedir), output_return=True
         ).rstrip()
 
     if guess:
-        return (Path("/home/pmos/build") / guess).parent
+        return (Path(pmb.config.abuild_basedir) / guess).parent
 
     # Not found
     raise RuntimeError(
@@ -133,11 +133,11 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild) -> Path:
 def extract_and_patch_sources(pkgname: str, arch: Arch) -> None:
     pmb.build.copy_to_buildpath(pkgname)
     logging.info("(native) extract kernel source")
-    pmb.chroot.user(["abuild", "unpack"], working_dir=Path("/home/pmos/build"))
+    pmb.chroot.user(["abuild", "unpack"], working_dir=Path(pmb.config.abuild_basedir))
     logging.info("(native) apply patches")
     pmb.chroot.user(
         ["abuild", "prepare"],
-        working_dir=Path("/home/pmos/build"),
+        working_dir=Path(pmb.config.abuild_basedir),
         output=RunOutputTypeDefault.INTERACTIVE,
         env={"CARCH": str(arch)},
     )
