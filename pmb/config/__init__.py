@@ -201,6 +201,10 @@ chroot_outdated = 3600 * 24 * 2
 # reverted when the bug is properly fixed.
 build_packages = ["abuild", "apk-tools", "build-base", "ccache", "git", "hexdump", "pigz"]
 
+# This is the directory that package sources are copied into in the chroot
+# before building.
+abuild_basedir = "/home/pmos/build"
+
 #
 # PARSE
 #
@@ -249,6 +253,7 @@ apkbuild_attributes = {
     "sha512sums": {},
     "subpackages": {},
     "url": {},
+    "builddir": {},
     # cross-compilers
     "makedepends_build": {"array": True},
     "makedepends_host": {"array": True},

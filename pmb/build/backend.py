@@ -114,7 +114,7 @@ def override_source(
     pmb.chroot.user(["cat", append_path], chroot)
 
     # Append it to the APKBUILD
-    apkbuild_path = "/home/pmos/build/APKBUILD"
+    apkbuild_path = f"{pmb.config.abuild_basedir}/APKBUILD"
     shell_cmd = "cat " + apkbuild_path + " " + append_path + " > " + append_path + "_"
     pmb.chroot.user(["sh", "-c", shell_cmd], chroot)
     pmb.chroot.user(["mv", append_path + "_", apkbuild_path], chroot)
@@ -138,7 +138,7 @@ def mount_pmaports(chroot: Chroot = Chroot.native()) -> dict[str, Path]:
 
 
 def link_to_git_dir(chroot: Chroot) -> None:
-    """Make ``/home/pmos/build/.git`` point to the .git dir from pmaports.git, with a
+    """Make ``pmb.config.abuild_basedir/.git`` point to the .git dir from pmaports.git, with a
     symlink so abuild does not fail (#1841).
 
     abuild expects the current working directory to be a subdirectory of a
@@ -159,8 +159,8 @@ def link_to_git_dir(chroot: Chroot) -> None:
     dest_paths = mount_pmaports(chroot)
 
     # Create .git symlink
-    pmb.chroot.user(["mkdir", "-p", "/home/pmos/build"], chroot)
-    pmb.chroot.user(["ln", "-sf", dest_paths["pmaports"] / ".git", "/home/pmos/build/.git"], chroot)
+    pmb.chroot.user(["mkdir", "-p", pmb.config.abuild_basedir], chroot)
+    pmb.chroot.user(["ln", "-sf", dest_paths["pmaports"] / ".git", f"{pmb.config.abuild_basedir}/.git"], chroot)
 
 
 def handle_csum_failure(apkbuild: Apkbuild, chroot: Chroot) -> None:
@@ -312,7 +312,7 @@ def run_abuild(
     link_to_git_dir(buildchroot)
 
     try:
-        pmb.chroot.user(cmd, buildchroot, Path("/home/pmos/build"), env=env)
+        pmb.chroot.user(cmd, buildchroot, Path(pmb.config.abuild_basedir), env=env)
     finally:
         handle_csum_failure(apkbuild, buildchroot)
 

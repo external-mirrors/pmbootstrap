@@ -90,7 +90,7 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild, must_exist: bool = True) -> 
     chroot = Chroot.native()
 
     # Old style ($srcdir/build)
-    old_ret = Path("/home/pmos/build/src/build")
+    old_ret = Path(f"{pmb.config.abuild_basedir}/src/build")
     if must_exist and os.path.exists(chroot / old_ret / ".config"):
         logging.warning("*****")
         logging.warning(
@@ -102,10 +102,10 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild, must_exist: bool = True) -> 
         return old_ret
 
     # New style ($builddir)
-    cmd = "srcdir=/home/pmos/build/src source APKBUILD; echo $builddir"
+    cmd = f"srcdir={pmb.config.abuild_basedir}/src source APKBUILD; echo $builddir"
     ret = Path(
         pmb.chroot.user(
-            ["sh", "-c", cmd], chroot, Path("/home/pmos/build"), output_return=True
+            ["sh", "-c", cmd], chroot, Path(pmb.config.abuild_basedir), output_return=True
         ).rstrip()
     )
 
@@ -135,11 +135,11 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild, must_exist: bool = True) -> 
 
     # out-of-tree ($builddir)
     guess = pmb.chroot.root(
-            ["find", "-maxdepth", "3", "-name", ".config"], chroot, Path("/home/pmos/build"), output_return=True
+            ["find", "-maxdepth", "3", "-name", ".config"], chroot, Path(pmb.config.abuild_basedir), output_return=True
         ).rstrip()
 
     if guess:
-        return (Path("/home/pmos/build") / guess).parent
+        return (Path(pmb.config.abuild_basedir) / guess).parent
 
     # Not found
     raise RuntimeError(
@@ -152,11 +152,11 @@ def get_outputdir(pkgname: str, apkbuild: Apkbuild, must_exist: bool = True) -> 
 def extract_and_patch_sources(pkgname: str, arch: Arch) -> None:
     pmb.build.copy_to_buildpath(pkgname)
     logging.info("(native) extract kernel source")
-    pmb.chroot.user(["abuild", "unpack"], working_dir=Path("/home/pmos/build"))
+    pmb.chroot.user(["abuild", "unpack"], working_dir=Path(pmb.config.abuild_basedir))
     logging.info("(native) apply patches")
     pmb.chroot.user(
         ["abuild", "prepare"],
-        working_dir=Path("/home/pmos/build"),
+        working_dir=Path(pmb.config.abuild_basedir),
         output="interactive",
         env={"CARCH": str(arch)},
     )
@@ -278,7 +278,7 @@ def generate_config(pkgname: str, arch: Arch | None) -> None:
 
     # Create the configs directory if it doesn't exist
     pmb.chroot.user(
-        ["mkdir", "-p", str(arch_configs_dir)], chroot, working_dir=Path("/home/pmos/build")
+        ["mkdir", "-p", str(arch_configs_dir)], chroot, working_dir=Path(pmb.config.abuild_basedir)
     )
 
     # Write the pmos fragment to a temp file and copy it in

@@ -114,7 +114,7 @@ def modify_apkbuild(pkgname: str, aport: Path) -> None:
         "pkgver": pkgver,
         "pkgrel": "0",
         "subpackages": "",
-        "builddir": "/home/pmos/build/src",
+        "builddir": f"{pmb.config.abuild_basedir}/src",
     }
 
     pmb.aportgen.core.rewrite(pkgname, apkbuild_path, fields=fields)
@@ -153,7 +153,7 @@ def run_abuild(
     :param kbuild_out: kernel build system output sub-directory
     """
     chroot = Chroot.native()
-    build_path = Path("/home/pmos/build")
+    build_path = Path(pmb.config.abuild_basedir)
     kbuild_out_source = f"/mnt/linux/{kbuild_out}"
 
     # If the kernel was cross-compiled on the host rather than with the envkernel
