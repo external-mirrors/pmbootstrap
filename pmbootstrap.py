@@ -61,6 +61,17 @@ if pid > 0:
 # print(f"cap_sys_admin: {sandbox.have_effective_cap(sandbox.CAP_SYS_ADMIN)}")
 # print(f"single user: {sandbox.userns_has_single_user()}")
 
+def create_stub_passwd() -> str:
+    """
+    Create a version of passwd where the root user home dir is replaced with our user
+    home dir, so  that commands like ssh with read the right configs.
+    """
+    return "".join(map(
+        lambda x: x.replace(":/root:", f":{os.environ['HOME']}:")
+            if x.startswith("root:") else x,
+        open("/etc/passwd").readlines()))
+
+
 # We set up a very basic mount environment, where we just bind mount the host
 # rootfs in. We can extend this in the future to isolate the pmb workdir but
 # for now this is enough.
@@ -77,6 +88,28 @@ fsops = [
     # /tmp/pmb is a tmpfs we can use for scratch data that will be removed
     # on exit.
     sandbox.TmpfsOperation("/tmp/pmb"),
+    # We need to make /etc/ssh/ssh_config.d appear empty because permissions
+    # are all messed up. Probably there's a fancy way to mount with adjusted
+    # perms but for now this will do...
+    sandbox.DirOperation("/tmp/pmb/empty"),
+    sandbox.BindOperation(
+        "/tmp/pmb/empty",
+        "/etc/ssh/ssh_config.d",
+        readonly=True,
+        required=True,
+        relative=True
+    ),
+    sandbox.WriteOperation(
+        create_stub_passwd(),
+        "/tmp/pmb/etc_passwd",
+    ),
+    sandbox.BindOperation(
+        "/tmp/pmb/etc_passwd",
+        "/etc/passwd",
+        readonly=True,
+        required=True,
+        relative=True
+    ),
 ]
 sandbox.setup_mounts(fsops)
 
