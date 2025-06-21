@@ -12,6 +12,7 @@ from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
 from pmb.helpers import logging
 from pmb.types import Apkbuild, CrossCompile, Env, RunOutputTypeDefault
+import pmb.helpers.mount
 
 
 class BootstrapStage(enum.IntEnum):
@@ -34,7 +35,7 @@ def override_source(
         return
 
     # Mount source in chroot
-    mount_path = "work/source-override/"
+    mount_path = "/work/source-override/"
     mount_path_outside = chroot / mount_path
     pmb.helpers.mount.bind(src, mount_path_outside, umount=True)
 
