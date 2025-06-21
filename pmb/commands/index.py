@@ -4,6 +4,8 @@
 from __future__ import annotations
 from pmb import commands
 import pmb.build.other
+import pmb.chroot
+from pmb.core.chroot import Chroot
 
 
 class Index(commands.Command):
@@ -11,4 +13,6 @@ class Index(commands.Command):
         pass
 
     def run(self) -> None:
+        # Set up native chroot for running commands
+        pmb.chroot.init(Chroot.native())
         pmb.build.other.index_repo()
