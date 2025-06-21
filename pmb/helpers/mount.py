@@ -41,7 +41,7 @@ def bind(
     # Check/create folders
     if create_folders:
         for path in [source, destination]:
-            Path(path).mkdir(exist_ok=True)
+            Path(path).mkdir(exist_ok=True, parents=True)
 
     # Actually mount the folder
     sandbox.mount_rbind(str(source), str(destination))
