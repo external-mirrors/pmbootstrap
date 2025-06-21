@@ -43,6 +43,7 @@ def bind(
         for path in [source, destination]:
             Path(path).mkdir(exist_ok=True, parents=True)
 
+    pmb.logging.verbose(f"mount --bind {source} {destination}")
     # Actually mount the folder
     sandbox.mount_rbind(str(source), str(destination))
 
