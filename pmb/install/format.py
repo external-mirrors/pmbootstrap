@@ -273,11 +273,11 @@ def format_and_mount_root(args: PmbArgs, layout: PartitionLayout) -> None:
 
         install_fsprogs(filesystem)
         logging.info(f"(native) format {layout.root.path} (root, {filesystem})")
-        rootfs_size = round(layout.root.size / 1024)
+        rootfs_size = layout.root.size
         # Leave some empty space for LUKS
         if layout.fde:
             rootfs_size -= 64 * 1024
-        pmb.chroot.root([*mkfs_root_args, layout.root.path, f"{round(layout.root.size / 1024)}k"])
+        pmb.chroot.root([*mkfs_root_args, layout.root.path, f"{int(rootfs_size/1024)}k"])
 
         # Unmount the empty dir we mounted over /boot
         pmb.mount.umount_all(Chroot.native() / rootfs / "boot")
