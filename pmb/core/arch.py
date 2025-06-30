@@ -204,7 +204,6 @@ class Arch(enum.Enum):
         not_required = {
             Arch.x86_64: [Arch.x86],
             Arch.armv7: [Arch.armel, Arch.armhf],
-            Arch.aarch64: [Arch.armv7],
         }
         if Arch.native() in not_required:
             if self in not_required[Arch.native()]:
