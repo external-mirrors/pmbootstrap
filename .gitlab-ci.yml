@@ -287,3 +287,8 @@ chroot basic:
   extends: .integration
   script:
     - .ci/integration_tests/chroot_basic
+
+inspect initramfs:
+  extends: .integration
+  script:
+    - .ci/integration_tests/inspect_initramfs

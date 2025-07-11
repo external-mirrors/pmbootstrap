@@ -120,6 +120,12 @@ chroot_basic() {
 	pmbootstrap chroot true
 }
 
+inspect_initramfs() {
+	pmbootstrap initfs
+	pmbootstrap initfs ls
+	pmbootstrap initfs extract
+}
+
 # Run the test
 echo "Running $test $*"
 "$test" "$@"
