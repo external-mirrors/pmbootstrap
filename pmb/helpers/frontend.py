@@ -513,6 +513,8 @@ def stats(args: PmbArgs) -> None:
     # Chroot suffix
     chroot = Chroot.buildroot(args.arch or Arch.native())
 
+    pmb.chroot.init(chroot)
+
     # Install ccache and display stats
     pmb.chroot.apk.install(["ccache"], chroot)
     logging.info(f"({chroot}) % ccache -s")
