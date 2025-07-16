@@ -20,11 +20,11 @@ import pmb.parse.version
 from pmb.types import RunOutputTypeDefault
 
 
-def clone() -> None:
+def clone(do_shallow: bool = False) -> None:
     logging.info("Setting up the native chroot and cloning the package build recipes (pmaports)...")
 
     # Set up the native chroot and clone pmaports
-    pmb.helpers.git.clone("pmaports")
+    pmb.helpers.git.clone("pmaports", do_shallow)
 
 
 def check_version_pmaports(real: str) -> None:
@@ -186,9 +186,9 @@ def read_config_channel() -> dict[str, str]:
     )
 
 
-def init() -> None:
+def init(do_shallow_clone: bool = False) -> None:
     if not os.path.exists(pkgrepo_default_path()):
-        clone()
+        clone(do_shallow_clone)
     read_config()
 
 
