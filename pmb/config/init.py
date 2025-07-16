@@ -860,11 +860,11 @@ def frontend(args: PmbArgs) -> None:
     pmb.helpers.other.migrate_work_folder()
 
     # Clone pmaports
-    pmb.config.pmaports.init()
+    pmb.config.pmaports.init(args.shallow_initial_clone)
 
     # Choose release channel, possibly switch pmaports branch
     channel = ask_for_channel(config)
-    pmb.config.pmaports.switch_to_channel_branch(channel)
+    pmb.config.pmaports.switch_to_channel_branch(channel, args.shallow_initial_clone)
     # FIXME: ???
     config.is_default_channel = False
 
