@@ -4,6 +4,7 @@
 from pathlib import Path
 from pmb.core.arch import Arch
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 
 import pmb.parse.apkindex
 
@@ -242,7 +243,7 @@ p:postmarketos-ramdisk=3.3.5-r2"""
 
 
 @pytest.fixture
-def valid_apkindex_file(tmp_path) -> Path:
+def valid_apkindex_file(tmp_path: Path) -> Path:
     # FIXME: use tmpfile fixture from !2453
     tmpfile = tmp_path / "APKINDEX.1"
     print(tmp_path)
@@ -253,7 +254,7 @@ def valid_apkindex_file(tmp_path) -> Path:
     return tmpfile
 
 
-def test_apkindex_parse(valid_apkindex_file) -> None:
+def test_apkindex_parse(valid_apkindex_file: Path) -> None:
     tmpfile = valid_apkindex_file
     blocks = parse_apkindex(tmpfile, True)
     for k, v in blocks.items():
@@ -320,7 +321,7 @@ def test_apkindex_parse(valid_apkindex_file) -> None:
     assert networkmanager.provider_priority is None
 
 
-def test_apkindex_parse_bad_priority(tmp_path) -> None:
+def test_apkindex_parse_bad_priority(tmp_path: Path) -> None:
     tmpfile = tmp_path / "APKINDEX.2"
     f = open(tmpfile, "w")
     # A snippet of the above example but with the provider_priority
@@ -369,7 +370,7 @@ p:postmarketos-ramdisk=3.3.5-r2"""
         parse_apkindex(tmpfile, True)
 
 
-def test_apkindex_parse_missing_optionals(tmp_path) -> None:
+def test_apkindex_parse_missing_optionals(tmp_path: Path) -> None:
     tmpfile = tmp_path / "APKINDEX.3"
     f = open(tmpfile, "w")
     # A snippet of the above example but with a missing timestamp
@@ -397,7 +398,7 @@ i:postmarketos-base-ui=29-r1 xorg-server"""
     parse_apkindex(tmpfile, True)
 
 
-def test_apkindex_parse_trailing_newline(tmp_path) -> None:
+def test_apkindex_parse_trailing_newline(tmp_path: Path) -> None:
     tmpfile = tmp_path / "APKINDEX.4"
     f = open(tmpfile, "w")
     # A snippet of the above example but with additional
@@ -428,12 +429,12 @@ i:postmarketos-base-ui=29-r1 xorg-server
     parse_apkindex(tmpfile, True)
 
 
-def test_apkindex_parse_cache_hit(valid_apkindex_file, monkeypatch) -> None:
+def test_apkindex_parse_cache_hit(valid_apkindex_file: Path, monkeypatch: MonkeyPatch) -> None:
     # First parse normally, filling the cache
     parse_apkindex(valid_apkindex_file)
 
     # Mock that always asserts when called
-    def mock_parse_next_block(path, lines):
+    def mock_parse_next_block(path: Path, lines: list[str]) -> None:
         assert False
 
     # parse_next_block() is only called on cache miss
@@ -449,19 +450,21 @@ def test_apkindex_parse_cache_hit(valid_apkindex_file, monkeypatch) -> None:
         parse_apkindex(valid_apkindex_file)
 
 
-def test_apkindex_package(valid_apkindex_file) -> None:
+def test_apkindex_package(valid_apkindex_file: Path) -> None:
     index_block = package_apkindex(
         "postmarketos-base-ui-networkmanager", arch=Arch.aarch64, indexes=[valid_apkindex_file]
     )
+    assert index_block is not None
     assert index_block.pkgname == "postmarketos-base-ui-networkmanager"
 
     index_block = package_apkindex(
         "postmarketos-base-ui-wifi", arch=Arch.aarch64, indexes=[valid_apkindex_file]
     )
+    assert index_block is not None
     assert index_block.pkgname == "postmarketos-base-ui-wifi-wpa_supplicant"
 
 
-def test_apkindex_package_provider_priority(tmp_path) -> None:
+def test_apkindex_package_provider_priority(tmp_path: Path) -> None:
     tmpfile = tmp_path / "APKINDEX.5"
     f = open(tmpfile, "w")
     # A snippet of the above example but with a missing timestamp
@@ -506,12 +509,13 @@ k:100
     f.close()
 
     index_block = package_apkindex("postmarketos-base-init", arch=Arch.aarch64, indexes=[tmpfile])
+    assert index_block is not None
     assert index_block.pkgname == "postmarketos-base-loooooooooong"
     assert index_block.origin == "postmarketos-base-systemd"
     assert index_block.provides == ["postmarketos-base-init"]
 
 
-def test_apkindex_package_provider_shortest(tmp_path) -> None:
+def test_apkindex_package_provider_shortest(tmp_path: Path) -> None:
     tmpfile = tmp_path / "APKINDEX.6"
     f = open(tmpfile, "w")
     # A snippet of the above example but with a missing timestamp
@@ -552,5 +556,6 @@ p:so:libGL.so.1=22-r0
     f.close()
 
     index_block = package_apkindex("so:libGL.so.1", arch=Arch.aarch64, indexes=[tmpfile])
+    assert index_block
     assert index_block.pkgname == "mesa-egl"
     assert index_block.origin == "mesa"
