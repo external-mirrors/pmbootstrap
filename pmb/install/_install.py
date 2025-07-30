@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pmb.core.arch import Arch
 from pmb.helpers import logging
+import enum
 import os
 import re
 import glob
@@ -32,6 +33,17 @@ import pmb.install.ui
 import pmb.install
 from pmb.core import Chroot, ChrootType
 from pmb.core.context import get_context
+
+class HermeticMerge(enum.Enum):
+    """
+    Hermetic merge while initializing chroot.
+    https://uapi-group.org/specifications/specs/configuration_files_specification/
+    """
+
+    AUTO = 0
+    ON = 1
+    OFF = 2
+
 
 # Keep track of the packages we already visited in get_recommends() to avoid
 # infinite recursion
@@ -896,6 +908,12 @@ def create_fstab(args: PmbArgs, layout: PartitionLayout | None, chroot: Chroot) 
     pmb.chroot.root(["mv", "/tmp/fstab", "/etc/fstab"], chroot)
 
 
+def init_hermetic_merge(chroot: Chroot):
+    logging.info(f"({chroot}) merge hermetic-usr")
+    script = f"{pmb.config.pmb_src}/pmb/data/merge-hermetic.sh"
+    pmb.helpers.run.root(["sh", "-e", script, "CALLED_FROM_PMB", chroot.path])
+
+
 def install_system_image(
     args: PmbArgs,
     size_reserve: int,
@@ -907,6 +925,7 @@ def install_system_image(
     split: bool = False,
     single_partition: bool = False,
     disk: Path | None = None,
+    hermetic_merge=HermeticMerge.AUTO,
 ) -> None:
     """
     :param size_reserve: empty partition between root and boot in MiB (pma#463)
@@ -918,6 +937,7 @@ def install_system_image(
     :param root_label: label of the root partition (e.g. "pmOS_root")
     :param split: create separate images for boot and root partitions
     :param disk: path to disk block device (e.g. /dev/mmcblk0) or None
+    :param hermetic_merge: whether to do the hermetic-usr merge or not
     """
     config = get_context().config
     device = chroot.name
@@ -964,6 +984,11 @@ def install_system_image(
 
     # Clean up after running mkinitfs in chroot
     pmb.helpers.mount.umount_all(chroot.path)
+    # Do hermetic merge at the end as otherwise the whole chroot can be bricked
+    if hermetic_merge is HermeticMerge.AUTO:
+        hermetic_merge = HermeticMerge.ON
+    if hermetic_merge is HermeticMerge.ON:
+        init_hermetic_merge(chroot)
     pmb.helpers.run.root(["rm", chroot / "in-pmbootstrap"])
     pmb.chroot.remove_mnt_pmbootstrap(chroot)
 
@@ -971,8 +996,9 @@ def install_system_image(
     logging.info(f"*** ({step + 1}/{steps}) FILL INSTALL BLOCKDEVICE ***")
     copy_files_from_chroot(args, chroot)
     create_home_from_skel(args.filesystem, config.user)
-    configure_apk(args)
-    copy_ssh_keys(config)
+    if hermetic_merge is HermeticMerge.OFF:
+        configure_apk(args)
+        copy_ssh_keys(config)
 
     # Don't try to embed firmware and cgpt on split images since there's no
     # place to put it and it will end up in /dev of the chroot instead
@@ -1424,7 +1450,7 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
         disable_service(chroot, "nftables")
 
 
-def install(args: PmbArgs) -> None:
+def install(args: PmbArgs, hermetic_merge=HermeticMerge.AUTO) -> None:
     device = get_context().config.device
     chroot = Chroot(ChrootType.ROOTFS, device)
     deviceinfo = pmb.parse.deviceinfo()
