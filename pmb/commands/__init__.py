@@ -31,7 +31,6 @@ unmigrated_commands = [
     "qemu",
     "aportupgrade",
     "newapkbuild",
-    "lint",
     "status",
     "ci",
     "zap",

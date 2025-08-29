@@ -25,7 +25,6 @@ import pmb.flasher
 import pmb.helpers.aportupgrade
 import pmb.helpers.devices
 import pmb.helpers.git
-import pmb.helpers.lint
 import pmb.helpers.logging
 import pmb.helpers.mount
 import pmb.helpers.pmaports
@@ -541,18 +540,6 @@ def bootimg_analyze(args: PmbArgs) -> None:
     for line in pmb.aportgen.device.generate_deviceinfo_fastboot_content(bootimg).split("\n"):
         tmp_output += "\n" + line.lstrip()
     logging.info(tmp_output)
-
-
-def lint(args: PmbArgs) -> None:
-    logging.warning(
-        "WARNING: The 'pmbootstrap lint' command is deprecated. If you are linting pmaports, use 'pmbootstrap ci apkbuild-lint' instead."
-    )
-
-    packages: Sequence[str] = args.packages
-    if not packages:
-        packages = pmb.helpers.pmaports.get_list()
-
-    pmb.helpers.lint.check(packages)
 
 
 def status(args: PmbArgs) -> NoReturn:
