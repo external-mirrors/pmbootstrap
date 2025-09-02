@@ -231,6 +231,7 @@ class PmbArgs(Namespace):
     ignore_depends: bool
     image_size: str
     image: bool
+    inspect_property: str
     install_base: bool
     install_blockdev: bool
     install_cgpt: bool

@@ -19,6 +19,7 @@ with contextlib.suppress(ImportError):
 import pmb.config
 import pmb.helpers.args
 import pmb.helpers.pmaports
+import pmb.commands
 
 """This file is about parsing command line arguments passed to pmbootstrap, as
    well as generating the help pages (pmbootstrap -h). All this is done with
@@ -1294,6 +1295,16 @@ def get_parser() -> argparse.ArgumentParser:
         metavar="name",
     )
     config.add_argument("value", nargs="?", help="set variable to value")
+
+    get = sub.add_parser("inspect", help="Get information about the device and build configuration")
+    inspect_properties = pmb.commands.Inspect.choices("property")
+    get.add_argument(
+        "inspect_property",
+        nargs="?",
+        help="Property to get",
+        choices=inspect_properties,
+        metavar="property",
+    )
 
     # Action: bootimg_analyze
     bootimg_analyze = sub.add_parser(

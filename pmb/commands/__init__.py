@@ -16,6 +16,7 @@ from .pkgrel_bump import PkgrelBump
 from .pkgver_bump import PkgverBump
 from .pull import Pull
 from .kconfig import KConfigCheck, KConfigEdit, KConfigMigrate
+from .inspect import Inspect
 
 """New way to model pmbootstrap subcommands that can be invoked without PmbArgs."""
 
@@ -96,6 +97,8 @@ def run_command(args: PmbArgs) -> None:
                     command = KConfigEdit(args.package[0], args.arch, args.xconfig, args.nconfig)
                 case "migrate":
                     command = KConfigMigrate(args.package, args.arch)
+        case "inspect":
+            command = Inspect(args.inspect_property)
         case _:
             raise NotImplementedError(f"Command '{args.action}' is not implemented.")
 

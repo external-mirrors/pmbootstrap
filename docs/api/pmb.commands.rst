@@ -36,6 +36,14 @@ pmb.commands.index module
    :undoc-members:
    :show-inheritance:
 
+pmb.commands.inspect module
+---------------------------
+
+.. automodule:: pmb.commands.inspect
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pmb.commands.kconfig module
 ---------------------------
 
