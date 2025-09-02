@@ -8,3 +8,8 @@ class Command:
     def run(self) -> None:
         """Run the command."""
         raise NotImplementedError()
+
+    @staticmethod
+    def choices(arg: str) -> tuple[str]:
+        """Get the available choices for an argument"""
+        raise NotImplementedError()
