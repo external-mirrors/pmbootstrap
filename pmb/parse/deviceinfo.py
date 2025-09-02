@@ -292,3 +292,21 @@ class Deviceinfo:
 
         if not self.flash_method:
             self.flash_method = "none"
+
+    def to_json(self) -> str:
+        import json
+        from enum import Enum
+        from typing import Any
+
+        def json_default(o: object) -> Any | None:
+            t = type(o)
+            if issubclass(t, Enum):
+                # mypy doesn't correctly figure out that o is an enum here :/
+                return o._value_  # type: ignore
+            try:
+                return o.__dict__
+            except Exception as e:
+                logging.error(f"Parsing error: {e}")
+            return dict()
+
+        return json.dumps(self, default=json_default, sort_keys=True, indent=4)
