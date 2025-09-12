@@ -7,7 +7,6 @@ import pmb.chroot
 import pmb.chroot.apk
 import pmb.parse
 from pmb.core import Chroot
-from pmb.core.context import get_context
 from pmb.types import PartitionLayout, PmbArgs, PathString, RunOutputTypeDefault
 import os
 from pathlib import Path
@@ -253,6 +252,8 @@ def format_and_mount_root(args: PmbArgs, layout: PartitionLayout) -> None:
                 rootfs,
                 "-F",
                 "-q",
+                "-b",
+                str(get_context().sector_size),
                 "-L",
                 layout.root.partition_label,
                 "-U",
