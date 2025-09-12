@@ -7,6 +7,7 @@ import re
 import glob
 import shlex
 import sys
+from math import ceil
 from collections.abc import Sequence
 from pathlib import Path
 import shutil
@@ -58,6 +59,10 @@ def get_subpartitions_size(chroot: Chroot) -> tuple[int, int]:
     root = pmb.helpers.other.folder_size(chroot.path) * 1024
     root *= 1.20
     root += 50 + int(config.extra_space) * 1024 * 1024
+    
+    # Ensure the sizes will be aligned to the sector size, up to 4k.
+    boot = ceil(boot/4096) * 4096
+    root = ceil(root/4096) * 4096
     return (boot, round(root))
 
 
