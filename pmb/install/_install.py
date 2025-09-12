@@ -344,7 +344,7 @@ def setup_keymap(config: Config) -> None:
     options = deviceinfo.keymaps.split(" ")
     if config.keymap != "" and config.keymap is not None and config.keymap in options:
         layout, variant = config.keymap.split("/")
-        if pmb.config.is_systemd_selected():
+        if pmb.config.other.is_systemd_selected():
             pmb.chroot.root(
                 ["systemd-firstboot", "--force", f"--keymap={variant}"],
                 chroot,
@@ -545,7 +545,7 @@ def disable_service_openrc(chroot: Chroot, service_name: str) -> None:
 
 
 def disable_service(chroot: Chroot, service_name: str) -> None:
-    if pmb.config.is_systemd_selected():
+    if pmb.config.other.is_systemd_selected():
         disable_service_systemd(chroot, service_name)
     else:
         disable_service_openrc(chroot, service_name)

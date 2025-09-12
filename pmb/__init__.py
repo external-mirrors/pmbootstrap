@@ -14,10 +14,7 @@ if TYPE_CHECKING:
 
 from . import config, parse
 from .commands import run_command
-from .config import (
-    init as config_init,
-    require_programs,
-)
+from .config import init as config_init
 from .core import Chroot, Config
 from .core.context import get_context
 from .helpers import logging, mount, other, status
@@ -75,7 +72,7 @@ def main() -> int:
             raise RuntimeError("Do not run pmbootstrap as root!")
 
         # Check for required programs (and find their absolute paths)
-        require_programs()
+        config_init.require_programs()
 
         # Initialize or require config
         if args.action == "init":

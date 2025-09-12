@@ -15,6 +15,7 @@ import pmb.chroot.initfs
 import pmb.chroot.other
 import pmb.ci
 import pmb.config
+import pmb.config.file
 import pmb.export
 import pmb.helpers.aportupgrade
 import pmb.helpers.git
@@ -229,14 +230,14 @@ def config(args: PmbArgs) -> None:
 
     # Reload the config because get_context().config has been overwritten
     # by any rogue cmdline arguments.
-    config = pmb.config.load(args.config)
+    config = pmb.config.file.load(args.config)
     if args.reset:
         if args.name is None:
             raise RuntimeError("config --reset requires a name to be given.")
         def_value = Config.get_default(args.name)
         setattr(config, args.name, def_value)
         logging.info(f"Config changed to default: {args.name}='{def_value}'")
-        pmb.config.save(args.config, config)
+        pmb.config.file.save(args.config, config)
     elif args.value is not None:
         if args.name.startswith("mirrors."):
             name = args.name.split(".", 1)[1]
@@ -253,7 +254,7 @@ def config(args: PmbArgs) -> None:
                 setattr(config, args.name, args.value)
         if value_changed:
             print(f"{args.name} = {args.value}")
-        pmb.config.save(args.config, config)
+        pmb.config.file.save(args.config, config)
     elif args.name:
         value = getattr(config, args.name) if hasattr(config, args.name) else ""
 
@@ -272,7 +273,7 @@ def config(args: PmbArgs) -> None:
         # Serialize the entire config including default values for
         # the user. Even though the defaults aren't actually written
         # to disk.
-        cfg = pmb.config.serialize(config, skip_defaults=False)
+        cfg = pmb.config.file.serialize(config, skip_defaults=False)
         cfg.write(sys.stdout)
 
     # Don't write the "Done" message

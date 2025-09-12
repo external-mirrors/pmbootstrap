@@ -62,7 +62,7 @@ def device_package(config_file: Path) -> Path:
 @pytest.fixture(autouse=True)
 def find_required_programs() -> None:
     """Fixture to find required programs for pmbootstrap."""
-    pmb.config.require_programs()
+    pmb.config.init.require_programs()
 
 
 @pytest.fixture

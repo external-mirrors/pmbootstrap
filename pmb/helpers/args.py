@@ -3,7 +3,8 @@
 import os
 import sys
 
-import pmb.config
+import pmb.config.file
+import pmb.config.pmaports
 import pmb.helpers.git
 from pmb.core.context import CommandTimeout, Context, TimeoutReason
 from pmb.core.pkgrepo import pkgrepo_default_path
@@ -52,7 +53,7 @@ def init(args: PmbArgs) -> PmbArgs:
     # Basic initialization
     # print(json.dumps(args.__dict__))
     # sys.exit(0)
-    config = pmb.config.load(args.config)
+    config = pmb.config.file.load(args.config)
 
     if args.aports:
         for pmaports_dir in args.aports:

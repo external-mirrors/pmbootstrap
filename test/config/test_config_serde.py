@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
 
-import pmb.config
+import pmb.config.file
 from pmb.core.config import SystemdConfig
 
 """Test the config file serialization and deserialization."""
 
 
 def test_load(config_file: Path) -> None:
-    config = pmb.config.load(config_file)
+    config = pmb.config.file.load(config_file)
     assert config.build_default_device_arch
     assert config.ccache_size == "5G"
     assert config.device == "qemu-amd64"

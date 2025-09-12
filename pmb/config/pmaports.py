@@ -228,7 +228,7 @@ def switch_to_channel_branch(channel_new: str) -> bool:
     if (
         branch_current == "master_staging_systemd"
         and channel_new == DEVELOPMENT_CHANNEL
-        and pmb.config.is_systemd_selected()
+        and pmb.config.other.is_systemd_selected()
     ):
         logging.info("NOTE: master_staging_systemd was merged into master, switching to it")
 

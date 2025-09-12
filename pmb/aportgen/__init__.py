@@ -83,7 +83,7 @@ def generate(
     device_category: pmb.helpers.devices.DeviceCategory | None = None,
 ) -> None:
     if pkgname.startswith(("device", "linux")) and not device_category:
-        device_category = pmb.config.ask_for_mainline_downstream()
+        device_category = pmb.config.init.ask_for_mainline_downstream()
 
     if fork_alpine:
         prefix, folder, confirm_overwrite = (pkgname, Path("temp"), True)
