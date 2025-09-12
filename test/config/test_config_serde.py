@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
 
-import pmb.config
+import pmb.config.file
 from pmb.core.config import SystemdConfig
 
 """Test the config file serialization and deserialization."""

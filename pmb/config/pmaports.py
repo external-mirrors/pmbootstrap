@@ -8,12 +8,14 @@ from pmb.core.pkgrepo import (
     pkgrepo_paths,
     pkgrepo_relative_path,
 )
+from pmb.core.context import get_context
 from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
 import os
 import sys
 
 import pmb.config
+import pmb.config.systemd
 from pmb.meta import Cache
 import pmb.helpers.git
 import pmb.helpers.pmaports
@@ -212,7 +214,7 @@ def switch_to_channel_branch(channel_new: str) -> bool:
     if (
         branch_current == "master_staging_systemd"
         and channel_new == "edge"
-        and pmb.config.is_systemd_selected()
+        and pmb.config.systemd.is_systemd_selected(get_context().config)
     ):
         logging.info("NOTE: master_staging_systemd was merged into master, switching to it")
 

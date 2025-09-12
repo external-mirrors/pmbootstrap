@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import sys
 
-import pmb.config
+import pmb.config.file
+import pmb.config.pmaports
 from pmb.core.context import Context
 from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.types import PmbArgs
@@ -68,7 +69,7 @@ def init(args: PmbArgs) -> PmbArgs:
                 break
         if not args.config:
             args.config = pmb.config.defaults["config"]
-    config = pmb.config.load(args.config)
+    config = pmb.config.file.load(args.config)
 
     if args.aports:
         for pmaports_dir in args.aports:

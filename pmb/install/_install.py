@@ -18,6 +18,7 @@ import pmb.chroot.apk
 import pmb.chroot.initfs
 import pmb.config
 import pmb.config.pmaports
+import pmb.config.systemd
 from pmb.helpers.locale import get_xkb_layout
 import pmb.parse.depends
 from pmb.parse.deviceinfo import Deviceinfo
@@ -544,8 +545,8 @@ def disable_service_openrc(chroot: Chroot, service_name: str) -> None:
         raise RuntimeError(f"Failed to disable service {service_name} (openrc): {runlevel_files}")
 
 
-def disable_service(chroot: Chroot, service_name: str) -> None:
-    if pmb.config.is_systemd_selected():
+def disable_service(config: Config, chroot: Chroot, service_name: str) -> None:
+    if pmb.config.systemd.is_systemd_selected(config):
         disable_service_systemd(chroot, service_name)
     else:
         disable_service_openrc(chroot, service_name)
@@ -1271,7 +1272,7 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
 
     # Install the base-systemd package first to make sure presets are available
     # when services are installed later
-    if pmb.config.other.is_systemd_selected(context.config):
+    if pmb.config.systemd.is_systemd_selected(context.config):
         pmb.chroot.apk.install(["postmarketos-base-systemd"], chroot)
 
     # Install all packages to device rootfs chroot (and rebuild the initramfs,
@@ -1299,9 +1300,9 @@ def create_device_rootfs(args: PmbArgs, step: int, steps: int) -> None:
     setup_appstream(context.offline, chroot)
 
     if args.no_sshd:
-        disable_service(chroot, "sshd")
+        disable_service(config, chroot, "sshd")
     if args.no_firewall:
-        disable_service(chroot, "nftables")
+        disable_service(config, chroot, "nftables")
 
 
 def install(args: PmbArgs) -> None:

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 from . import config
 from .init import arguments
-from .config import init as config_init, require_programs
+from .config import init as config_init
 from .helpers import logging
 from .helpers import mount
 from .helpers import other
@@ -74,7 +74,7 @@ def main() -> int:
         other.check_grsec()
 
         # Check for required programs (and find their absolute paths)
-        require_programs()
+        config_init.require_programs()
 
         # Initialize or require config
         if args.action == "init":

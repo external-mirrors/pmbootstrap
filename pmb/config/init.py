@@ -868,7 +868,7 @@ def frontend(args: PmbArgs) -> None:
 
     # Update args and save config (so chroots and 'pmbootstrap log' work)
     # pmb.helpers.args.update_work(args, config.work)
-    pmb.config.save(args.config, config)
+    pmb.config.file.save(args.config, config)
 
     # Migrate work dir if necessary
     pmb.helpers.other.migrate_localdir()
@@ -950,7 +950,7 @@ def frontend(args: PmbArgs) -> None:
     config.build_pkgs_on_install = ask_build_pkgs_on_install(config.build_pkgs_on_install)
 
     # Save config
-    pmb.config.save(args.config, config)
+    pmb.config.file.save(args.config, config)
 
     # Zap existing chroots
     if (

@@ -1,7 +1,7 @@
 # Copyright 2024 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import pmb.config
-import pmb.config.other
+import pmb.config.systemd
 import pmb.helpers.git
 from pmb.core import Config
 from pmb.core.context import get_context
@@ -46,7 +46,7 @@ def print_ui(config: Config) -> None:
 
 
 def print_systemd(config: Config) -> None:
-    yesno, reason = pmb.config.other.systemd_selected_str(config)
+    yesno, reason = pmb.config.systemd.systemd_selected_str(config)
     print_status_line("systemd", f"{yesno} ({reason})")
 
 

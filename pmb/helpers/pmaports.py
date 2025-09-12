@@ -9,6 +9,7 @@ See also:
 
 from pmb.core.arch import Arch
 from pmb.core.pkgrepo import pkgrepo_iter_package_dirs
+from pmb.core.context import get_context
 from pmb.helpers import logging
 from pathlib import Path
 from typing import overload, Any, Literal
@@ -170,7 +171,7 @@ def show_pkg_not_found_systemd_hint(package: str, with_extra_repos: WithExtraRep
     """Check if a package would be found if systemd was enabled and display a
     hint about it."""
 
-    if with_extra_repos != "default" or pmb.config.other.is_systemd_selected():
+    if with_extra_repos != "default" or pmb.config.systemd.is_systemd_selected(get_context().config):
         return
 
     if find(package, False, with_extra_repos="enabled"):

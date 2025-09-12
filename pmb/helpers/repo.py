@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Literal
 
 import pmb.config.pmaports
+import pmb.config.systemd
 from pmb.meta import Cache
 import pmb.helpers.http
 import pmb.helpers.run
@@ -86,7 +87,7 @@ def urls(
         return ret
 
     # Don't add the systemd mirror if systemd is disabled
-    if not pmb.config.is_systemd_selected(config):
+    if not pmb.config.systemd.is_systemd_selected(config):
         mirrors_exclude.append("systemd")
 
     # ["pmaports", "systemd", "alpine", "plasma-nightly"]
