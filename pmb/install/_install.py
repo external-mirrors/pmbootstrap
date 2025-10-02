@@ -1453,7 +1453,7 @@ def install(args: PmbArgs) -> None:
     else:
         steps = 4
 
-    if args.zap:
+    if not args.no_zap:
         pmb.chroot.zap(False)
 
     # Install required programs in native chroot

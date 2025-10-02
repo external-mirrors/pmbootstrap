@@ -110,7 +110,8 @@ def arguments_install(subparser: argparse._SubParsersAction) -> None:
         action="store_false",
         default=True,
     )
-    ret.add_argument("--zap", help="zap chroots before installing", action="store_true")
+    ret.add_argument("--no-zap", help="do NOT zap chroots before installing", action="store_true")
+    ret.add_argument("--zap", help="zap chroots before installing (deprecated, default is always zap))", action="store_true", default=True)
     ret.add_argument(
         "--sector-size",
         help="set the sector size for the image file",
