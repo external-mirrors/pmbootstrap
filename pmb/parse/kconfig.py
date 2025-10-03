@@ -290,7 +290,6 @@ def check(
     pkgver = apkbuild["pkgver"]
 
     # Get categories from the APKBUILD
-    categories = []
     for option in apkbuild["options"]:
         if not option.startswith("pmb:kconfigcheck-"):
             continue
