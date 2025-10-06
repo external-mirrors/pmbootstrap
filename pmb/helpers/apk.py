@@ -163,7 +163,7 @@ def _prepare_cmd(command: Sequence[PathString], chroot: Chroot | None) -> list[s
     # the progress so we can render it. So we always set --no-progress.
     command_: list[str] = [str(config.cache / "apk.static"), "--no-progress"]
     if chroot:
-        cache_dir = config.cache / f"cache_apk_{chroot.arch}"
+        cache_dir = config.cache / f"apk_{chroot.arch}"
         command_.extend(
             [
                 "--root",

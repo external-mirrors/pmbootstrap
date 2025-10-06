@@ -47,7 +47,7 @@ def mark_in_chroot(chroot: Chroot = Chroot.native()) -> None:
         pmb.helpers.run.root(["touch", in_chroot_file])
 
 
-def init_keys(chroot: Chroot) -> None:
+def init_keys(path: Path) -> None:
     """
     All Alpine and postmarketOS repository keys are shipped with pmbootstrap.
     Copy them into $WORK/keys, which gets mounted inside the various
@@ -57,7 +57,7 @@ def init_keys(chroot: Chroot) -> None:
     files of binary repositories even though alpine-keys/postmarketos-keys are
     not installed yet.
     """
-    target = chroot / "etc/apk/keys/"
+    target = path / "etc/apk/keys/"
     target.mkdir(exist_ok=True, parents=True)
     for key in pmb.config.apk_keys_path.glob("*.pub"):
         shutil.copy(key, target)
@@ -71,13 +71,13 @@ def warn_if_chroots_outdated() -> None:
     if outdated:
         days_warn = int(pmb.config.chroot_outdated / 3600 / 24)
         msg = ""
-        if Chroot.native() in outdated:
+        if str(Chroot.native()) in outdated:
             msg += "your native"
-            if Chroot.rootfs(get_context().config.device) in outdated:
+            if str(Chroot.rootfs(get_context().config.device)) in outdated:
                 msg += " and rootfs chroots are"
             else:
                 msg += " chroot is"
-        elif Chroot.rootfs(get_context().config.device) in outdated:
+        elif str(Chroot.rootfs(get_context().config.device)) in outdated:
             msg += "your rootfs chroot is"
         else:
             msg += "some of your chroots are"
@@ -127,12 +127,12 @@ def init(chroot: Chroot) -> None:
 
     logging.info(f"({chroot}) Creating chroot")
 
-    # Initialize /etc/apk/keys/, resolv.conf, repositories
-    init_keys(chroot)
-    # Also creates /etc
+    # Initialize /etc/apk/keys/, creates /etc
+    init_keys(chroot.path)
+    # Set up /etc/apk/repositories
     pmb.helpers.apk.update_repository_list(chroot.path)
 
-    pmb.config.workdir.chroot_save_init(chroot)
+    pmb.config.workdir.chroot_save_init(str(chroot))
 
     pmb.helpers.repo.update(arch)
     # Create the /usr-merge-related symlinks, which needs to be done manually

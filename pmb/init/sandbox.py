@@ -473,7 +473,7 @@ def become_user(uid: int, gid: int) -> None:
                 "newgidmap",
                 str(ppid),
                 "0",
-                str(uid),
+                str(gid),
                 "1",
                 "1",
                 "100000",
@@ -828,9 +828,11 @@ class WriteOperation(FSOperation):
 
     def execute(self, oldroot: str, newroot: str) -> None:
         dst = chase(newroot, self.dst)
+        print(f"WriteOp execute {dst}")
         with umask(~0o755):
             os.makedirs(os.path.dirname(dst), exist_ok=True)
         with open(dst, "wb") as f:
+            print(f"write {dst}")
             f.write(self.data.encode())
 
 
@@ -983,6 +985,7 @@ def setup_mounts(fsops: list[FSOperation]) -> None:
         umount2("oldroot/tmp", MNT_DETACH)
 
     for fsop in fsops:
+        print(f"Execute fsop: {type(fsop)} - {fsop.dst}")
         fsop.execute("oldroot", "newroot")
 
     # Now that we're done setting up the sandbox let's pivot root into newroot to make it the new

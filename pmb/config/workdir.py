@@ -17,7 +17,7 @@ from pmb.core.context import get_context
 from pmb.helpers import logging
 from pmb.meta import Cache
 
-def chroot_save_init(suffix: Chroot) -> None:
+def chroot_save_init(name: str) -> None:
     """Save the chroot initialization data in $WORK/workdir.cfg."""
     # Read existing cfg
     cfg = configparser.ConfigParser()
@@ -32,8 +32,8 @@ def chroot_save_init(suffix: Chroot) -> None:
 
     # Update sections
     channel = pmb.config.pmaports.read_config()["channel"]
-    cfg["chroot-channels"][str(suffix)] = channel
-    cfg["chroot-init-dates"][str(suffix)] = str(int(time.time()))
+    cfg["chroot-channels"][name] = channel
+    cfg["chroot-init-dates"][name] = str(int(time.time()))
 
     # Write back
     with open(path, "w") as handle:
@@ -41,14 +41,14 @@ def chroot_save_init(suffix: Chroot) -> None:
 
 
 @overload
-def chroots_outdated() -> list[Chroot]: ...
+def chroots_outdated() -> list[str]: ...
 
 
 @overload
-def chroots_outdated(chroot: Chroot) -> bool: ...
+def chroots_outdated(chroot: str) -> bool: ...
 
 
-def chroots_outdated(chroot: Chroot | None = None) -> bool | list[Chroot]:
+def chroots_outdated(name: str | None = None) -> bool | list[str]:
     """Check if init dates from workdir.cfg indicate that any chroot is
     outdated.
 
@@ -61,25 +61,25 @@ def chroots_outdated(chroot: Chroot | None = None) -> bool | list[Chroot]:
     # Skip if workdir.cfg doesn't exist
     path = get_context().config.work / "workdir.cfg"
     if not os.path.exists(path):
-        return False if chroot else []
+        return False if name else []
 
     cfg = configparser.ConfigParser()
     cfg.read(path)
     key = "chroot-init-dates"
     if key not in cfg:
-        return False if chroot else []
+        return False if name else []
 
     outdated: list[Chroot] = []
     date_outdated = time.time() - pmb.config.chroot_outdated
-    for cfg_suffix in cfg[key]:
-        if chroot and cfg_suffix != str(chroot):
+    for name in cfg[key]:
+        if name and name != str(name):
             continue
-        date_init = int(cfg[key][cfg_suffix])
+        date_init = int(cfg[key][name])
         if date_init <= date_outdated:
-            if chroot:
+            if name:
                 return True
-            outdated.append(Chroot.from_str(cfg_suffix))
-    return False if chroot else outdated
+            outdated.append(name)
+    return False if name else outdated
 
 
 @Cache("chroot")

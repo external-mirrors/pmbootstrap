@@ -13,13 +13,13 @@ if TYPE_CHECKING:
     from pmb.types import PmbArgs
 
 from . import config
-from .init import arguments
+from .init import arguments, sysroot
 from .config import init as config_init
 from .helpers import logging
 from .helpers import mount
 from .helpers import other
 from .helpers import status
-from .core import Chroot, Config
+from .core import Chroot, Sysroot, Config
 from .core.context import get_context
 from .commands import run_command
 
@@ -57,9 +57,14 @@ def print_log_hint() -> None:
     print(log_hint)
 
 
+def enter_sandbox(config: Config):
+    sbox = sysroot.PmbSandboxBuilder(work=config.work, cache=config.cache, aports=config.aports, sysroot=Sysroot().path)
+    sbox.enter()
+    # Cool, we are now inside the sandbox :3
+
+
 def main() -> int:
     # Wrap everything to display nice error messages
-
     args: PmbArgs
     try:
         # Parse arguments, set up logging
@@ -100,8 +105,10 @@ def main() -> int:
             raise NonBugError("Work path not found, please run 'pmbootstrap init' to create it.")
 
         # Migrate work folder if necessary
-        if args.action not in ["shutdown", "zap", "log"]:
+        if args.action not in ["shutdown", "zap", "log", "config"]:
             other.migrate_localdir()
+
+        enter_sandbox(context.config)
 
         # Run the function with the action's name (in pmb/helpers/frontend.py)
         if args.action:

@@ -3,7 +3,7 @@
 import sys
 
 import pmb.config.file
-import pmb.config.pmaports
+# import pmb.config.pmaports
 from pmb.core.context import Context
 from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.types import PmbArgs
@@ -112,7 +112,12 @@ def init(args: PmbArgs) -> PmbArgs:
 
     # Now we go round-about to set context based on deviceinfo hahaha
     if args.action != "config":
-        context.sector_size = context.sector_size or pmb.parse.deviceinfo().rootfs_image_sector_size
+        dinfo_sector_size = pmb.parse.deviceinfo().rootfs_image_sector_size
+        # Warn if overriding sector size from cmdline
+        if dinfo_sector_size and context.sector_size:
+            pmb.helpers.logging.warning(f"WARNING: overriding sector size {dinfo_sector_size} from cmdline {context.sector_size}")
+        else:
+            context.sector_size = dinfo_sector_size
     if context.sector_size is None:
         context.sector_size = 512
 
@@ -133,7 +138,7 @@ def init(args: PmbArgs) -> PmbArgs:
         "shutdown",
         "zap",
     ]:
-        pmb.config.pmaports.read_config()
+        # pmb.config.pmaports.read_config()
         pmb.helpers.git.parse_channels_cfg(pkgrepo_default_path())
 
     # Remove attributes from args so they don't get used by mistake

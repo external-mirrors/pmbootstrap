@@ -22,6 +22,7 @@ import pmb.aportgen
 import pmb.config
 import pmb.config.pmaports
 from pmb.core import Config
+from pmb.core.pkgrepo import pkgrepo_iglob
 from pmb.types import Apkbuild, PmbArgs
 import pmb.helpers.cli
 import pmb.helpers.devices
@@ -225,6 +226,28 @@ def ask_for_channel(config: Config) -> str:
         if ret in choices:
             return ret
         logging.fatal("ERROR: Invalid channel specified, please type in one from the list above.")
+
+
+def list_ui(arch: Arch) -> list[tuple[str, str]]:
+    """Get all UIs, for which aports are available with their description.
+
+    :param arch: device architecture, for which the UIs must be available
+    :returns: [("none", "No graphical..."), ("weston", "Wayland reference...")]
+    """
+    ret = [
+        (
+            "none",
+            "Bare minimum OS image for testing and manual"
+            ' customization. The "console" UI should be selected if'
+            " a graphical UI is not desired.",
+        )
+    ]
+    for path in sorted(pkgrepo_iglob("main/postmarketos-ui-*")):
+        apkbuild = pmb.parse.apkbuild(path)
+        ui = os.path.basename(path).split("-", 2)[2]
+        if pmb.helpers.package.check_arch(apkbuild["pkgname"], arch):
+            ret.append((ui, apkbuild["pkgdesc"]))
+    return ret
 
 
 def ask_for_ui(deviceinfo: Deviceinfo) -> str:

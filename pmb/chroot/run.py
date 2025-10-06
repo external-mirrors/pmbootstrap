@@ -22,7 +22,7 @@ from pmb.types import (
 
 def rootm(
     cmds: Sequence[Sequence[PathString]],
-    chroot: Chroot = Chroot.native(),
+    chroot: Chroot = Chroot.sysroot(),
     working_dir: PurePath = PurePath("/"),
     output: RunOutputType = RunOutputTypeDefault.LOG,
     output_return: bool = False,
@@ -150,7 +150,7 @@ def root(
 
 def root(
     cmds: Sequence[PathString],
-    chroot: Chroot = Chroot.native(),
+    chroot: Chroot = Chroot.sysroot(),
     working_dir: PurePath = PurePath("/"),
     output: RunOutputType = RunOutputTypeDefault.LOG,
     output_return: bool = False,

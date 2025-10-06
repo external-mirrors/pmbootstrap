@@ -6,7 +6,7 @@ import glob
 from pathlib import Path
 from collections.abc import Generator
 
-import pmb.config.systemd
+from pmb.config.systemd import is_systemd_selected
 from pmb.core.context import get_context
 from pmb.meta import Cache
 from pmb.types import WithExtraRepos
@@ -27,7 +27,7 @@ def pkgrepo_paths(with_extra_repos: WithExtraRepos = "default") -> list[Path]:
         case "enabled":
             with_systemd = True
         case "default":
-            with_systemd = pmb.config.systemd.is_systemd_selected(config)
+            with_systemd = is_systemd_selected(config)
 
     out_paths = []
     for p in paths:

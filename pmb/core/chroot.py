@@ -15,14 +15,15 @@ class ChrootType(enum.Enum):
     BUILDROOT = "buildroot"
     INSTALLER = "installer"
     NATIVE = "native"
+    SYSROOT = "sysroot" # replaces native
 
     def __str__(self) -> str:
         return self.name
 
 
 class Chroot:
-    __type: ChrootType
-    __name: str
+    type_: ChrootType
+    name_: str
     __channel: str | None
 
     def __init__(self, suffix_type: ChrootType, name: str | Arch | None = "") -> None:
@@ -31,8 +32,8 @@ class Chroot:
             suffix_type = ChrootType.NATIVE
             name = ""
 
-        self.__type = suffix_type
-        self.__name = str(name or "")
+        self.type_ = suffix_type
+        self.name_ = str(name or "")
         self.__channel = None
 
         self.__validate()
@@ -41,32 +42,32 @@ class Chroot:
         """
         Ensures that this suffix follows the correct format.
         """
-        if self.__type not in ChrootType._member_map_.values():
-            raise ValueError(f"Invalid chroot type: '{self.__type}'")
+        if self.type_ not in ChrootType._member_map_.values():
+            raise ValueError(f"Invalid chroot type: '{self.type_}'")
 
         # A buildroot suffix must have a name matching one of alpines
         # architectures.
-        if self.__type == ChrootType.BUILDROOT and self.arch not in Arch.supported():
-            raise ValueError(f"Invalid buildroot suffix: '{self.__name}'")
+        if self.type_ == ChrootType.BUILDROOT and self.arch not in Arch.supported():
+            raise ValueError(f"Invalid buildroot suffix: '{self.name_}'")
 
         # A rootfs or installer suffix must have a name matching a device.
-        if self.__type == ChrootType.INSTALLER or self.__type == ChrootType.ROOTFS:
+        if self.type_ == ChrootType.INSTALLER or self.type_ == ChrootType.ROOTFS:
             # FIXME: pmb.helpers.devices.find_path() requires args parameter
             pass
 
         # A native suffix must not have a name.
-        if self.__type == ChrootType.NATIVE and self.__name != "":
-            raise ValueError(f"The native suffix can't have a name but got: '{self.__name}'")
+        if self.type_ == ChrootType.NATIVE and self.name_ != "":
+            raise ValueError(f"The native suffix can't have a name but got: '{self.name_}'")
 
         # rootfs suffixes must have a valid device name
-        if self.__type == ChrootType.ROOTFS and (len(self.__name) < 3 or "-" not in self.__name):
-            raise ValueError(f"Invalid device name: '{self.__name}'")
+        if self.type_ == ChrootType.ROOTFS and (len(self.name_) < 3 or "-" not in self.name_):
+            raise ValueError(f"Invalid device name: '{self.name_}'")
 
     def __str__(self) -> str:
-        if len(self.__name) > 0:
-            return f"{self.__type.value}_{self.__name}"
+        if len(self.name_) > 0:
+            return f"{self.type_.value}_{self.name_}"
         else:
-            return self.__type.value
+            return self.type_.value
 
     @property
     def dirname(self) -> str:
@@ -84,7 +85,7 @@ class Chroot:
 
     @property
     def arch(self) -> Arch:
-        if self.type == ChrootType.NATIVE:
+        if self.type in (ChrootType.NATIVE, ChrootType.SYSROOT):
             return Arch.native()
         if self.type == ChrootType.BUILDROOT:
             return Arch.from_str(self.name)
@@ -135,11 +136,11 @@ class Chroot:
 
     @property
     def type(self) -> ChrootType:
-        return self.__type
+        return self.type_
 
     @property
     def name(self) -> str:
-        return self.__name
+        return self.name_
 
     # FIXME: this feels unoptimised and hacky, we ought to know the channel
     # at the point where the chroot is created.
@@ -157,7 +158,12 @@ class Chroot:
 
     @staticmethod
     def native() -> Chroot:
+        # raise NotImplementedError("native chroot is removed")
         return Chroot(ChrootType.NATIVE)
+
+    @staticmethod
+    def sysroot() -> Chroot:
+        return Sysroot()
 
     @staticmethod
     def buildroot(arch: Arch) -> Chroot:
@@ -212,3 +218,20 @@ class Chroot:
         """
         for path in Chroot.glob("/in-pmbootstrap"):
             yield Chroot.from_str(path.parent.name.removeprefix("chroot_"))
+
+
+# This lets us treat the sysroot as a Chroot prior to entering the mount namespace
+class Sysroot(Chroot):
+    def __init__(self):
+        self.type_ = ChrootType.SYSROOT
+        self.name_ = "sysroot"
+
+
+    @property
+    def dirname(self) -> str:
+        return "sysroot"
+
+
+    @property
+    def path(self) -> Path:
+        return get_context().config.work / "sysroot"
