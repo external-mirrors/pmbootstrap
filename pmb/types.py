@@ -153,6 +153,7 @@ class AportGenEntry(TypedDict):
 
 
 class Bootimg(TypedDict):
+    """Representation of the data we get from parsing an Android boot image."""
     cmdline: str
     bootimg_qcdt: str
     bootimg_qcdt_type: str | None
@@ -174,6 +175,7 @@ class Bootimg(TypedDict):
 # Property list generated with:
 # $ rg --vimgrep "((^|\s)args\.\w+)" --only-matching | cut -d"." -f3 | sort | uniq
 class PmbArgs(Namespace):
+    """Typed interface for accessing all arguments that pmbootstrap accepts one way or another."""
     action_flasher: str
     action_initfs: str
     action_kconfig: str
