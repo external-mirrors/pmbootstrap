@@ -559,7 +559,7 @@ def ask_for_device(context: Context) -> tuple[str, bool, str]:
             device_category = pmb.helpers.devices.get_device_category_by_apkbuild_path(device_path)
         if device_path is None:
             if device == context.config.device:
-                raise RuntimeError(
+                raise NonBugError(
                     "This device does not exist anymore, check <https://postmarketos.org/renamed>"
                     " to see if it was renamed"
                 )
