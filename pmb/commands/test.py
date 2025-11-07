@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
-from pmb import commands, logging
+from pmb import commands
+from pmb.helpers import logging
 import pmb.helpers.repo
 import pmb.parse.apkindex
 from pmb.core.arch import Arch

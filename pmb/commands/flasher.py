@@ -8,6 +8,8 @@ from pmb.core.context import get_context
 from pmb.flasher.frontend import flash_lk2nd, kernel, list_flavors, rootfs, sideload
 from pmb.helpers import logging
 
+import argparse
+
 
 class Flasher(commands.Command):
     def __init__(
@@ -111,3 +113,111 @@ class Flasher(commands.Command):
                 partition=self.partition,
                 resume=self.resume,
             )
+
+    @staticmethod
+    def add_arguments(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+        ret = subparser.add_parser("flasher", help="flash something to the target device")
+        ret.add_argument(
+            "--method", help="override flash method", dest="flash_method", default=None
+        )
+        sub = ret.add_subparsers(dest="action_flasher")
+        sub.required = True
+
+        # Boot, flash kernel
+        boot = sub.add_parser("boot", help="boot a kernel once")
+        boot.add_argument("--cmdline", help="override kernel commandline")
+        flash_kernel = sub.add_parser("flash_kernel", help="flash a kernel")
+        for action in [boot, flash_kernel]:
+            action.add_argument(
+                "--no-install",
+                dest="autoinstall",
+                default=True,
+                help="skip updating kernel/initfs",
+                action="store_false",
+            )
+        flash_kernel.add_argument(
+            "--partition",
+            default=None,
+            help="partition to flash the kernel to (defaults to deviceinfo_flash_*_partition_kernel)",
+        )
+
+        # Flash lk2nd
+        flash_lk2nd = sub.add_parser(
+            "flash_lk2nd",
+            help="flash lk2nd, a secondary bootloader needed for various Android devices",
+        )
+        flash_lk2nd.add_argument(
+            "--partition",
+            default=None,
+            help="partition to flash lk2nd to (defaults to default boot image partition ",
+        )
+
+        # Flash rootfs
+        flash_rootfs = sub.add_parser(
+            "flash_rootfs",
+            help="flash the rootfs to a partition on the"
+            " device (partition layout does not get"
+            " changed)",
+        )
+        flash_rootfs.add_argument(
+            "--partition",
+            default=None,
+            help="partition to flash the rootfs to (defaults"
+            " to deviceinfo_flash_*_partition_rootfs,"
+            " 'userdata' on Android may have more"
+            " space)",
+        )
+
+        # Flash vbmeta
+        flash_vbmeta = sub.add_parser(
+            "flash_vbmeta",
+            help="generate and flash AVB 2.0 image with"
+            " disable verification flag set to a"
+            " partition on the device (typically called"
+            " vbmeta)",
+        )
+        flash_vbmeta.add_argument(
+            "--partition",
+            default=None,
+            help="partition to flash the vbmeta to (defaults to deviceinfo_flash_*_partition_vbmeta",
+        )
+
+        # Flash dtbo
+        flash_dtbo = sub.add_parser("flash_dtbo", help="flash dtbo image")
+        flash_dtbo.add_argument(
+            "--partition",
+            default=None,
+            help="partition to flash the dtbo to (defaults to deviceinfo_flash_*_partition_dtbo)",
+        )
+
+        # Actions without extra arguments
+        sub.add_parser("sideload", help="sideload recovery zip")
+        sub.add_parser(
+            "list_flavors",
+            help="list installed kernel flavors"
+            + " inside the device rootfs chroot on this computer",
+        )
+        sub.add_parser("list_devices", help="show connected devices")
+
+        group = ret.add_argument_group(
+            "heimdall options",
+            "With heimdall as"
+            " flash method, the device automatically"
+            " reboots after each flash command. Use"
+            " --no-reboot and --resume for multiple"
+            " flash actions without reboot.",
+        )
+        group.add_argument(
+            "--no-reboot",
+            dest="no_reboot",
+            help="don't automatically reboot after flashing",
+            action="store_true",
+        )
+        group.add_argument(
+            "--resume",
+            dest="resume",
+            help="resume flashing after using --no-reboot",
+            action="store_true",
+        )
+
+        return ret

@@ -3,7 +3,6 @@
 from pmb.parse.arguments import (
     arguments as arguments,
     arguments_install as arguments_install,
-    arguments_flasher as arguments_flasher,
     get_parser as get_parser,
 )
 from pmb.parse._apkbuild import apkbuild as apkbuild
