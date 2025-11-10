@@ -33,11 +33,13 @@ pmb = "pmb"
 line-length=100
 
 [tool.ruff.lint]
+# D203, D212: These are stylistic alternatives to D211 and D213, respectively.
+# D205: Not all of our docstrings have a summary yet.
 # FURB101, FURB103: Easier to do if str gets replaced with Path in more places.
 # PERF203: Negligible performance improvement on Python 3.11 and newer, and
 #          not worth the required rework.
-extend-ignore = ["FURB101", "FURB103", "PERF203"]
-extend-select = ["C4", "CPY001", "FURB", "N", "PERF", "PIE", "RUF", "SIM", "UP"]
+extend-ignore = ["D203", "D205", "D212", "FURB101", "FURB103", "PERF203"]
+extend-select = ["C4", "CPY001", "D2", "FURB", "N", "PERF", "PIE", "RUF", "SIM", "UP"]
 preview = true
 
 [tool.ruff.lint.extend-per-file-ignores]

@@ -42,9 +42,7 @@ def format_and_mount_boot(args: PmbArgs, device: str, boot_label: str) -> None:
 
 
 def format_luks_root(args: PmbArgs, device: str) -> None:
-    """
-    :param device: root partition on install block device (e.g. /dev/installp2)
-    """
+    """:param device: root partition on install block device (e.g. /dev/installp2)"""
     mountpoint = "/dev/mapper/pm_crypt"
 
     logging.info(f"(native) format {device} (root, luks), mount to {mountpoint}")

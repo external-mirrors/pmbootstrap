@@ -12,9 +12,7 @@ from pmb.core.context import get_context
 
 
 def indent_size(line: str) -> int:
-    """
-    Number of spaces at the beginning of a string.
-    """
+    """Number of spaces at the beginning of a string."""
     matches = re.findall(r"^[ ]*", line)
     if len(matches) == 1:
         return len(matches[0])
@@ -243,7 +241,8 @@ def get_upstream_aport(pkgname: str, arch: Arch | None = None, retain_branch: bo
 
 
 def prepare_tempdir() -> Path:
-    """Prepare a temporary directory to do aportgen-related operations within.
+    """
+    Prepare a temporary directory to do aportgen-related operations within.
 
     :returns: Path to a temporary directory for aportgen to work within.
     """
@@ -259,7 +258,8 @@ def prepare_tempdir() -> Path:
 
 
 def generate_checksums(tempdir: Path, apkbuild_path: Path) -> None:
-    """Generate new checksums for a given APKBUILD.
+    """
+    Generate new checksums for a given APKBUILD.
 
     :param tempdir: Temporary directory as provided by prepare_tempdir().
     :param apkbuild_path: APKBUILD to generate new checksums for.

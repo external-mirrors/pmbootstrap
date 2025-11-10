@@ -41,7 +41,8 @@ from pmb.core.context import get_context
 
 
 def _parse_flavor(device: str, autoinstall: bool = True) -> str:
-    """Verify the flavor argument if specified, or return a default value.
+    """
+    Verify the flavor argument if specified, or return a default value.
 
     :param autoinstall: make sure that at least one kernel flavor is installed
     """

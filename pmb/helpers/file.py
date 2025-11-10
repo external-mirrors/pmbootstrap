@@ -24,7 +24,8 @@ def replace(path: Path, old: str, new: str) -> None:
 def replace_apkbuild(
     args: PmbArgs, pkgname: str, key: str, new: int | str, in_quotes: bool = False
 ) -> None:
-    """Replace one key=value line in an APKBUILD and verify it afterwards.
+    """
+    Replace one key=value line in an APKBUILD and verify it afterwards.
 
     :param pkgname: package name, e.g. "hello-world"
     :param key: key that should be replaced, e.g. "pkgver"
@@ -61,7 +62,8 @@ def replace_apkbuild(
 def is_up_to_date(
     path_sources: list[Path], path_target: Path | None = None, lastmod_target: float | None = None
 ) -> bool:
-    """Check if a file is up-to-date by comparing the last modified timestamps.
+    """
+    Check if a file is up-to-date by comparing the last modified timestamps.
 
     (just like make does it).
 
@@ -70,7 +72,6 @@ def is_up_to_date(
     :param lastmod_target: the timestamp of the target file. specify this as
                            alternative to specifying path_target.
     """
-
     if path_target and lastmod_target:
         raise RuntimeError("Specify path_target *or* lastmod_target, not both!")
 

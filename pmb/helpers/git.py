@@ -23,7 +23,8 @@ re_branch_pmaports = re.compile(r"^v\d\d\.\d\d$")
 
 
 def get_path(name_repo: str) -> Path:
-    """Get the path to the repository.
+    """
+    Get the path to the repository.
 
     The path is either the default one in the work dir, or a user-specified one in args.
 
@@ -35,7 +36,8 @@ def get_path(name_repo: str) -> Path:
 
 
 def clone(name_repo: str, do_shallow_clone: bool = False) -> None:
-    """Clone a git repository to $WORK/cache_git/$name_repo.
+    """
+    Clone a git repository to $WORK/cache_git/$name_repo.
 
     (or to the overridden path set in args, as with ``pmbootstrap --aports``).
 
@@ -71,7 +73,8 @@ def clone(name_repo: str, do_shallow_clone: bool = False) -> None:
 def rev_parse(
     path: Path, revision: str = "HEAD", extra_args: list = [], silent: bool = False
 ) -> str:
-    """Run "git rev-parse" in a specific repository dir.
+    """
+    Run "git rev-parse" in a specific repository dir.
 
     :param path: to the git repository
     :param extra_args: additional arguments for ``git rev-parse``. Pass
@@ -115,7 +118,8 @@ def list_remotes(aports: Path) -> list[str]:
 
 
 def get_upstream_remote(aports: Path) -> str:
-    """Find the remote, which matches the git URL from the config.
+    """
+    Find the remote, which matches the git URL from the config.
 
     Usually "origin", but the user may have set up their git repository differently.
     """
@@ -179,7 +183,6 @@ OUTDATED_GIT_REMOTES_SSH: Final[list[str]] = ["git@gitlab.com:postmarketos/pmapo
 
 def migrate_upstream_remote() -> None:
     """Migrate pmaports git remote URL from gitlab.com to gitlab.postmarketos.org."""
-
     repo = pkgrepo_default_path()
     repo_name = repo.parts[-1]
     lines = list_remotes(repo)
@@ -210,7 +213,8 @@ def migrate_upstream_remote() -> None:
 
 @Cache("aports")
 def parse_channels_cfg(aports: Path) -> dict:
-    """Parse channels.cfg from pmaports.git, origin/master branch.
+    """
+    Parse channels.cfg from pmaports.git, origin/master branch.
 
     Reference: https://postmarketos.org/channels.cfg
 
@@ -266,7 +270,8 @@ def parse_channels_cfg(aports: Path) -> dict:
 
 
 def branch_looks_official(repo: Path, branch: str) -> bool:
-    """Check if a given branch follows the patterns of official branches in
+    """
+    Check if a given branch follows the patterns of official branches in
        pmaports or aports.
 
     :returns: True if it looks official, False otherwise
@@ -283,7 +288,8 @@ def branch_looks_official(repo: Path, branch: str) -> bool:
 
 
 def pull(repo_name: str) -> int:
-    """Check if on official branch and essentially try ``git pull --ff-only``.
+    """
+    Check if on official branch and essentially try ``git pull --ff-only``.
 
     Instead of really doing ``git pull --ff-only``, do it in multiple steps
     (``fetch, merge --ff-only``), so we can display useful messages depending
@@ -353,7 +359,8 @@ def pull(repo_name: str) -> int:
 
 
 def get_topdir(repo: Path) -> Path:
-    """Get top-dir of git repo.
+    """
+    Get top-dir of git repo.
 
     :returns: the top dir of the git repository
     """
@@ -366,7 +373,8 @@ def get_topdir(repo: Path) -> Path:
 
 
 def get_files(repo: Path, include_dot_git_dir: bool = False) -> list[str]:
-    """Get all files inside a git repository, that are either already in the git tree or are not in gitignore.
+    """
+    Get all files inside a git repository, that are either already in the git tree or are not in gitignore.
 
     Do not list deleted files. To be used for creating a tarball of the git repository.
 
