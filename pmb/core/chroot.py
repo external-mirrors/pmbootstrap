@@ -37,9 +37,7 @@ class Chroot:
         self.__validate()
 
     def __validate(self) -> None:
-        """
-        Ensures that this suffix follows the correct format.
-        """
+        """Ensures that this suffix follows the correct format."""
         if self.__type not in ChrootType._member_map_.values():
             raise ValueError(f"Invalid chroot type: '{self.__type}'")
 
@@ -157,9 +155,7 @@ class Chroot:
 
     @staticmethod
     def from_str(s: str) -> Chroot:
-        """
-        Generate a Suffix from a suffix string like "buildroot_aarch64"
-        """
+        """Generate a Suffix from a suffix string like "buildroot_aarch64"."""
         parts = s.split("_", 1)
         stype = parts[0]
 
@@ -174,9 +170,7 @@ class Chroot:
 
     @staticmethod
     def iter_patterns() -> Generator[str, None, None]:
-        """
-        Generate suffix patterns for all valid suffix types
-        """
+        """Generate suffix patterns for all valid suffix types"""
         for stype in ChrootType:
             if stype == ChrootType.NATIVE:
                 yield f"chroot_{stype.value}"
@@ -185,8 +179,6 @@ class Chroot:
 
     @staticmethod
     def glob() -> Generator[Path, None, None]:
-        """
-        Glob all initialized chroot directories
-        """
+        """Glob all initialized chroot directories"""
         for pattern in Chroot.iter_patterns():
             yield from Path(get_context().config.work).glob(pattern)

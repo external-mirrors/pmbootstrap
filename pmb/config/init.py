@@ -83,7 +83,8 @@ def require_programs() -> None:
 
 
 def ask_for_username(default_user: str) -> str:
-    """Ask for a reasonable username for the non-root user.
+    """
+    Ask for a reasonable username for the non-root user.
 
     :returns: the username
     """
@@ -100,7 +101,8 @@ def ask_for_username(default_user: str) -> str:
 
 
 def ask_for_work_path(default: Path | None) -> tuple[Path, bool]:
-    """Ask for the work path, until we can create it (when it does not exist) and write into it.
+    """
+    Ask for the work path, until we can create it (when it does not exist) and write into it.
 
     :returns: (path, exists)
         * path: is the full path, with expanded ~ sign
@@ -153,7 +155,8 @@ def ask_for_work_path(default: Path | None) -> tuple[Path, bool]:
 
 
 def ask_for_pmaports_path(default: Path) -> Path:
-    """Ask for a path for pmaports, until it can either be created or already exists.
+    """
+    Ask for a path for pmaports, until it can either be created or already exists.
 
     :returns: full path to the directory, with a leading ~ expanded.
     """
@@ -192,7 +195,8 @@ def ask_for_pmaports_path(default: Path) -> Path:
 
 
 def ask_for_channel(config: Config) -> str:
-    """Ask for the postmarketOS release channel.
+    """
+    Ask for the postmarketOS release channel.
     The channel dictates, which pmaports branch pmbootstrap will check out,
     and which repository URLs will be used when initializing chroots.
 
@@ -348,7 +352,8 @@ def ask_for_timezone() -> str:
 
 
 def ask_for_provider_select(apkbuild: dict[str, Any], providers_cfg: dict[str, str]) -> None:
-    """Ask for selectable providers that are specified using "_pmb_select" in a APKBUILD.
+    """
+    Ask for selectable providers that are specified using "_pmb_select" in a APKBUILD.
 
     :param apkbuild: the APKBUILD with the _pmb_select
     :param providers_cfg: the configuration section with previously selected
@@ -412,7 +417,8 @@ def ask_for_provider_select(apkbuild: dict[str, Any], providers_cfg: dict[str, s
 
 
 def ask_for_provider_select_pkg(pkgname: str, providers_cfg: dict[str, str]) -> None:
-    """Look up the APKBUILD for the specified pkgname and ask for selectable
+    """
+    Look up the APKBUILD for the specified pkgname and ask for selectable
     providers that are specified using "_pmb_select".
 
     :param pkgname: name of the package to search APKBUILD for
@@ -427,7 +433,8 @@ def ask_for_provider_select_pkg(pkgname: str, providers_cfg: dict[str, str]) -> 
 
 
 def ask_for_device_kernel(config: Config, device: str) -> str:
-    """Ask for the kernel that should be used with the device.
+    """
+    Ask for the kernel that should be used with the device.
 
     :param device: code name, e.g. "lg-mako"
 
@@ -496,8 +503,10 @@ def ask_for_mainline_downstream() -> pmb.helpers.devices.DeviceCategory:
 
 
 def switch_channel(config: Config, channel: str) -> None:
-    """Wrapper around `pmb.config.pmaports.switch_to_channel_branch(channel)` that also handles
-    installing git hooks if master is selected."""
+    """
+    Wrapper around `pmb.config.pmaports.switch_to_channel_branch(channel)` that also handles
+    installing git hooks if master is selected.
+    """
     pmb.config.pmaports.switch_to_channel_branch(channel)
     # FIXME: ???
     config.is_default_channel = False
