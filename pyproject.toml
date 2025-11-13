@@ -38,7 +38,7 @@ line-length=100
 # FURB101, FURB103: Easier to do if str gets replaced with Path in more places.
 # PERF203: Negligible performance improvement on Python 3.11 and newer, and
 #          not worth the required rework.
-extend-ignore = ["D203", "D205", "D212", "FURB101", "FURB103", "PERF203"]
+ignore = ["D203", "D205", "D212", "FURB101", "FURB103", "PERF203"]
 extend-select = ["C4", "CPY001", "D2", "FURB", "N", "PERF", "PIE", "RUF", "SIM", "UP"]
 preview = true
 
