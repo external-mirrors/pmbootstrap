@@ -5,6 +5,7 @@ from enum import Enum
 from glob import glob
 from pathlib import Path
 from typing import Final
+from urllib.parse import urlparse
 from pmb.core.context import get_context
 from pmb.core.pkgrepo import pkgrepo_default_path, pkgrepo_path, pkgrepo_name
 from pmb.helpers import logging
@@ -126,7 +127,11 @@ def get_upstream_remote(aports: Path) -> str:
     urls = pmb.config.git_repos[name_repo]
     lines = list_remotes(aports)
     for line in lines:
-        if any(u.lower() in line.lower() for u in urls):
+        line_url = line.split("\t", 1)[1]
+        parsed = urlparse(line_url)
+        clean_url = f"{parsed.scheme}://{parsed.hostname}{parsed.path}"
+
+        if any(u.lower() in clean_url.lower() for u in urls):
             return line.split("\t", 1)[0]
 
     # Fallback to old URLs, in case the migration was not done yet
