@@ -5,6 +5,7 @@ from enum import Enum
 from glob import glob
 from pathlib import Path
 from typing import Final
+from urllib.parse import urlparse
 from pmb.core.context import get_context
 from pmb.core.pkgrepo import pkgrepo_default_path, pkgrepo_path, pkgrepo_name
 from pmb.helpers import logging
@@ -120,17 +121,27 @@ def get_upstream_remote(aports: Path) -> str:
     Usually "origin", but the user may have set up their git repository differently.
     """
     name_repo = pkgrepo_name(aports)
+    logging.warning(f"{name_repo=}")
     if name_repo not in pmb.config.git_repos:
         logging.warning(f"WARNING: can't determine remote for {name_repo}, using 'origin'")
         return "origin"
+    logging.warning(f"{pmb.config.git_repos=}")
     urls = pmb.config.git_repos[name_repo]
     lines = list_remotes(aports)
+    logging.warning(f"{urls=}")
+    logging.warning(f"{lines=}")
+
     for line in lines:
-        if any(u.lower() in line.lower() for u in urls):
+        line_url = line.split("\t", 1)[1].split(" ", 1)[0]
+        parsed = urlparse(line_url)
+        clean_url = f"{parsed.scheme}://{parsed.hostname}{parsed.path}"
+
+        if any(u.lower() in clean_url.lower() for u in urls):
             return line.split("\t", 1)[0]
 
     # Fallback to old URLs, in case the migration was not done yet
     if name_repo == "pmaports":
+        logging.warning("IN FALLBACK")
         urls_outdated = OUTDATED_GIT_REMOTES_HTTP + OUTDATED_GIT_REMOTES_SSH
         for line in lines:
             if any(u in line.lower() for u in urls_outdated):
