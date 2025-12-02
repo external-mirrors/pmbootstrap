@@ -2,20 +2,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from pmb.core.context import get_context
-from pmb.helpers import logging
-from pmb.helpers.exceptions import NonBugError
-
-import pmb.config
-from pmb.parse.deviceinfo import Deviceinfo
-import pmb.flasher
 import pmb.chroot.apk
 import pmb.chroot.initfs
 import pmb.chroot.other
+import pmb.config
+import pmb.flasher
 import pmb.helpers.frontend
 import pmb.helpers.mount
 import pmb.parse.kconfig
 from pmb.core import Chroot, ChrootType
+from pmb.core.context import get_context
+from pmb.helpers import logging
+from pmb.helpers.exceptions import NonBugError
+from pmb.parse.deviceinfo import Deviceinfo
 from pmb.types import RunOutputTypeDefault
 
 
