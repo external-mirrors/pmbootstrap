@@ -230,7 +230,7 @@ def set_user(config: Config) -> None:
         pmb.chroot.root(["addgroup", config.user, group], chroot)
 
 
-def setup_login_chpasswd_user_from_arg(args: PmbArgs, user: str, chroot: Chroot) -> None:
+def setup_login_chpasswd_user_from_arg(user: str, password: str, chroot: Chroot) -> None:
     """
     Set the user's password from what the user passed as --password. Make an
     effort to not have the password end up in the log file by writing it to
@@ -246,7 +246,7 @@ def setup_login_chpasswd_user_from_arg(args: PmbArgs, user: str, chroot: Chroot)
     path_outside = chroot / path
 
     with open(path_outside, "w", encoding="utf-8") as handle:
-        handle.write(f"{user}:{args.password}")
+        handle.write(f"{user}:{password}")
 
     pmb.chroot.root(["sh", "-c", f"cat {shlex.quote(path)} | chpasswd"], chroot)
 
@@ -279,7 +279,7 @@ def setup_login(args: PmbArgs, config: Config, chroot: Chroot) -> None:
         # User password
         logging.info(f" *** SET LOGIN PASSWORD FOR: '{config.user}' ***")
         if args.password:
-            setup_login_chpasswd_user_from_arg(args, config.user, chroot)
+            setup_login_chpasswd_user_from_arg(config.user, password, chroot)
         else:
             while True:
                 try:
