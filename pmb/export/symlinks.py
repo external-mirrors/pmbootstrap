@@ -9,7 +9,7 @@ import pmb.helpers.file
 from pmb.core import Chroot, ChrootType
 
 
-def symlinks(folder: Path) -> None:
+def symlinks(target: Path) -> None:
     """
     Create convenience symlinks to the rootfs and boot files.
     """
@@ -57,11 +57,12 @@ def symlinks(folder: Path) -> None:
 
     files += list(path_boot.glob("initramfs*"))
     files += list(path_boot.glob("vmlinuz*"))
+    files += list(path_boot.glob("*.dtb"))
 
     # Iterate through all files
     for file in files:
         basename = file.name
-        link = folder / basename
+        link = target / basename
 
         # Display a readable message
         msg = " * " + basename
