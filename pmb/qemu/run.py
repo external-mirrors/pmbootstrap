@@ -379,7 +379,7 @@ def _sigterm_handler(number: int, stack_frame: FrameType | None) -> None:
     )
 
 
-def install_depends(args: PmbArgs, arch: Arch) -> None:
+def install_depends(arch: Arch, use_efi: bool) -> None:
     """Install any necessary qemu dependencies in native chroot"""
     depends = [
         "mesa-dri-gallium",
@@ -409,7 +409,7 @@ def install_depends(args: PmbArgs, arch: Arch) -> None:
         depends.remove("qemu-hw-display-virtio-vga")
         depends.remove("qemu-ui-opengl")
 
-    use_direct_kernel_boot = arch.uses_direct_kernel_image_boot_by_default() and not args.efi
+    use_direct_kernel_boot = arch.uses_direct_kernel_image_boot_by_default() and not use_efi
 
     if not use_direct_kernel_boot:
         edk2_pkg = None
@@ -466,7 +466,7 @@ def run(args: PmbArgs) -> None:
         img_path_2nd = create_second_storage(args.second_storage, device)
 
     if not args.host_qemu:
-        install_depends(args, arch)
+        install_depends(arch, args.efi)
     logging.info("Running postmarketOS in QEMU VM (" + arch.qemu_system() + ")")
 
     qemu, env = command_qemu(args, config, arch, img_path, img_path_2nd)
