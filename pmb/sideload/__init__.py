@@ -65,7 +65,6 @@ def ssh_find_arch(args: PmbArgs, user: str, host: str, port: str) -> Arch:
 
 
 def ssh_install_apks(
-    args: PmbArgs,
     user: str,
     host: str,
     port: str,
@@ -157,4 +156,4 @@ def sideload(
     if copy_key:
         scp_abuild_key(args, user, host, port)
 
-    ssh_install_apks(args, user, host, port, paths, install_offline)
+    ssh_install_apks(user, host, port, paths, install_offline)
