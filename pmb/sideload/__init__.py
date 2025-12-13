@@ -47,7 +47,7 @@ def scp_abuild_key(args: PmbArgs, user: str, host: str, port: str) -> None:
     pmb.helpers.run.user(command, output=RunOutputTypeDefault.TUI)
 
 
-def ssh_find_arch(args: PmbArgs, user: str, host: str, port: str) -> Arch:
+def ssh_find_arch(user: str, host: str, port: str) -> Arch:
     """Connect to a device via ssh and query the architecture."""
     logging.info(f"Querying architecture of {user}@{host}")
     # Run command in a subshell in case the foreign device has a weird uname
@@ -119,7 +119,7 @@ def sideload(
     paths = []
 
     if arch is None:
-        arch = ssh_find_arch(args, user, host, port)
+        arch = ssh_find_arch(user, host, port)
 
     context = get_context()
     to_build = []
