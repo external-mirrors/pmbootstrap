@@ -4,18 +4,17 @@
 from pmb.core.context import get_context
 from pmb.helpers import logging
 import os
+from pathlib import Path
 
-from pmb.types import PmbArgs
 import pmb.helpers.run
 import pmb.chroot.initfs
 import pmb.export
 from pmb.core import Chroot, ChrootType
 
 
-def frontend(args: PmbArgs) -> None:  # FIXME: ARGS_REFACTOR
+def frontend(target: Path, autoinstall: bool, odin_flashable_tar: bool) -> None:
     config = get_context().config
     # Create the export folder
-    target = args.export_folder
     if not os.path.exists(target):
         pmb.helpers.run.user(["mkdir", "-p", target])
 
@@ -29,11 +28,11 @@ def frontend(args: PmbArgs) -> None:  # FIXME: ARGS_REFACTOR
         )
 
     # Rebuild the initramfs, just to make sure (see #69)
-    if args.autoinstall:
+    if autoinstall:
         pmb.chroot.initfs.build(Chroot(ChrootType.ROOTFS, config.device))
 
     # Do the export, print all files
     logging.info(f"Export symlinks to: {target}")
-    if args.odin_flashable_tar:
+    if odin_flashable_tar:
         pmb.export.odin(config.device, target)
     pmb.export.symlinks(target)
