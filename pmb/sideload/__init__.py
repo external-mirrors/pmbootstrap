@@ -6,7 +6,7 @@ from pmb.core.arch import Arch
 from pmb.helpers import logging
 import shlex
 
-from pmb.types import PathString, PmbArgs, RunOutputTypeDefault
+from pmb.types import PathString, RunOutputTypeDefault
 import pmb.helpers.run
 import pmb.helpers.run_core
 import pmb.parse.apkindex
@@ -97,7 +97,6 @@ def ssh_install_apks(
 
 
 def sideload(
-    args: PmbArgs,
     user: str,
     host: str,
     port: str,
