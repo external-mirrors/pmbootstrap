@@ -6,11 +6,12 @@ from pmb.helpers import logging
 import os
 from pathlib import Path
 import re
+import resource
 import pmb.chroot
 import pmb.config
 import pmb.helpers.pmaports
 import pmb.helpers.run
-from typing import Any
+from typing import Any, Final
 from pmb.helpers.exceptions import NonBugError
 
 
@@ -44,6 +45,23 @@ def check_grsec() -> None:
     raise RuntimeError(
         "You're running a kernel based on the grsec patchset. This is not supported."
     )
+
+
+KNOWN_GOOD_PAGE_SIZE: Final[int] = 4096
+
+
+def check_page_size() -> None:
+    """Check if the page size is known to cause problems with pmbootstrap."""
+
+    page_size = resource.getpagesize()
+
+    if page_size != KNOWN_GOOD_PAGE_SIZE:
+        logging.warning(
+            f"WARNING: Your system reports a page size of {page_size}. Page sizes other than "
+            f"{KNOWN_GOOD_PAGE_SIZE} are known to have issues with pmbootstrap. Consider running "
+            "pmbootstrap in a virtual machine with the expected page size. See pmbootstrap issue "
+            "#2690 for more information."
+        )
 
 
 def check_binfmt_misc() -> None:

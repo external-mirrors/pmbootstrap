@@ -72,6 +72,7 @@ def main() -> int:
 
         # Sanity checks
         other.check_grsec()
+        other.check_page_size()
         if not args.as_root and os.geteuid() == 0:
             raise RuntimeError("Do not run pmbootstrap as root!")
 
