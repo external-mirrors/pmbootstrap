@@ -57,6 +57,10 @@ def symlinks(target: Path) -> None:
 
     files += list(path_boot.glob("initramfs*"))
     files += list(path_boot.glob("vmlinuz*"))
+    dtbs = list(path_boot.glob("*.dtb"))
+    if len(dtbs) > 0:
+        files += dtbs
+        logging.info(" * dtbs/ (Device tree blobs")
 
     # Iterate through all files
     for file in files:
