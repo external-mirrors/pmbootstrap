@@ -64,3 +64,19 @@ def copy_xauthority(chroot: Chroot) -> None:
         pmb.helpers.run.root(["rm", copy])
     pmb.helpers.run.root(["cp", original, copy])
     pmb.chroot.root(["chown", "pmos:pmos", "/home/pmos/.Xauthority"])
+
+
+def remove_distfiles_cache(chroot: Chroot) -> None:
+    """Remove /var/cache/distfiles from the chroot.
+
+    This is supposed to be created by installing abuild and removed upon
+    uninstalling it. However, somehow due to our apk handling this remains
+    in built images despite abuild not being installed there—worse, with
+    incorrect permissions. So, just remove it manually as to not cause
+    problems for people who want to use abuild on postmarketOS."""
+    distfiles_dir = chroot / "cache/distfiles"
+
+    if not distfiles_dir.exists():
+        return
+
+    pmb.helpers.run.root(["rmdir"], distfiles_dir)

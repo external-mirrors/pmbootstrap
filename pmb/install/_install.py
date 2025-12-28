@@ -991,6 +991,7 @@ def install_system_image(
     pmb.helpers.mount.umount_all(chroot.path)
     pmb.helpers.run.root(["rm", chroot / "in-pmbootstrap"])
     pmb.chroot.remove_mnt_pmbootstrap(chroot)
+    pmb.chroot.other.remove_distfiles_cache(chroot)
 
     # Just copy all the files
     logging.info(f"*** ({step + 1}/{steps}) FILL INSTALL BLOCKDEVICE ***")
