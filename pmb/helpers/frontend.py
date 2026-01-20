@@ -137,7 +137,10 @@ def build_init(args: PmbArgs) -> None:
 
 def checksum(args: PmbArgs) -> None:
     pmb.chroot.init(Chroot.native())
-    for package in args.packages:
+
+    packages = pmb.helpers.git.get_changed_packages() if args.changed else args.packages
+
+    for package in packages:
         if args.verify:
             pmb.build.checksum.verify(package)
         else:
