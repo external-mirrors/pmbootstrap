@@ -3,7 +3,7 @@
 import json
 import os
 import sys
-from collections.abc import Collection, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -132,31 +132,6 @@ def build(args: PmbArgs) -> None:
 def build_init(args: PmbArgs) -> None:
     chroot = _parse_suffix(args)
     pmb.build.init(chroot)
-
-
-def checksum(args: PmbArgs) -> None:
-    def get_relevant_packages() -> Collection[str]:
-        if args.changed:
-            return pmb.helpers.git.get_changed_packages()
-        elif args.packages:
-            return args.packages
-        else:
-            return {Path.cwd().name}
-
-    pmb.chroot.init(Chroot.native())
-
-    packages = get_relevant_packages()
-
-    for package in packages:
-        if args.verify:
-            pmb.build.checksum.verify(package)
-        else:
-            pmb.build.checksum.update(package)
-
-    if not packages:
-        # We should only ever reach this if the --changed argument is used as
-        # otherwise at least one package must be specified in the arguments.
-        logging.info("NOTE: No changed packages detected, not updating any checksums")
 
 
 def sideload(args: PmbArgs) -> None:

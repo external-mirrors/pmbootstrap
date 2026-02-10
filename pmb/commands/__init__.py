@@ -7,6 +7,7 @@ from pmb.helpers import frontend
 from pmb.types import PmbArgs
 
 from .aportgen import aportgen
+from .checksum import checksum
 from .flasher import flasher
 from .index import index
 from .kconfig import KConfigCheck, KConfigEdit, KConfigGenerate, KConfigMigrate
@@ -38,7 +39,6 @@ unmigrated_commands = [
     "build_init",
     "chroot",
     "install",
-    "checksum",
     "build",
     "apkbuild_parse",
     "apkindex_parse",
@@ -56,6 +56,8 @@ def run_command(args: PmbArgs) -> None:
     match args.action:
         case "aportgen":
             aportgen(args.packages, args.fork_alpine, args.fork_alpine_retain_branch)
+        case "checksum":
+            checksum(args.packages, args.changed, args.verify)
         case "flasher":
             flasher(
                 args.action_flasher,
