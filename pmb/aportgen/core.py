@@ -56,7 +56,7 @@ def rewrite(
     fields: dict[str, str] = {},
     replace_pkgname: str | None = None,
     replace_functions: dict[str, str | None] = {},
-    replace_simple: dict = {},  # Can't type this dictionary properly without fixing type errors
+    replace_simple: dict[str, str | None] = {},
     below_header: str = "",
     remove_indent: int = 4,
 ) -> None:
@@ -153,12 +153,11 @@ def rewrite(
             # Replace simple
             for pattern, replacement in replace_simple.items():
                 if fnmatch.fnmatch(line, pattern + "\n"):
-                    line = replacement
                     if replacement:
-                        line += "\n"
+                        line += f"{replacement}\n"
+                    else:
+                        continue
                     break
-            if line is None:
-                continue
 
             lines_new.append(line)
 
