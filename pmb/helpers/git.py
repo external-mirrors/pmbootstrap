@@ -464,7 +464,7 @@ def get_changed_packages() -> set[str]:
         # * in the root dir of pmaports (i.e. files with only one parent like ./README.md, which
         #   has the parent ".")
         # * path with a dot (e.g. .ci/, device/.shared-patches/)
-        if not file.parent or _is_path_hidden(file):
+        if len(file.parents) < 2 or _is_path_hidden(file):
             continue
 
         dirname = file.parent
