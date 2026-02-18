@@ -25,7 +25,6 @@ import pmb.helpers.repo_missing
 import pmb.helpers.status
 import pmb.install
 import pmb.install.blockdevice
-import pmb.netboot
 import pmb.parse
 import pmb.parse.apkindex
 import pmb.qemu
@@ -156,12 +155,6 @@ def checksum(args: PmbArgs) -> None:
         # We should only ever reach this if the --changed argument is used as
         # otherwise at least one package must be specified in the arguments.
         logging.info("NOTE: No changed packages detected, not updating any checksums")
-
-
-def netboot(args: PmbArgs) -> None:
-    if args.action_netboot == "serve":
-        device = get_context().config.device
-        pmb.netboot.start_nbd_server(device, args.replace)
 
 
 def chroot(args: PmbArgs) -> None:

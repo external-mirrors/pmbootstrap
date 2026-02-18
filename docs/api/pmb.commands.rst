@@ -44,6 +44,14 @@ pmb.commands.log module
    :undoc-members:
    :show-inheritance:
 
+pmb.commands.netboot module
+-------------------------------
+
+.. automodule:: pmb.commands.netboot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pmb.commands.pkgrel_bump module
 -------------------------------
 
