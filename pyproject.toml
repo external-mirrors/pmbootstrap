@@ -84,4 +84,4 @@ disallow_untyped_defs = true
 strict_bytes = true
 strict_equality = true
 strict_equality_for_none = true
-enable_error_code = "truthy-bool"
+enable_error_code = ["deprecated", "truthy-bool"]
