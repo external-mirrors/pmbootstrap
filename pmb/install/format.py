@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import tempfile
+from pathlib import Path
 
 import pmb.chroot
 from pmb.core import Chroot
@@ -102,7 +103,7 @@ def format_luks_root(device: str, cipher: str, iter_time: str) -> None:
     # Avoid cryptsetup warning about missing locking directory
     pmb.chroot.root(["mkdir", "-p", "/run/cryptsetup"])
 
-    format_cmd = [
+    format_cmd: list[PathString] = [
         "cryptsetup",
         "luksFormat",
         "-q",
@@ -113,25 +114,25 @@ def format_luks_root(device: str, cipher: str, iter_time: str) -> None:
         "--use-random",
         device,
     ]
-    open_cmd = ["cryptsetup", "luksOpen"]
+    open_cmd: list[PathString] = ["cryptsetup", "luksOpen"]
 
-    path_outside = None
+    path = None
     fde_key = os.environ.get("PMB_FDE_PASSWORD", None)
     if fde_key:
         # Write passphrase to a temp file, to avoid printing it in any log
-        fd, path = tempfile.mkstemp(dir=Chroot.native().path / "/tmp", text=True)
-        with os.fdopen(fd) as handle:
+        fd, path_str = tempfile.mkstemp(dir=Chroot.native().path / "/tmp", text=True)
+        path = Path(path_str)
+        with os.fdopen(fd, "w") as handle:
             handle.write(f"{fde_key}")
-        os.close(fd)
-        format_cmd += [str(path)]
-        open_cmd += ["--key-file", str(path)]
+        format_cmd += [path]
+        open_cmd += ["--key-file", path]
 
     try:
         pmb.chroot.root(format_cmd, output=RunOutputTypeDefault.INTERACTIVE)
         pmb.chroot.root([*open_cmd, device, "pm_crypt"], output=RunOutputTypeDefault.INTERACTIVE)
     finally:
-        if path_outside:
-            path_outside.unlink()
+        if path:
+            path.unlink()
 
     if not (Chroot.native() / mountpoint).exists():
         raise RuntimeError("Failed to open cryptdevice!")
