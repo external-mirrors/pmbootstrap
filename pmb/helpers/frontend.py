@@ -320,11 +320,9 @@ def apkindex_parse(args: PmbArgs) -> None:
             raise RuntimeError(f"Package not found in the APKINDEX: {args.package}")
         if isinstance(args.package, list):
             raise AssertionError
-        result_temp = result[args.package]
-        if isinstance(result_temp, pmb.parse.apkindex.ApkindexBlock):
-            raise AssertionError
-        result = result_temp
-    print(json.dumps(result, indent=4))
+        print(json.dumps(result[args.package], indent=4, default=vars))
+    else:
+        print(json.dumps(result, indent=4, default=vars))
 
 
 def stats(args: PmbArgs) -> None:
