@@ -98,6 +98,63 @@ def get_depends(context: Context, apkbuild: dict[str, Any]) -> list[str]:
     return list(filter(lambda x: not x.startswith("!"), ret))
 
 
+def eval_apkbuild_deps(pkgname: str, chroot: Chroot, arch: Arch) -> dict[str, list[str]]:
+    """
+    Evaluate an APKBUILD inside the chroot with $CARCH set to get the real
+    values of dependency variables after shell evaluation for e.g. variables
+    that are set conditionally.
+
+    :param pkgname: name of pkg to parse
+    :param chroot: the chroot to evaluate in
+    :param arch: the target architecture (sets $CARCH)
+    :returns: dict with keys makedepends, makedepends_build, makedepends_host,
+              depends, checkdepends — each a list of strings
+    """
+    # FIXME: this is janky since we copy just the APKBUILD to a temp path to
+    # evaluate it before copy_to_buildpath() is called. copy_to_buildpath is
+    # pretty heavy. Ideally dep evaluation would happen after the aport is
+    # already in the chroot.
+    aport = pmb.helpers.pmaports.find(pkgname)
+    src = aport / "APKBUILD"
+    dst = chroot / "tmp/pmb-apkbuild-eval"
+    pmb.helpers.run.root(["cp", src, dst])
+
+    # this script sources the apkbuild and then prints out depends variables
+    # that we can parse out later
+    script = """
+    . /tmp/pmb-apkbuild-eval
+    echo "makedepends=$(echo $makedepends)"
+    echo "makedepends_build=$(echo $makedepends_build)"
+    echo "makedepends_host=$(echo $makedepends_host)"
+    echo "depends=$(echo $depends)"
+    echo "checkdepends=$(echo $checkdepends)"
+    """
+
+    output = pmb.chroot.root(
+        ["sh", "-c", script],
+        chroot,
+        env={"CARCH": str(arch)},
+        output_return=True,
+    )
+
+    # parse variables from shell output, into result dict
+    result: dict[str, list[str]] = {}
+    for line in output.splitlines():
+        if "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        if key in [
+            "makedepends",
+            "makedepends_build",
+            "makedepends_host",
+            "depends",
+            "checkdepends",
+        ]:
+            result[key] = value.split() if value.strip() else []
+
+    return result
+
+
 def get_pkgver(original_pkgver: str, original_source: bool = False) -> str:
     """
     Get the original pkgver when using the original source.
@@ -650,6 +707,12 @@ def packages(
             pmb.build.init_compiler(context, pkg_depends, cross, pkg_arch)
             if cross == CrossCompile.CROSSDIRECT:
                 pmb.chroot.mount_native_into_foreign(buildchroot)
+
+        # Evaluate APKBUILD in chroot to get correct dep values after shell
+        # evaluation (handles conditionals like case/esac that the static
+        # parser can't handle).
+        evaled = eval_apkbuild_deps(apkbuild["pkgname"], buildchroot, pkg_arch)
+        apkbuild = {**apkbuild, **evaled}
 
         depends_build: list[str] = []
         depends_host: list[str] = []
