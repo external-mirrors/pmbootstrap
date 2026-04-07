@@ -24,7 +24,7 @@ def new_dummy_apkindex_block() -> ApkindexBlock:
     )
 
 
-def test_depends_for_sonames(monkeypatch: MonkeyPatch) -> None:
+def test_depends_for_sonames(pmb_args: None, monkeypatch: MonkeyPatch) -> None:
     fake_apkindex: dict[str, dict[str, ApkindexBlock]] = {}
     arch_libc = Arch.x86_64
     libraries = {
