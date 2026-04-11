@@ -135,6 +135,17 @@ RunReturnType = str | int | subprocess.Popen
 PathString = Path | str
 Env = dict[str, PathString]
 Apkbuild = dict[str, Any]
+ActionFlasher = Literal[
+    "boot",
+    "flash_kernel",
+    "flash_rootfs",
+    "flash_vbmeta",
+    "flash_dtbo",
+    "flash_lk2nd",
+    "list_flavors",
+    "list_devices",
+    "sideload",
+]
 ActionKConfig = Literal["check", "edit", "migrate", "generate"]
 WithExtraRepos = Literal["default", "enabled", "disabled"]
 
@@ -173,7 +184,7 @@ class Bootimg(TypedDict):
 # Property list generated with:
 # $ rg --vimgrep "((^|\s)args\.\w+)" --only-matching | cut -d"." -f3 | sort | uniq
 class PmbArgs(Namespace):
-    action_flasher: str
+    action_flasher: ActionFlasher
     action_initfs: str
     action_kconfig: ActionKConfig
     action_netboot: str
