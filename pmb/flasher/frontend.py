@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 
 import pmb.chroot.apk
 import pmb.chroot.initfs
@@ -18,6 +18,23 @@ from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
 from pmb.parse.deviceinfo import Deviceinfo
 from pmb.types import RunOutputTypeDefault
+
+
+def flash(
+    deviceinfo: Deviceinfo,
+    method: str,
+    no_reboot: bool | None,
+    partition: str | None,
+    resume: bool | None,
+    file: Path,
+) -> None:
+    target_file = "tmp/file-to-flash"
+    target_host = Chroot.native() / target_file
+    target = Path("/") / target_file
+
+    pmb.helpers.run.root(["cp", file, target_host])
+    # FIXME: make filename available in chroot?
+    pmb.flasher.run(deviceinfo, method, "flash", None, None, no_reboot, partition, resume, target)
 
 
 def kernel(

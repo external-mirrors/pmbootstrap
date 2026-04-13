@@ -137,6 +137,7 @@ Env = dict[str, PathString]
 Apkbuild = dict[str, Any]
 ActionFlasher = Literal[
     "boot",
+    "flash",
     "flash_kernel",
     "flash_rootfs",
     "flash_vbmeta",

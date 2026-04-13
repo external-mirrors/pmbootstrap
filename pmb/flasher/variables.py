@@ -1,5 +1,7 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+from pathlib import Path
+
 import pmb.config.pmaports
 from pmb.core.chroot import Chroot
 from pmb.core.context import get_context
@@ -12,6 +14,7 @@ def variables(
     no_reboot: bool | None,
     partition: str | None,
     resume: bool | None,
+    file: Path | None,
 ) -> dict[str, str | None]:
     device = get_context().config.device
     deviceinfo = pmb.parse.deviceinfo()
@@ -91,10 +94,12 @@ def variables(
     fvars = {
         "$BOOT": "/mnt/rootfs_" + device + "/boot",
         "$DTB": dtb,
+        "$FILE": str(file),
         "$IMAGE_SPLIT_BOOT": "/home/pmos/rootfs/" + device + "-boot.img",
         "$IMAGE_SPLIT_ROOT": "/home/pmos/rootfs/" + device + "-root.img",
         "$IMAGE": "/home/pmos/rootfs/" + device + ".img",
         "$KERNEL_CMDLINE": cmdline_,
+        "$PARTITION": partition,
         "$PARTITION_KERNEL": partition_kernel,
         "$PARTITION_VENDOR_BOOT": partition_vendor_boot,
         "$PARTITION_INITFS": deviceinfo.flash_heimdall_partition_initfs or "RECOVERY",

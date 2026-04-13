@@ -35,6 +35,7 @@ def create_zip(
         no_reboot,
         partition,
         resume,
+        None,
     )
 
     # Install recovery installer package in buildroot

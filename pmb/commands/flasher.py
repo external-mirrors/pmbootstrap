@@ -1,10 +1,11 @@
 # Copyright 2023 Oliver Smith
 # Copyright 2024 Stefan Hansson
 # SPDX-License-Identifier: GPL-3.0-or-later
+from pathlib import Path
 
 import pmb.parse.deviceinfo
 from pmb.core.context import get_context
-from pmb.flasher.frontend import flash_lk2nd, kernel, list_flavors, rootfs, sideload
+from pmb.flasher.frontend import flash, flash_lk2nd, kernel, list_flavors, rootfs, sideload
 from pmb.helpers import logging
 from pmb.types import ActionFlasher
 
@@ -17,6 +18,7 @@ def flasher(
     no_reboot: bool | None,
     partition: str | None,
     resume: bool | None,
+    file: str | None,
 ) -> None:
     context = get_context()
     device = context.config.device
@@ -28,6 +30,11 @@ def flasher(
         return
 
     match action:
+        case "flash":
+            if file is None:
+                raise AssertionError
+
+            flash(deviceinfo, method, no_reboot, partition, resume, Path(file))
         case "boot" | "flash_kernel":
             kernel(
                 deviceinfo,

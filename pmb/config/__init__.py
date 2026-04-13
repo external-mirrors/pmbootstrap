@@ -378,6 +378,7 @@ flashers: dict[str, dict[str, bool | list[str] | dict[str, list[list[str]]]]] = 
         "depends": [],  # pmaports.cfg: supported_fastboot_depends
         "actions": {
             "list_devices": [["fastboot", "devices", "-l"]],
+            "flash": [["fastbootflash", "$PARTITION", "$FILEPATH"]],
             "flash_rootfs": [["fastboot", "flash", "$PARTITION_ROOTFS", "$IMAGE"]],
             "flash_kernel": [["fastboot", "flash", "$PARTITION_KERNEL", "$BOOT/boot.img$FLAVOR"]],
             "flash_vendorboot": [
@@ -434,6 +435,7 @@ flashers: dict[str, dict[str, bool | list[str] | dict[str, list[list[str]]]]] = 
         "depends": ["heimdall"],
         "actions": {
             "list_devices": [["heimdall", "detect"]],
+            "flash": [["heimdall", "flash", "--wait", "--$PARTITION", "$FILENAME"]],
             "flash_rootfs": [
                 ["heimdall", "flash", "--wait", "--$PARTITION_ROOTFS", "$IMAGE"],
             ],
@@ -455,6 +457,7 @@ flashers: dict[str, dict[str, bool | list[str] | dict[str, list[list[str]]]]] = 
         "depends": [],  # pmaports.cfg: supported_heimdall_depends
         "actions": {
             "list_devices": [["heimdall", "detect"]],
+            "flash": [["heimdall", "flash", "--wait", "--$PARTITION", "$FILE"]],
             "flash_rootfs": [
                 [
                     "heimdall",

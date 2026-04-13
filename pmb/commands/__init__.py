@@ -111,6 +111,7 @@ def run_command(args: PmbArgs) -> None:
                 getattr(args, "no_reboot", None),
                 getattr(args, "partition", None),
                 getattr(args, "resume", None),
+                getattr(args, "file", None),
             )
         case "log":
             log(args.clear_log, args.lines)
