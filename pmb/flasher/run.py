@@ -1,5 +1,7 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+from pathlib import Path
+
 import pmb.chroot.initfs
 import pmb.flasher
 from pmb.helpers.exceptions import NonBugError
@@ -28,6 +30,7 @@ def run(
     no_reboot: bool = False,
     partition: str | None = None,
     resume: bool = False,
+    file: Path | None = None,
 ) -> None:
     pmb.flasher.init(deviceinfo.codename, method)
 
@@ -43,7 +46,7 @@ def run(
         )
 
     # Variable setup
-    fvars = pmb.flasher.variables(flavor, method, cmdline, no_reboot, partition, resume)
+    fvars = pmb.flasher.variables(flavor, method, cmdline, no_reboot, partition, resume, file)
 
     # vbmeta flasher requires vbmeta partition to be explicitly specified
     if action == "flash_vbmeta" and not fvars["$PARTITION_VBMETA"]:

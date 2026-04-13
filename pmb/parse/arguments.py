@@ -292,6 +292,11 @@ def arguments_flasher(subparser: argparse._SubParsersAction) -> argparse.Argumen
     sub = ret.add_subparsers(dest="action_flasher")
     sub.required = True
 
+    # Flash user provided file
+    flash = sub.add_parser("flash", help="flash a user-provided file to a partition")
+    flash.add_argument("file", help="path to the file you want to flash")
+    flash.add_argument("partition", help="partition to flash the file onto")
+
     # Boot, flash kernel
     boot = sub.add_parser("boot", help="boot a kernel once")
     boot.add_argument("--cmdline", help="override kernel commandline")
