@@ -591,11 +591,12 @@ git_repos = {
 # APORTGEN
 #
 
-# Use a deterministic mirror URL instead of CDN for aportgen. Otherwise we may
-# generate a pmaport that wraps an apk from Alpine (e.g. musl-armv7) locally
-# with one up-to-date mirror given by the CDN. But then the build will fail if
-# CDN picks an outdated mirror for CI or BPO.
-aportgen_mirror_alpine = "http://dl-4.alpinelinux.org/alpine/"
+# Alpine mirror URL. In the past, we hardcoded one of Alpine's mirrors here,
+# but this caused problems because not all of the mirrors have IPv6
+# connectivity, but some of them have AAAA records.
+# Alpine's infra team said that outdated mirrors should not be a problem and to
+# just use dl-cdn here.
+aportgen_mirror_alpine = "http://dl-cdn.alpinelinux.org/alpine/"
 
 #
 # NEWAPKBUILD
