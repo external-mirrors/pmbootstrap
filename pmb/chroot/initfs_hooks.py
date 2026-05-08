@@ -1,19 +1,11 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-from collections.abc import Generator
-from pathlib import Path
-
 import pmb.chroot.apk
 import pmb.config
-import pmb.parse._apkbuild
 from pmb.core import Chroot
-from pmb.core.pkgrepo import pkgrepo_iglob
+from pmb.core.apkindex_block import ApkindexBlock
 from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
-
-
-def _path_to_hook_name(path: Path) -> str:
-    return path.name[len(pmb.config.initfs_hook_prefix) :]
 
 
 def _list_chroot(suffix: Chroot, remove_prefix: bool = True) -> list[str]:
@@ -28,30 +20,33 @@ def _list_chroot(suffix: Chroot, remove_prefix: bool = True) -> list[str]:
     return ret
 
 
-def _list_hook_paths() -> Generator[Path, None, None]:
-    return pkgrepo_iglob(f"*/{pmb.config.initfs_hook_prefix}*")
-
-
-def _list_hook_packages() -> list[str]:
-    return [_path_to_hook_name(path) for path in _list_hook_paths()]
+def _list_hook_packages(suffix: Chroot) -> dict[str, ApkindexBlock]:
+    pkgs = {}
+    pmb.helpers.repo.update(suffix.arch)
+    paths = pmb.helpers.repo.apkindex_files(suffix.arch)
+    for path in paths:
+        index = pmb.parse.apkindex.parse(path, False)
+        for pkgname, block in index.items():
+            if pkgname.startswith(pmb.config.initfs_hook_prefix):
+                pkgs[pkgname[len(pmb.config.initfs_hook_prefix) :]] = block
+    return pkgs
 
 
 def ls(suffix: Chroot) -> None:
     hooks_chroot = _list_chroot(suffix)
+    prefix = pmb.config.initfs_hook_prefix
 
-    for hook_path in _list_hook_paths():
-        hook_desc = pmb.parse._apkbuild.apkbuild(hook_path)["pkgdesc"]
-        hook = _path_to_hook_name(hook_path)
-        line = f"* {hook}: {hook_desc} ({'' if hook in hooks_chroot else 'not '}installed)"
+    for hook, block in _list_hook_packages(suffix).items():
+        line = f"* {hook}: {block.pkgdesc} ({'' if prefix + hook in hooks_chroot else 'not '}installed)"
         logging.info(line)
 
 
 def add(hook: str, suffix: Chroot) -> None:
-    if hook not in _list_hook_packages():
+    prefix = pmb.config.initfs_hook_prefix
+    if hook not in _list_hook_packages(suffix):
         raise NonBugError(
             "Invalid hook name! Run 'pmbootstrap initfs hook_ls' to get a list of all hooks."
         )
-    prefix = pmb.config.initfs_hook_prefix
     pmb.chroot.apk.install([f"{prefix}{hook}"], suffix)
 
 
