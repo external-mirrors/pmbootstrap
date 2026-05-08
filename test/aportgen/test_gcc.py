@@ -21,6 +21,7 @@ def new_dummy_apkindex_block() -> ApkindexBlock:
         provider_priority=None,
         timestamp=None,
         version="1.0.0",
+        pkgdesc=None,
     )
 
 

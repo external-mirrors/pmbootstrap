@@ -28,6 +28,8 @@ class ApkindexBlock:
     timestamp: str | None
     #: package version
     version: str
+    #: package description
+    pkgdesc: str | None
 
     @property
     def __dict__(self) -> dict:

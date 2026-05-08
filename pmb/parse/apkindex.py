@@ -21,6 +21,7 @@ apkindex_map = {
     "p": "provides",
     "k": "provider_priority",
     "t": "timestamp",
+    "T": "pkgdesc",
     "V": "version",
 }
 
@@ -110,6 +111,7 @@ def _parse_next_block(path: Path, lines: list[str]) -> ApkindexBlock | None:
         provider_priority=provider_priority,
         timestamp=ret.get("timestamp"),
         version=ret["version"],
+        pkgdesc=ret.get("pkgdesc"),
     )
 
 
