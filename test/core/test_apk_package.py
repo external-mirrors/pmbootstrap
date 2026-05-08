@@ -17,6 +17,7 @@ def test_apkindex_block_full() -> None:
             "p:so:liba.so=1.0 virtual",
             "k:10",
             "t:111011",
+            "T:this is a test package",
             "V:1.0.0-r0",
         ]
     )
@@ -28,6 +29,7 @@ def test_apkindex_block_full() -> None:
     assert block.provider_priority == 10
     assert block.timestamp == "111011"
     assert block.version == "1.0.0-r0"
+    assert block.pkgdesc == "this is a test package"
 
 
 def test_apkindex_block_missing_optionals() -> None:
@@ -43,6 +45,7 @@ def test_apkindex_block_missing_optionals() -> None:
     )
     assert block.origin is None
     assert block.timestamp is None
+    assert block.pkgdesc is None
 
 
 def test_apkindex_block_bad_priority() -> None:
