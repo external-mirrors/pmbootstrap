@@ -4,7 +4,7 @@ import pmb.chroot.apk
 import pmb.config
 import pmb.parse._apkbuild
 from pmb.core import Chroot
-from pmb.core.pkgrepo import pkgrepo_iglob
+from pmb.core.pkgrepo import pkgrepo_glob_one, pkgrepo_iglob
 from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
 
@@ -23,10 +23,23 @@ def _list_chroot(suffix: Chroot, remove_prefix: bool = True) -> list[str]:
 
 def _list_hook_packages() -> dict[str, str]:
     pkgs = {}
-    packages = pkgrepo_iglob(f"*/{pmb.config.initfs_hook_prefix}*")
-    for p in packages:
-        hook_desc = pmb.parse._apkbuild.apkbuild(p)["pkgdesc"]
-        pkgs[p.name.removeprefix(pmb.config.initfs_hook_prefix)] = hook_desc
+    pmaports_cfg = pmb.config.pmaports.read_config()
+    # This can be removed once all pmaports stable releases use merged hooks
+    # Likely after v26.12 is EOL
+    if pmaports_cfg.get("supported_merged_mkinitfs_hooks", False):
+        pkg_dir = pkgrepo_glob_one("main/postmarketos-mkinitfs-hook")
+        if pkg_dir is None:
+            raise RuntimeError("No postmarketos-mkinitfs-hook available")
+        main_apkbuild = pmb.parse.apkbuild(pkg_dir / "APKBUILD")
+        for subpackage, info in main_apkbuild["subpackages"].items():
+            if not subpackage.startswith(pmb.config.initfs_hook_prefix):
+                continue
+            pkgs[subpackage.removeprefix(pmb.config.initfs_hook_prefix)] = info["pkgdesc"]
+    else:
+        packages = pkgrepo_iglob(f"*/{pmb.config.initfs_hook_prefix}*")
+        for p in packages:
+            hook_desc = pmb.parse._apkbuild.apkbuild(p)["pkgdesc"]
+            pkgs[p.name.removeprefix(pmb.config.initfs_hook_prefix)] = hook_desc
     return pkgs
 
 
