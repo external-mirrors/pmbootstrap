@@ -16,6 +16,7 @@ apkindex_map = {
     "p": "provides",
     "k": "provider_priority",
     "t": "timestamp",
+    "T": "pkgdesc",
     "V": "version",
 }
 
@@ -35,6 +36,7 @@ class ApkPackage:
         provider_priority: int | None,
         timestamp: str | None,
         version: str,
+        pkgdesc: str | None = None,
         from_pmaports: bool = False,
     ):
         self._arch = arch
@@ -45,6 +47,7 @@ class ApkPackage:
         self._provider_priority = provider_priority
         self._timestamp = timestamp
         self._version = version
+        self._pkgdesc = pkgdesc
         self._from_pmaports = from_pmaports
 
     @classmethod
@@ -104,6 +107,7 @@ class ApkPackage:
             provider_priority=provider_priority,
             timestamp=ret.get("timestamp"),
             version=ret["version"],
+            pkgdesc=ret.get("pkgdesc"),
             from_pmaports=False,
         )
 
@@ -113,6 +117,7 @@ class ApkPackage:
         pkgname = apkbuild["pkgname"]
         provides = apkbuild["provides"]
         version = apkbuild["pkgver"] + "-r" + apkbuild["pkgrel"]
+        pkgdesc = apkbuild["pkgdesc"]
 
         return cls(
             arch=arch,
@@ -123,6 +128,7 @@ class ApkPackage:
             provider_priority=None,
             timestamp=None,
             version=version,
+            pkgdesc=pkgdesc,
             from_pmaports=True,
         )
 
@@ -173,6 +179,11 @@ class ApkPackage:
     def version(self) -> str:
         """The package version."""
         return self._version
+
+    @property
+    def pkgdesc(self) -> str | None:
+        """The description of the package"""
+        return self._pkgdesc
 
     @property
     def from_pmaports(self) -> bool:
