@@ -21,7 +21,6 @@ import pmb.install
 import pmb.install.blockdevice
 import pmb.install.recovery
 import pmb.install.ui
-import pmb.parse.depends
 from pmb.core import Chroot, ChrootType, Config
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
@@ -1306,21 +1305,8 @@ def create_device_rootfs(
     pmaports_cfg = pmb.config.pmaports.read_config()
     # postmarketos-base supports a dummy package for blocking unl0kr install
     # when not required
-    if pmaports_cfg.get("supported_base_nofde", None):
-        if full_disk_encryption:
-            # Pick the most suitable unlocker depending on the packages
-            # selected for installation
-            unlocker = pmb.parse.depends.package_provider(
-                "postmarketos-fde-unlocker", install_packages, chroot
-            )
-            if not unlocker:
-                raise RuntimeError(
-                    "Full disk encryption enabled but unable to find any suitable FDE unlocker app"
-                )
-            if unlocker.pkgname not in install_packages:
-                install_packages += [unlocker.pkgname]
-        else:
-            install_packages += ["postmarketos-base-nofde"]
+    if pmaports_cfg.get("supported_base_nofde", None) and not full_disk_encryption:
+        install_packages += ["postmarketos-base-nofde"]
 
     pmb.helpers.repo.update(pmb.parse.deviceinfo().arch)
 
