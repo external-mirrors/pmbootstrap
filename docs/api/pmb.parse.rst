@@ -44,14 +44,6 @@ pmb.parse.cpuinfo module
    :undoc-members:
    :show-inheritance:
 
-pmb.parse.depends module
-------------------------
-
-.. automodule:: pmb.parse.depends
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pmb.parse.deviceinfo module
 ---------------------------
 
