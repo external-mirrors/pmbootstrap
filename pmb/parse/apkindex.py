@@ -417,7 +417,7 @@ def providers(
     return ret
 
 
-def provider_highest_priority(
+def _provider_highest_priority(
     providers: dict[str, ApkindexBlock], pkgname: str
 ) -> dict[str, ApkindexBlock]:
     """
@@ -447,7 +447,7 @@ def provider_highest_priority(
     return providers
 
 
-def provider_shortest(providers: dict[str, ApkindexBlock], pkgname: str) -> ApkindexBlock:
+def _provider_shortest(providers: dict[str, ApkindexBlock], pkgname: str) -> ApkindexBlock:
     """
     Get the provider with the shortest pkgname and log a message. In most cases
     this should be sufficient, e.g. 'mesa-purism-gc7000-egl, mesa-egl' or
@@ -491,7 +491,7 @@ def package(
     )
 
     if package_providers:
-        providers_priority = provider_highest_priority(package_providers, package)
+        providers_priority = _provider_highest_priority(package_providers, package)
         num_providers = len(providers_priority)
         # Only one provider with max priority: return it
         if num_providers == 1:
@@ -502,7 +502,7 @@ def package(
 
     # Any provider
     if package_providers:
-        return pmb.parse.apkindex.provider_shortest(package_providers, package)
+        return _provider_shortest(package_providers, package)
 
     # No provider
     if must_exist:
