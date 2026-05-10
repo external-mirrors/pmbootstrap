@@ -113,38 +113,10 @@ def _parse_next_block(path: Path, lines: list[str]) -> ApkindexBlock | None:
     )
 
 
-@overload
-def parse_add_block(
-    ret: dict[str, ApkindexBlock],
-    block: ApkindexBlock,
-    provide: str | None = ...,
-    multiple_providers: Literal[False] = ...,
-) -> None: ...
-
-
-@overload
 def parse_add_block(
     ret: dict[str, dict[str, ApkindexBlock]],
     block: ApkindexBlock,
-    provide: str | None = ...,
-    multiple_providers: Literal[True] = ...,
-) -> None: ...
-
-
-@overload
-def parse_add_block(
-    ret: dict[str, ApkindexBlock] | dict[str, dict[str, ApkindexBlock]],
-    block: ApkindexBlock,
-    provide: str | None = ...,
-    multiple_providers: bool = ...,
-) -> None: ...
-
-
-def parse_add_block(
-    ret: dict[str, ApkindexBlock] | dict[str, dict[str, ApkindexBlock]],
-    block: ApkindexBlock,
     provide: str | None = None,
-    multiple_providers: bool = True,
 ) -> None:
     """
     Add one block to the return dictionary of parse().
@@ -154,49 +126,48 @@ def parse_add_block(
     :param block: return value from _parse_next_block().
     :param provide: defaults to the pkgname, could be a provide from the
                     "provides" list.
-    :param multiple_providers: assume that there are more than one provider for
-                               the package. This makes sense when parsing the
-                               APKINDEX files from a repository (#1122), but
-                               not when parsing apk's installed packages DB.
     """
     # Defaults
     pkgname = block.pkgname
     provide = provide or pkgname
 
-    # Get an existing block with the same provide
     block_old = None
-    if multiple_providers:
-        ret = cast(dict[str, dict[str, ApkindexBlock]], ret)
-        if provide in ret and pkgname in ret[provide]:
-            picked_provides = ret[provide]
-            if not isinstance(picked_provides, dict):
-                raise AssertionError
-            block_old = picked_provides[pkgname]
-    else:
-        if provide in ret:
-            ret = cast(dict[str, ApkindexBlock], ret)
-            picked_provide = ret[provide]
-            if not isinstance(picked_provide, ApkindexBlock):
-                raise AssertionError
-            block_old = picked_provide
-
     # Ignore the block, if the block we already have has a higher version
-    if block_old:
+    if provide in ret and pkgname in ret[provide]:
+        block_old = ret[provide][pkgname]
         version_old = block_old.version
         version_new = block.version
         if pmb.parse.version.compare(version_old, version_new) == 1:
             return
 
     # Add it to the result set
-    if multiple_providers:
-        ret = cast(dict[str, dict[str, ApkindexBlock]], ret)
-        if provide not in ret:
-            ret[provide] = {}
-        picked_provides = ret[provide]
-        picked_provides[pkgname] = block
-    else:
-        ret = cast(dict[str, ApkindexBlock], ret)
-        ret[provide] = block
+    if provide not in ret:
+        ret[provide] = {}
+    ret[provide][pkgname] = block
+
+
+def parse_block_add_pkgname(
+    ret: dict[str, ApkindexBlock],
+    block: ApkindexBlock,
+) -> None:
+    """
+    Add one block to the return dictionary of parse().
+
+    :param ret: dictionary of all packages in the APKINDEX that is
+                getting built right now. This function will extend it.
+    :param block: return value from parse_next_block().
+    """
+    pkgname = block.pkgname
+
+    # Don't add it if a block with a newer version exists
+    if pkgname in ret:
+        block_old = ret[pkgname]
+        version_old = block_old.version
+        version_new = block.version
+        if pmb.parse.version.compare(version_old, version_new) == 1:
+            return
+
+    ret[pkgname] = block
 
 
 @overload
@@ -283,6 +254,8 @@ def parse(
 
     # Parse the whole APKINDEX file
     ret: dict[str, ApkindexBlock] = collections.OrderedDict()
+    if multiple_providers:
+        ret = cast(dict[str, dict[str, ApkindexBlock]], ret)
     if lines[-1] == "\n":
         lines.pop()  # Strip the trailing newline
     while True:
@@ -295,10 +268,12 @@ def parse(
             logging.verbose(f"Skipped virtual package {block} in file: {path}")
             continue
 
-        parse_add_block(ret, block, None, multiple_providers)
         if multiple_providers:
+            parse_add_block(ret, block, None)
             for provide in block.provides:
-                parse_add_block(ret, block, provide, multiple_providers)
+                parse_add_block(ret, block, provide)
+        else:
+            parse_block_add_pkgname(ret, block)
 
     # Update the cache
     key = cache_key(path)
