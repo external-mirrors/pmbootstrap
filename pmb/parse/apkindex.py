@@ -25,7 +25,7 @@ def _read_apkindex(path: Path) -> list[str]:
             return handle.read().split("\n\n")
 
 
-def parse_add_block(
+def _add_block_from_provides(
     ret: dict[str, dict[str, ApkPackage]],
     block: ApkPackage,
     provide: str | None = None,
@@ -57,7 +57,7 @@ def parse_add_block(
     ret[provide][pkgname] = block
 
 
-def parse_block_add_pkgname(
+def _add_block_from_pkgname(
     ret: dict[str, ApkPackage],
     block: ApkPackage,
 ) -> None:
@@ -166,11 +166,11 @@ def parse(
             continue
 
         if multiple_providers:
-            parse_add_block(ret, block, None)
+            _add_block_from_provides(ret, block, None)
             for provide in block.provides:
-                parse_add_block(ret, block, provide)
+                _add_block_from_provides(ret, block, provide)
         else:
-            parse_block_add_pkgname(ret, block)
+            _add_block_from_pkgname(ret, block)
 
     # Update the cache
     key = cache_key(path)
