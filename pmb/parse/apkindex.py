@@ -295,10 +295,10 @@ def parse(
             logging.verbose(f"Skipped virtual package {block} in file: {path}")
             continue
 
-        # Add the next package and all provides
         parse_add_block(ret, block, None, multiple_providers)
-        for provide in block.provides:
-            parse_add_block(ret, block, provide, multiple_providers)
+        if multiple_providers:
+            for provide in block.provides:
+                parse_add_block(ret, block, provide, multiple_providers)
 
     # Update the cache
     key = cache_key(path)
