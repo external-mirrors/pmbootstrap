@@ -30,48 +30,39 @@ def apk_mocks(monkeypatch: MonkeyPatch) -> None:
     ) -> ApkindexBlock | None:
         if _package == "package1":
             return ApkindexBlock(
-                arch=_arch,
-                depends=["package2"],
-                origin=None,
-                pkgname=_package,
-                provides=[],
-                provider_priority=None,
-                timestamp=None,
-                version="5.5-r0",
+                [
+                    f"A:{_arch}",
+                    f"P:{_package}",
+                    "V:5.5-r0",
+                    "D:package2",
+                ]
             )
         if _package == "package2":
             return ApkindexBlock(
-                arch=_arch,
-                depends=[],
-                origin=None,
-                pkgname=_package,
-                provides=[],
-                provider_priority=None,
-                timestamp=None,
-                version="5.5-r0",
+                [
+                    f"A:{_arch}",
+                    f"P:{_package}",
+                    "V:5.5-r0",
+                ]
             )
         if _package == "package3":
             return ApkindexBlock(
-                arch=_arch,
-                depends=["package1", "package4"],
-                origin=None,
-                pkgname=_package,
-                provides=[],
-                provider_priority=None,
-                timestamp=None,
-                version="5.5-r0",
+                [
+                    f"A:{_arch}",
+                    f"P:{_package}",
+                    "V:5.5-r0",
+                    "D:package1 package4",
+                ]
             )
         # Test recursive dependency
         if _package == "package4":
             return ApkindexBlock(
-                arch=_arch,
-                depends=["package3"],
-                origin=None,
-                pkgname=_package,
-                provides=[],
-                provider_priority=None,
-                timestamp=None,
-                version="5.5-r0",
+                [
+                    f"A:{_arch}",
+                    f"P:{_package}",
+                    "V:5.5-r0",
+                    "D:package3",
+                ]
             )
 
         return None

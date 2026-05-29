@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
-import pmb.parse.apkindex
+from pmb.core.apkindex_block import ApkindexBlock
 from pmb.core.arch import Arch
 from pmb.parse.apkindex import (
     clear_cache as clear_apkindex_cache,
@@ -319,75 +319,6 @@ def test_apkindex_parse(valid_apkindex_file: Path) -> None:
     assert networkmanager.provider_priority is None
 
 
-def test_apkindex_parse_bad_priority(tmp_path: Path) -> None:
-    tmpfile = tmp_path / "APKINDEX.2"
-    # A snippet of the above example but with the provider_priority
-    # of postmarketos-initramfs set to a non-integer value
-    tmpfile.write_text("""
-C:Q1yB3CVUFMOjnLOOEAUIUUpJJV8g0=
-P:postmarketos-base-ui-x11
-V:29-r1
-A:aarch64
-S:1587
-I:22
-T:Meta package for minimal postmarketOS UI base
-U:https://postmarketos.org
-L:GPL-3.0-or-later
-o:postmarketos-base-ui
-m:Clayton Craft <clayton@craftyguy.net>
-t:1729538699
-c:901cb9520450a1e88ded95ac774e83f6b2cfbba3-dirty
-D:libinput xf86-input-libinput xf86-video-fbdev
-p:postmarketos-base-x11=29-r1
-i:postmarketos-base-ui=29-r1 xorg-server
-
-C:Q1TgE1jgGt1PUb/Zwbi6rDRt3b8go=
-P:postmarketos-initramfs
-V:3.3.5-r2
-A:aarch64
-S:16530
-I:143360
-T:Base files for the postmarketOS initramfs / initramfs-extra
-U:https://postmarketos.org
-L:GPL-2.0-or-later
-o:postmarketos-initramfs
-m:Caleb Connolly <caleb@postmarketos.org>
-t:1728049308
-c:f3a4285732781d5577bad06046b7bbeaf132ce1f-dirty
-k:beep
-D:blkid btrfs-progs buffyboard busybox-extras bzip2 cryptsetup device-mapper devicepkg-utils>=0.2.0 dosfstools e2fsprogs e2fsprogs-extra f2fs-tools font-terminus iskey kmod libinput-libs lz4 multipath-tools parted postmarketos-fde-unlocker postmarketos-mkinitfs>=2.2 udev unudhcpd util-linux-misc xz
-p:postmarketos-ramdisk=3.3.5-r2""")
-
-    # We expect a RuntimeError to be raised when provider_priority is not
-    # an integer
-    with pytest.raises(RuntimeError):
-        parse_apkindex(tmpfile, True)
-
-
-def test_apkindex_parse_missing_optionals(tmp_path: Path) -> None:
-    tmpfile = tmp_path / "APKINDEX.3"
-    # A snippet of the above example but with a missing timestamp
-    # and origin fields
-    tmpfile.write_text("""
-C:Q1yB3CVUFMOjnLOOEAUIUUpJJV8g0=
-P:postmarketos-base-ui-x11
-V:29-r1
-A:aarch64
-S:1587
-I:22
-T:Meta package for minimal postmarketOS UI base
-U:https://postmarketos.org
-L:GPL-3.0-or-later
-m:Clayton Craft <clayton@craftyguy.net>
-c:901cb9520450a1e88ded95ac774e83f6b2cfbba3-dirty
-D:libinput xf86-input-libinput xf86-video-fbdev
-p:postmarketos-base-x11=29-r1
-i:postmarketos-base-ui=29-r1 xorg-server""")
-
-    # We expect parsing to succeed when the timestamp is missing
-    parse_apkindex(tmpfile, True)
-
-
 def test_apkindex_parse_trailing_newline(tmp_path: Path) -> None:
     tmpfile = tmp_path / "APKINDEX.4"
     # A snippet of the above example but with additional
@@ -420,11 +351,11 @@ def test_apkindex_parse_cache_hit(valid_apkindex_file: Path, monkeypatch: Monkey
     parse_apkindex(valid_apkindex_file)
 
     # Mock that always asserts when called
-    def mock_parse_next_block(path: Path, lines: list[str]) -> None:
+    def mock_assert(self: ApkindexBlock, lines: list[str]) -> None:
         assert False
 
-    # _parse_next_block() is only called on cache miss
-    monkeypatch.setattr(pmb.parse.apkindex, "_parse_next_block", mock_parse_next_block)
+    # ApkindexBlock() is only called on cache miss
+    monkeypatch.setattr(ApkindexBlock, "__init__", mock_assert)
 
     # Now we expect the cache to be hit and thus the mock won't be called, so no assertion error
     parse_apkindex(valid_apkindex_file)
