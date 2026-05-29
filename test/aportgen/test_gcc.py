@@ -13,14 +13,11 @@ from pmb.core.arch import Arch
 
 def new_dummy_apkindex_block() -> ApkindexBlock:
     return ApkindexBlock(
-        arch=Arch.x86_64,
-        depends=[],
-        origin=None,
-        pkgname="Dummy",
-        provides=[],
-        provider_priority=None,
-        timestamp=None,
-        version="1.0.0",
+        [
+            "A:x86_64",
+            "P:Dummy",
+            "V:1.0.0",
+        ]
     )
 
 
