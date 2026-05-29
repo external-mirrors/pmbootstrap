@@ -3,7 +3,7 @@
 import pmb.chroot.apk
 import pmb.config
 from pmb.core import Chroot
-from pmb.core.apkindex_block import ApkindexBlock
+from pmb.core.pkgrepo import pkgrepo_glob_one
 from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
 
@@ -20,15 +20,16 @@ def _list_chroot(suffix: Chroot, remove_prefix: bool = True) -> list[str]:
     return ret
 
 
-def _list_hook_packages(suffix: Chroot) -> dict[str, ApkindexBlock]:
+def _list_hook_packages(suffix: Chroot) -> dict[str, str]:
     pkgs = {}
-    pmb.helpers.repo.update(suffix.arch)
-    paths = pmb.helpers.repo.apkindex_files(suffix.arch)
-    for path in paths:
-        index = pmb.parse.apkindex.parse(path, False)
-        for pkgname, block in index.items():
-            if pkgname.startswith(pmb.config.initfs_hook_prefix):
-                pkgs[pkgname[len(pmb.config.initfs_hook_prefix) :]] = block
+    pkg_dir = pkgrepo_glob_one("main/postmarketos-mkinitfs-hook")
+    if pkg_dir is None:
+        raise RuntimeError("No postmarketos-mkinitfs-hook available")
+    main_apkbuild = pmb.parse.apkbuild(pkg_dir / "APKBUILD")
+    for subpackage, info in main_apkbuild["subpackages"].items():
+        if not subpackage.startswith(pmb.config.initfs_hook_prefix):
+            continue
+        pkgs[subpackage] = info["pkgdesc"]
     return pkgs
 
 
@@ -36,8 +37,8 @@ def ls(suffix: Chroot) -> None:
     hooks_chroot = _list_chroot(suffix)
     prefix = pmb.config.initfs_hook_prefix
 
-    for hook, block in _list_hook_packages(suffix).items():
-        line = f"* {hook}: {block.pkgdesc} ({'' if prefix + hook in hooks_chroot else 'not '}installed)"
+    for hook, desc in _list_hook_packages(suffix).items():
+        line = f"* {hook}: {desc} ({'' if prefix + hook in hooks_chroot else 'not '}installed)"
         logging.info(line)
 
 
