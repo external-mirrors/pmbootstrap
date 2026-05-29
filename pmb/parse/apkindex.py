@@ -2,9 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import collections
 import tarfile
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Literal, cast, overload
+from typing import Literal, cast, overload
 
 import pmb.helpers.package
 import pmb.helpers.repo
@@ -12,105 +11,6 @@ import pmb.parse.version
 from pmb.core.apkindex_block import ApkindexBlock
 from pmb.core.arch import Arch
 from pmb.helpers import logging
-
-apkindex_map = {
-    "A": "arch",
-    "D": "depends",
-    "o": "origin",
-    "P": "pkgname",
-    "p": "provides",
-    "k": "provider_priority",
-    "t": "timestamp",
-    "V": "version",
-}
-
-required_apkindex_keys = ["arch", "pkgname", "version"]
-
-
-def _parse_next_block(path: Path, lines: list[str]) -> ApkindexBlock | None:
-    """
-    Parse the next block in an APKINDEX.
-
-    :param path: to the APKINDEX.tar.gz
-    :param start: current index in lines, gets increased in this
-                  function. Wrapped into a list, so it can be modified
-                  "by reference". Example: [5]
-    :param lines: all lines from the "APKINDEX" file inside the archive
-    :returns: ApkindexBlock
-    :returns: None, when there are no more blocks
-    """
-    # Parse until we hit an empty line or end of file
-    ret: dict[str, Any] = {}
-    required_found = 0  # Count the required keys we found
-    line = ""
-    while len(lines):
-        # We parse backwards for performance (pop(0) is super slow)
-        line = lines.pop()
-        if not line:
-            continue
-        # Parse keys from the mapping
-        k = line[0]
-        key = apkindex_map.get(k)
-
-        # The checksum key is always the FIRST in the block, so when we find
-        # it we know we're done.
-        if k == "C":
-            break
-        if key:
-            if key in ret:
-                raise RuntimeError(f"Key {key} specified twice in block: {ret}, file: {path}")
-            if key in required_apkindex_keys:
-                required_found += 1
-            ret[key] = line[2:]
-
-    # Format and return the block
-    if not len(lines) and not ret:
-        return None
-
-    # Check for required keys
-    if required_found != len(required_apkindex_keys):
-        for key in required_apkindex_keys:
-            if key not in ret:
-                raise RuntimeError(f"Missing required key '{key}' in block {ret}, file: {path}")
-        raise RuntimeError(
-            f"Expected {len(required_apkindex_keys)} required keys,"
-            f" but found {required_found} in block: {ret}, file: {path}"
-        )
-
-    # Format optional lists
-    for key in ["provides", "depends"]:
-        if key in ret and ret[key] != "":
-            # Ignore all operators for now
-            values = ret[key].split(" ")
-            ret[key] = []
-            for value in values:
-                for operator in [">", "=", "<", "~"]:
-                    if operator in value:
-                        value = value.split(operator)[0]
-                        break
-                ret[key].append(value)
-        else:
-            ret[key] = []
-    provider_priority = ret.get("provider_priority")
-    if provider_priority:
-        if not provider_priority.isdigit():
-            raise RuntimeError(
-                f"Invalid provider_priority: '{provider_priority}' parsing block {ret}"
-            )
-        provider_priority = int(provider_priority)
-    else:
-        provider_priority = None
-
-    return ApkindexBlock(
-        arch=Arch.from_str(ret["arch"]),
-        depends=ret["depends"],
-        origin=ret.get("origin"),
-        pkgname=ret["pkgname"],
-        provides=ret["provides"],
-        provider_priority=provider_priority,
-        timestamp=ret.get("timestamp"),
-        version=ret["version"],
-    )
 
 
 @overload
@@ -151,7 +51,7 @@ def parse_add_block(
 
     :param ret: dictionary of all packages in the APKINDEX that is
                 getting built right now. This function will extend it.
-    :param block: return value from _parse_next_block().
+    :param block: an ApkindexBlock to potentially add to ret.
     :param provide: defaults to the pkgname, could be a provide from the
                     "provides" list.
     :param multiple_providers: assume that there are more than one provider for
@@ -240,9 +140,6 @@ def parse(
 
     Example:
         ``{ "postmarketos-mkinitfs": {"postmarketos-mkinitfs": ApkindexBlock},"so:libGL.so.1": {"mesa-egl": ApkindexBlock, "libhybris": ApkindexBlock}, ...}``
-
-    *NOTE:* ``block`` is the return value from ``_parse_next_block()`` above.
-
     """
     # Require the file to exist
     if not path.is_file():
@@ -265,31 +162,30 @@ def parse(
             clear_cache(path)
 
     # Read all lines
-    lines: Sequence[str]
+    block_lines: list[str]
     if tarfile.is_tarfile(path):
         with (
             tarfile.open(path, "r:gz") as tar,
             tar.extractfile(tar.getmember("APKINDEX")) as handle,  # type:ignore[union-attr]
         ):
-            lines = handle.read().decode().splitlines()
+            block_lines = handle.read().decode().split("\n\n")
     else:
         with path.open("r", encoding="utf-8") as handle:
-            lines = handle.read().splitlines()
+            block_lines = handle.read().split("\n\n")
 
     # The APKINDEX might be empty, for example if you run "pmbootstrap index" and have no local
     # packages
-    if not lines:
+    if not block_lines:
         return {}
 
     # Parse the whole APKINDEX file
     ret: dict[str, ApkindexBlock] = collections.OrderedDict()
-    if lines[-1] == "\n":
-        lines.pop()  # Strip the trailing newline
-    while True:
-        block = _parse_next_block(path, lines)
-        if not block:
-            break
 
+    for block_line in block_lines:
+        block_line = block_line.strip()
+        if len(block_line) == 0:
+            continue
+        block = ApkindexBlock.from_block(block_line.splitlines())
         # Skip virtual packages
         if block.timestamp is None:
             logging.verbose(f"Skipped virtual package {block} in file: {path}")
@@ -319,15 +215,14 @@ def parse_blocks(path: Path) -> list[ApkindexBlock]:
     """
     # Parse all lines
     with tarfile.open(path, "r:gz") as tar, tar.extractfile(tar.getmember("APKINDEX")) as handle:  # type:ignore[union-attr]
-        lines = handle.read().decode().splitlines()
+        block_lines = handle.read().decode().split("\n\n")
 
     # Parse lines into blocks
-    ret: list[ApkindexBlock] = []
-    while True:
-        block = _parse_next_block(path, lines)
-        if not block:
-            return ret
-        ret.append(block)
+    ret = [
+        ApkindexBlock.from_block(b.strip().splitlines()) for b in block_lines if len(b.strip()) > 0
+    ]
+
+    return ret
 
 
 # FIXME: come up with something better here...
