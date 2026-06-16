@@ -14,6 +14,7 @@ from pmb.parse.apkindex import (
     clear_cache as clear_apkindex_cache,
     package as package_apkindex,
     parse as parse_apkindex,
+    parse_blocks,
 )
 
 example_apkindex = """
@@ -470,3 +471,9 @@ p:so:libGL.so.1=22-r0
     assert index_block is not None
     assert index_block.pkgname == "mesa-egl"
     assert index_block.origin == "mesa"
+
+
+def test_apkindex_parse_blocks(valid_apkindex_file: Path) -> None:
+    tmpfile = valid_apkindex_file
+    blocks = parse_blocks(tmpfile)
+    assert len(blocks) == 14
