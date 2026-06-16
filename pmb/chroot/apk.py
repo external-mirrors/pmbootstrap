@@ -242,4 +242,4 @@ def installed(suffix: Chroot = Chroot.native()) -> dict[str, pmb.core.apkindex_b
 
     """
     path = suffix / "lib/apk/db/installed"
-    return pmb.parse.apkindex.parse(path, False)
+    return {block.pkgname: block for block in pmb.parse.apkindex.parse_blocks(path)}
