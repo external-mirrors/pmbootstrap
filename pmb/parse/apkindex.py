@@ -13,6 +13,18 @@ from pmb.core.arch import Arch
 from pmb.helpers import logging
 
 
+def _read_apkindex(path: Path) -> list[str]:
+    if tarfile.is_tarfile(path):
+        with (
+            tarfile.open(path, "r:gz") as tar,
+            tar.extractfile(tar.getmember("APKINDEX")) as handle,  # type:ignore[union-attr]
+        ):
+            return handle.read().decode().split("\n\n")
+    else:
+        with path.open("r", encoding="utf-8") as handle:
+            return handle.read().split("\n\n")
+
+
 @overload
 def parse_add_block(
     ret: dict[str, ApkindexBlock],
@@ -161,17 +173,7 @@ def parse(
         else:
             clear_cache(path)
 
-    # Read all lines
-    block_lines: list[str]
-    if tarfile.is_tarfile(path):
-        with (
-            tarfile.open(path, "r:gz") as tar,
-            tar.extractfile(tar.getmember("APKINDEX")) as handle,  # type:ignore[union-attr]
-        ):
-            block_lines = handle.read().decode().split("\n\n")
-    else:
-        with path.open("r", encoding="utf-8") as handle:
-            block_lines = handle.read().split("\n\n")
+    block_lines = _read_apkindex(path)
 
     # The APKINDEX might be empty, for example if you run "pmbootstrap index" and have no local
     # packages
@@ -213,9 +215,7 @@ def parse_blocks(path: Path) -> list[ApkindexBlock]:
               pkgname or removing duplicates with lower versions (use
               parse() if you need these features).
     """
-    # Parse all lines
-    with tarfile.open(path, "r:gz") as tar, tar.extractfile(tar.getmember("APKINDEX")) as handle:  # type:ignore[union-attr]
-        block_lines = handle.read().decode().split("\n\n")
+    block_lines = _read_apkindex(path)
 
     # Parse lines into blocks
     ret = [
