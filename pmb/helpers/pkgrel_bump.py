@@ -8,7 +8,7 @@ import pmb.helpers.pmaports
 import pmb.helpers.repo
 import pmb.parse
 import pmb.parse.apkindex
-from pmb.core.apkindex_block import ApkindexBlock
+from pmb.core.apk_package import ApkPackage
 from pmb.core.arch import Arch
 from pmb.helpers import logging
 
@@ -71,7 +71,7 @@ def package(
 
 
 def auto_apkindex_package(
-    arch: Arch, aport: dict[str, Any], apk: ApkindexBlock, dry: bool = False
+    arch: Arch, aport: dict[str, Any], apk: ApkPackage, dry: bool = False
 ) -> bool:
     """
     Bump the pkgrel of a specific package if it is outdated in the given APKINDEX.

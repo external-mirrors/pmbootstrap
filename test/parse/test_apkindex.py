@@ -8,7 +8,7 @@ from typing import NoReturn
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
-from pmb.core.apkindex_block import ApkindexBlock
+from pmb.core.apk_package import ApkPackage
 from pmb.core.arch import Arch
 from pmb.parse.apkindex import (
     clear_cache as clear_apkindex_cache,
@@ -354,11 +354,11 @@ def test_apkindex_parse_cache_hit(valid_apkindex_file: Path, monkeypatch: Monkey
     parse_apkindex(valid_apkindex_file)
 
     # Mock that always asserts when called
-    def mock_assert(cls: type[NoReturn], lines: list[str]) -> ApkindexBlock:
+    def mock_assert(cls: type[NoReturn], lines: list[str]) -> ApkPackage:
         assert False
 
     # ApkindexBlock.from_block() is only called on cache miss
-    monkeypatch.setattr(ApkindexBlock, "from_block", classmethod(mock_assert))
+    monkeypatch.setattr(ApkPackage, "from_apkindex_block", classmethod(mock_assert))
 
     # Now we expect the cache to be hit and thus the mock won't be called, so no assertion error
     parse_apkindex(valid_apkindex_file)

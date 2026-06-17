@@ -7,12 +7,12 @@ from _pytest.monkeypatch import MonkeyPatch
 import pmb.helpers.repo
 import pmb.parse.apkindex
 from pmb.aportgen.gcc import depends_for_sonames
-from pmb.core.apkindex_block import ApkindexBlock
+from pmb.core.apk_package import ApkPackage
 from pmb.core.arch import Arch
 
 
-def new_dummy_apkindex_block() -> ApkindexBlock:
-    return ApkindexBlock(
+def new_dummy_apkindex_block() -> ApkPackage:
+    return ApkPackage(
         arch=Arch.x86_64,
         depends=[],
         origin=None,
@@ -25,7 +25,7 @@ def new_dummy_apkindex_block() -> ApkindexBlock:
 
 
 def test_depends_for_sonames(monkeypatch: MonkeyPatch) -> None:
-    fake_apkindex: dict[str, dict[str, ApkindexBlock]] = {}
+    fake_apkindex: dict[str, dict[str, ApkPackage]] = {}
     arch_libc = Arch.x86_64
     libraries = {
         "so:libisl.so.*": "isl*",
@@ -35,7 +35,7 @@ def test_depends_for_sonames(monkeypatch: MonkeyPatch) -> None:
     def fake_apkindex_files(*args: object, **kwargs: object) -> str:
         return "fake/path/to/APKINDEX.tar.gz"
 
-    def fake_apkindex_parse(*args: object, **kwargs: object) -> dict[str, dict[str, ApkindexBlock]]:
+    def fake_apkindex_parse(*args: object, **kwargs: object) -> dict[str, dict[str, ApkPackage]]:
         print(fake_apkindex)
         return fake_apkindex
 

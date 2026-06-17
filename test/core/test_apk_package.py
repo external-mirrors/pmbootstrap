@@ -3,12 +3,12 @@
 
 import pytest
 
-from pmb.core.apkindex_block import ApkindexBlock
+from pmb.core.apk_package import ApkPackage
 from pmb.core.arch import Arch
 
 
 def test_apkindex_block_full() -> None:
-    block = ApkindexBlock.from_block(
+    block = ApkPackage.from_apkindex_block(
         [
             "A:x86_64",
             "D:dep-a dep-b",
@@ -31,7 +31,7 @@ def test_apkindex_block_full() -> None:
 
 
 def test_apkindex_block_missing_optionals() -> None:
-    block = ApkindexBlock.from_block(
+    block = ApkPackage.from_apkindex_block(
         [
             "A:x86_64",
             "D:dep-a dep-b",
@@ -47,7 +47,7 @@ def test_apkindex_block_missing_optionals() -> None:
 
 def test_apkindex_block_bad_priority() -> None:
     with pytest.raises(RuntimeError):
-        ApkindexBlock.from_block(
+        ApkPackage.from_apkindex_block(
             [
                 "A:x86_64",
                 "P:pkgname",
@@ -59,7 +59,7 @@ def test_apkindex_block_bad_priority() -> None:
 
 def test_apkindex_block_missing_required() -> None:
     with pytest.raises(RuntimeError):
-        ApkindexBlock.from_block(
+        ApkPackage.from_apkindex_block(
             [
                 "A:x86_64",
                 "V:1.0.0-r0",
@@ -69,7 +69,7 @@ def test_apkindex_block_missing_required() -> None:
 
 def test_apkindex_block_duplicated() -> None:
     with pytest.raises(RuntimeError):
-        ApkindexBlock.from_block(
+        ApkPackage.from_apkindex_block(
             [
                 "A:x86_64",
                 "P:pkgname",

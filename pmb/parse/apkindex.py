@@ -8,7 +8,7 @@ from typing import Literal, cast, overload
 import pmb.helpers.package
 import pmb.helpers.repo
 import pmb.parse.version
-from pmb.core.apkindex_block import ApkindexBlock
+from pmb.core.apk_package import ApkPackage
 from pmb.core.arch import Arch
 from pmb.helpers import logging
 
@@ -27,8 +27,8 @@ def _read_apkindex(path: Path) -> list[str]:
 
 @overload
 def parse_add_block(
-    ret: dict[str, ApkindexBlock],
-    block: ApkindexBlock,
+    ret: dict[str, ApkPackage],
+    block: ApkPackage,
     provide: str | None = ...,
     multiple_providers: Literal[False] = ...,
 ) -> None: ...
@@ -36,8 +36,8 @@ def parse_add_block(
 
 @overload
 def parse_add_block(
-    ret: dict[str, dict[str, ApkindexBlock]],
-    block: ApkindexBlock,
+    ret: dict[str, dict[str, ApkPackage]],
+    block: ApkPackage,
     provide: str | None = ...,
     multiple_providers: Literal[True] = ...,
 ) -> None: ...
@@ -45,16 +45,16 @@ def parse_add_block(
 
 @overload
 def parse_add_block(
-    ret: dict[str, ApkindexBlock] | dict[str, dict[str, ApkindexBlock]],
-    block: ApkindexBlock,
+    ret: dict[str, ApkPackage] | dict[str, dict[str, ApkPackage]],
+    block: ApkPackage,
     provide: str | None = ...,
     multiple_providers: bool = ...,
 ) -> None: ...
 
 
 def parse_add_block(
-    ret: dict[str, ApkindexBlock] | dict[str, dict[str, ApkindexBlock]],
-    block: ApkindexBlock,
+    ret: dict[str, ApkPackage] | dict[str, dict[str, ApkPackage]],
+    block: ApkPackage,
     provide: str | None = None,
     multiple_providers: bool = True,
 ) -> None:
@@ -78,7 +78,7 @@ def parse_add_block(
     # Get an existing block with the same provide
     block_old = None
     if multiple_providers:
-        ret = cast(dict[str, dict[str, ApkindexBlock]], ret)
+        ret = cast(dict[str, dict[str, ApkPackage]], ret)
         if provide in ret and pkgname in ret[provide]:
             picked_provides = ret[provide]
             if not isinstance(picked_provides, dict):
@@ -86,9 +86,9 @@ def parse_add_block(
             block_old = picked_provides[pkgname]
     else:
         if provide in ret:
-            ret = cast(dict[str, ApkindexBlock], ret)
+            ret = cast(dict[str, ApkPackage], ret)
             picked_provide = ret[provide]
-            if not isinstance(picked_provide, ApkindexBlock):
+            if not isinstance(picked_provide, ApkPackage):
                 raise AssertionError
             block_old = picked_provide
 
@@ -101,33 +101,33 @@ def parse_add_block(
 
     # Add it to the result set
     if multiple_providers:
-        ret = cast(dict[str, dict[str, ApkindexBlock]], ret)
+        ret = cast(dict[str, dict[str, ApkPackage]], ret)
         if provide not in ret:
             ret[provide] = {}
         picked_provides = ret[provide]
         picked_provides[pkgname] = block
     else:
-        ret = cast(dict[str, ApkindexBlock], ret)
+        ret = cast(dict[str, ApkPackage], ret)
         ret[provide] = block
 
 
 @overload
-def parse(path: Path) -> dict[str, dict[str, ApkindexBlock]]: ...
+def parse(path: Path) -> dict[str, dict[str, ApkPackage]]: ...
 
 
 @overload
-def parse(path: Path, multiple_providers: Literal[False] = ...) -> dict[str, ApkindexBlock]: ...
+def parse(path: Path, multiple_providers: Literal[False] = ...) -> dict[str, ApkPackage]: ...
 
 
 @overload
 def parse(
     path: Path, multiple_providers: Literal[True] = ...
-) -> dict[str, dict[str, ApkindexBlock]]: ...
+) -> dict[str, dict[str, ApkPackage]]: ...
 
 
 def parse(
     path: Path, multiple_providers: bool = True
-) -> dict[str, ApkindexBlock] | dict[str, dict[str, ApkindexBlock]]:
+) -> dict[str, ApkPackage] | dict[str, dict[str, ApkPackage]]:
     r"""
     Parse an APKINDEX.tar.gz file, and return its content as dictionary.
 
@@ -181,13 +181,13 @@ def parse(
         return {}
 
     # Parse the whole APKINDEX file
-    ret: dict[str, ApkindexBlock] = collections.OrderedDict()
+    ret: dict[str, ApkPackage] = collections.OrderedDict()
 
     for block_line in block_lines:
         block_line = block_line.strip()
         if len(block_line) == 0:
             continue
-        block = ApkindexBlock.from_block(block_line.splitlines())
+        block = ApkPackage.from_apkindex_block(block_line.splitlines())
         # Skip virtual packages
         if block.timestamp is None:
             logging.verbose(f"Skipped virtual package {block} in file: {path}")
@@ -206,7 +206,7 @@ def parse(
     return ret
 
 
-def parse_blocks(path: Path) -> list[ApkindexBlock]:
+def parse_blocks(path: Path) -> list[ApkPackage]:
     """
     Read all blocks from an APKINDEX.tar.gz into a list.
 
@@ -219,7 +219,9 @@ def parse_blocks(path: Path) -> list[ApkindexBlock]:
 
     # Parse lines into blocks
     return [
-        ApkindexBlock.from_block(b.strip().splitlines()) for b in block_lines if len(b.strip()) > 0
+        ApkPackage.from_apkindex_block(b.strip().splitlines())
+        for b in block_lines
+        if len(b.strip()) > 0
     ]
 
 
@@ -253,7 +255,7 @@ def providers(
     must_exist: bool = True,
     indexes: list[Path] | None = None,
     user_repository: bool = True,
-) -> dict[str, ApkindexBlock]:
+) -> dict[str, ApkPackage]:
     """
     Get all packages, which provide one package.
 
@@ -273,7 +275,7 @@ def providers(
     pkgname_with_op = package
     package = pmb.helpers.package.remove_operators(pkgname_with_op)
 
-    ret: dict[str, ApkindexBlock] = collections.OrderedDict()
+    ret: dict[str, ApkPackage] = collections.OrderedDict()
     for path in indexes:
         # Skip indexes not providing the package
         index_packages = parse(path)
@@ -311,8 +313,8 @@ def providers(
 
 
 def _provider_highest_priority(
-    providers: dict[str, ApkindexBlock], pkgname: str
-) -> dict[str, ApkindexBlock]:
+    providers: dict[str, ApkPackage], pkgname: str
+) -> dict[str, ApkPackage]:
     """
     Get the provider(s) with the highest provider_priority and log a message.
 
@@ -320,7 +322,7 @@ def _provider_highest_priority(
     :param pkgname: the package name we are interested in (for the log message)
     """
     max_priority = 0
-    priority_providers: collections.OrderedDict[str, ApkindexBlock] = collections.OrderedDict()
+    priority_providers: collections.OrderedDict[str, ApkPackage] = collections.OrderedDict()
     for provider_name, provider in providers.items():
         priority = int(-1 if provider.provider_priority is None else provider.provider_priority)
         if priority > max_priority:
@@ -340,7 +342,7 @@ def _provider_highest_priority(
     return providers
 
 
-def _provider_shortest(providers: dict[str, ApkindexBlock], pkgname: str) -> ApkindexBlock:
+def _provider_shortest(providers: dict[str, ApkPackage], pkgname: str) -> ApkPackage:
     """
     Get the provider with the shortest pkgname and log a message. In most cases
     this should be sufficient, e.g. 'mesa-purism-gc7000-egl, mesa-egl' or
@@ -365,7 +367,7 @@ def package(
     must_exist: Literal[True] = ...,
     indexes: list[Path] | None = ...,
     user_repository: bool = ...,
-) -> ApkindexBlock: ...
+) -> ApkPackage: ...
 
 
 @overload
@@ -375,7 +377,7 @@ def package(
     must_exist: bool = ...,
     indexes: list[Path] | None = ...,
     user_repository: bool = ...,
-) -> ApkindexBlock | None: ...
+) -> ApkPackage | None: ...
 
 
 # This can't be cached because the APKINDEX can change during pmbootstrap build!
@@ -385,7 +387,7 @@ def package(
     must_exist: bool = True,
     indexes: list[Path] | None = None,
     user_repository: bool = True,
-) -> ApkindexBlock | None:
+) -> ApkPackage | None:
     """
     Get a specific package's data from an apkindex.
 

@@ -21,7 +21,7 @@ apkindex_map = {
 required_apkindex_keys = ["arch", "pkgname", "version"]
 
 
-class ApkindexBlock:
+class ApkPackage:
     """A representation of a package block as parsed from APKINDEX file."""
 
     def __init__(
@@ -45,7 +45,7 @@ class ApkindexBlock:
         self._version = version
 
     @classmethod
-    def from_block(cls, block_lines: list[str]) -> ApkindexBlock:
+    def from_apkindex_block(cls, block_lines: list[str]) -> ApkPackage:
         ret: dict[str, Any] = {}
         required_found = 0  # Count the required keys we found
         for line in block_lines:
@@ -152,11 +152,11 @@ class ApkindexBlock:
         return self._version
 
 
-# This is needed since "apkindex_parse" command requires ApkindexBlock to
+# This is needed since "apkindex_parse" command requires ApkPackage to
 # be json-serializable
-class ApkindexBlockEncoder(JSONEncoder):
+class ApkPackageEncoder(JSONEncoder):
     def default(self, o: Any) -> dict:
-        if isinstance(o, ApkindexBlock):
+        if isinstance(o, ApkPackage):
             ret = {k[1:]: v for k, v in vars(o).items()}
             ret["arch"] = str(ret["arch"])
             return ret

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pmb.parse.apkindex
-from pmb.core.apkindex_block import ApkindexBlockEncoder
+from pmb.core.apk_package import ApkPackageEncoder
 
 
 def apkindex_parse(apkindex_path: Path, package: str | list[str]) -> None:
@@ -12,6 +12,6 @@ def apkindex_parse(apkindex_path: Path, package: str | list[str]) -> None:
     if package:
         if package not in result:
             raise RuntimeError(f"Package not found in the APKINDEX: {package}")
-        print(json.dumps(result[package], indent=4, cls=ApkindexBlockEncoder))
+        print(json.dumps(result[package], indent=4, cls=ApkPackageEncoder))
     else:
-        print(json.dumps(result, indent=4, cls=ApkindexBlockEncoder))
+        print(json.dumps(result, indent=4, cls=ApkPackageEncoder))

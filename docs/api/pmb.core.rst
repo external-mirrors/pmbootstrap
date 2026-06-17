@@ -4,10 +4,10 @@ pmb.core package
 Submodules
 ----------
 
-pmb.core.apkindex_block module
+pmb.core.apk_package module
 ------------------------------
 
-.. automodule:: pmb.core.apkindex_block
+.. automodule:: pmb.core.apk_package
    :members:
    :undoc-members:
    :show-inheritance:

@@ -11,7 +11,7 @@ import pmb.chroot.apk
 import pmb.config.pmaports
 import pmb.helpers.apk
 from pmb.chroot.apk import packages_get_locally_built_apks
-from pmb.core.apkindex_block import ApkindexBlock
+from pmb.core.apk_package import ApkPackage
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 
@@ -31,9 +31,9 @@ def apk_mocks(monkeypatch: MonkeyPatch) -> None:
         _arch: Arch,
         _must_exist: bool = False,
         indexes: None = None,
-    ) -> ApkindexBlock | None:
+    ) -> ApkPackage | None:
         if _package == "package1":
-            return ApkindexBlock(
+            return ApkPackage(
                 arch=_arch,
                 depends=["package2"],
                 origin=None,
@@ -44,7 +44,7 @@ def apk_mocks(monkeypatch: MonkeyPatch) -> None:
                 version="5.5-r0",
             )
         if _package == "package2":
-            return ApkindexBlock(
+            return ApkPackage(
                 arch=_arch,
                 depends=[],
                 origin=None,
@@ -55,7 +55,7 @@ def apk_mocks(monkeypatch: MonkeyPatch) -> None:
                 version="5.5-r0",
             )
         if _package == "package3":
-            return ApkindexBlock(
+            return ApkPackage(
                 arch=_arch,
                 depends=["package1", "package4"],
                 origin=None,
@@ -67,7 +67,7 @@ def apk_mocks(monkeypatch: MonkeyPatch) -> None:
             )
         # Test recursive dependency
         if _package == "package4":
-            return ApkindexBlock(
+            return ApkPackage(
                 arch=_arch,
                 depends=["package3"],
                 origin=None,
@@ -132,7 +132,7 @@ def test_install_run_apk_provider_conflict(
         pmb.chroot.apk,
         "installed",
         lambda _chroot: {
-            "package6": ApkindexBlock(
+            "package6": ApkPackage(
                 arch=arch,
                 depends=[],
                 origin=None,
@@ -143,7 +143,7 @@ def test_install_run_apk_provider_conflict(
                 version="5.5-r0",
             ),
             # provides alias also points to package6
-            "virtual-pkg": ApkindexBlock(
+            "virtual-pkg": ApkPackage(
                 arch=arch,
                 depends=[],
                 origin=None,

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import pmb.build._package
-from pmb.core.apkindex_block import ApkindexBlock
+from pmb.core.apk_package import ApkPackage
 from pmb.core.context import get_context
 from pmb.types import Apkbuild
 
@@ -21,7 +21,7 @@ class PackageMetadata:
     from_pmaports: bool
 
     @staticmethod
-    def from_apkindex_block(apkindex_block: ApkindexBlock) -> PackageMetadata:
+    def from_apkindex_block(apkindex_block: ApkPackage) -> PackageMetadata:
         return PackageMetadata(
             arch=[str(apkindex_block.arch)],
             depends=apkindex_block.depends,
