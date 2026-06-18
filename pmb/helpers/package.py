@@ -88,7 +88,7 @@ def get(
     # Find in pmaports
     pmaport = pmb.helpers.pmaports.get(pkgname, False)
     if pmaport and arch in Arch.from_arch_field(pmaport["arch"]):
-        return PackageMetadata.from_pmaport(pmaport)
+        return PackageMetadata.from_pmaport(pmaport, arch)
 
     # Find in APKINDEX
     pmb.helpers.repo.update(arch)

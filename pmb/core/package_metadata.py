@@ -6,14 +6,14 @@ from dataclasses import dataclass
 
 import pmb.build._package
 from pmb.core.apk_package import ApkPackage
+from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.types import Apkbuild
 
 
 @dataclass
 class PackageMetadata:
-    # This can't be list[Arch] because it can have values like "noarch" and "!armhf"
-    arch: list[str]
+    arch: Arch
     depends: list[str]
     pkgname: str
     provides: list[str]
@@ -23,7 +23,7 @@ class PackageMetadata:
     @staticmethod
     def from_apkindex_block(apkindex_block: ApkPackage) -> PackageMetadata:
         return PackageMetadata(
-            arch=[str(apkindex_block.arch)],
+            arch=apkindex_block.arch,
             depends=apkindex_block.depends,
             pkgname=apkindex_block.pkgname,
             provides=apkindex_block.provides,
@@ -32,15 +32,14 @@ class PackageMetadata:
         )
 
     @staticmethod
-    def from_pmaport(pmaport: Apkbuild) -> PackageMetadata:
-        pmaport_arches = pmaport["arch"]
+    def from_pmaport(pmaport: Apkbuild, arch: Arch) -> PackageMetadata:
         pmaport_depends = pmb.build._package.get_depends(get_context(), pmaport)
         pmaport_pkgname = pmaport["pkgname"]
         pmaport_provides = pmaport["provides"]
         pmaport_version = pmaport["pkgver"] + "-r" + pmaport["pkgrel"]
 
         return PackageMetadata(
-            arch=pmaport_arches,
+            arch=arch,
             depends=pmaport_depends or [],
             pkgname=pmaport_pkgname,
             provides=pmaport_provides,

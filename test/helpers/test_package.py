@@ -48,18 +48,18 @@ def test_depends_recurse_providers(monkeypatch: MonkeyPatch) -> None:
         match pkgname:
             case pkgname if pkgname.startswith("so:libc.musl-"):
                 return PackageMetadata(
-                    [str(arch)], [], "musl", [f"so:libc.musl-{arch}.so.1"], "1.2.5-r21", False
+                    arch, [], "musl", [f"so:libc.musl-{arch}.so.1"], "1.2.5-r21", False
                 )
             case "musl":
                 return PackageMetadata(
-                    [str(arch)], [], "musl", [f"so:libc.musl-{arch}.so.1"], "1.2.5-r21", False
+                    arch, [], "musl", [f"so:libc.musl-{arch}.so.1"], "1.2.5-r21", False
                 )
             case "glib":
                 return PackageMetadata(
-                    [str(arch)], [f"so:libc.musl-{arch}.so.1"], "glib", [], "2.31.1-r0", False
+                    arch, [f"so:libc.musl-{arch}.so.1"], "glib", [], "2.31.1-r0", False
                 )
             case "device-oneplus-fajita":
-                return PackageMetadata([str(arch)], ["glib"], pkgname, [], "34-r0", True)
+                return PackageMetadata(arch, ["glib"], pkgname, [], "34-r0", True)
             case _:
                 raise AssertionError("This is unreachable code")
 
@@ -72,14 +72,14 @@ def test_depends_recurse_alternative_names(monkeypatch: MonkeyPatch) -> None:
     def _get_package(pkgname: str, arch: Arch) -> PackageMetadata:
         match pkgname:
             case "dbus" | "dbus-dev<99990":
-                return PackageMetadata([str(arch)], ["dbus-libs"], "dbus", [], "1.16.2-r0", False)
+                return PackageMetadata(arch, ["dbus-libs"], "dbus", [], "1.16.2-r0", False)
             case "dbus-libs":
                 return PackageMetadata(
-                    [str(arch)], ["systemd-stage0-libs"], "dbus", [], "99991.16.2-r0", True
+                    arch, ["systemd-stage0-libs"], "dbus", [], "99991.16.2-r0", True
                 )
             case "systemd-stage0-libs" | "systemd-stage0":
                 return PackageMetadata(
-                    [str(arch)], ["dbus-dev<99990"], "systemd-stage0", [], "34-r0", True
+                    arch, ["dbus-dev<99990"], "systemd-stage0", [], "34-r0", True
                 )
             case _:
                 raise AssertionError("This is unreachable code")
