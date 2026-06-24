@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import pmb.build._package
 from pmb.core.apk_package import ApkPackage
 from pmb.core.arch import Arch
-from pmb.core.context import get_context
 from pmb.types import Apkbuild
 
 
@@ -33,7 +31,7 @@ class PackageMetadata:
 
     @staticmethod
     def from_pmaport(pmaport: Apkbuild, arch: Arch) -> PackageMetadata:
-        pmaport_depends = pmb.build._package.get_depends(get_context(), pmaport)
+        pmaport_depends = pmaport["depends"]
         pmaport_pkgname = pmaport["pkgname"]
         pmaport_provides = pmaport["provides"]
         pmaport_version = pmaport["pkgver"] + "-r" + pmaport["pkgrel"]
