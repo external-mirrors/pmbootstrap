@@ -5,8 +5,8 @@
 from _pytest.monkeypatch import MonkeyPatch
 
 import pmb.helpers.package
+from pmb.core.apk_package import ApkPackage
 from pmb.core.arch import Arch
-from pmb.core.package_metadata import PackageMetadata
 from pmb.helpers.package import check_version_constraints, depends_recurse, remove_operators
 
 
@@ -44,22 +44,56 @@ def test_check_version_constraints() -> None:
 
 
 def test_depends_recurse_providers(monkeypatch: MonkeyPatch) -> None:
-    def _get_package(pkgname: str, arch: Arch) -> PackageMetadata:
+    def _get_package(pkgname: str, arch: Arch) -> ApkPackage:
         match pkgname:
             case pkgname if pkgname.startswith("so:libc.musl-"):
-                return PackageMetadata(
-                    arch, [], "musl", [f"so:libc.musl-{arch}.so.1"], "1.2.5-r21", False
+                return ApkPackage(
+                    arch=arch,
+                    depends=[],
+                    pkgname="musl",
+                    provides=[f"so:libc.musl-{arch}.so.1"],
+                    version="1.2.5-r21",
+                    origin=None,
+                    provider_priority=None,
+                    timestamp=None,
+                    from_pmaports=False,
                 )
             case "musl":
-                return PackageMetadata(
-                    arch, [], "musl", [f"so:libc.musl-{arch}.so.1"], "1.2.5-r21", False
+                return ApkPackage(
+                    arch=arch,
+                    depends=[],
+                    pkgname="musl",
+                    provides=[f"so:libc.musl-{arch}.so.1"],
+                    version="1.2.5-r21",
+                    origin=None,
+                    provider_priority=None,
+                    timestamp=None,
+                    from_pmaports=False,
                 )
             case "glib":
-                return PackageMetadata(
-                    arch, [f"so:libc.musl-{arch}.so.1"], "glib", [], "2.31.1-r0", False
+                return ApkPackage(
+                    arch=arch,
+                    depends=[f"so:libc.musl-{arch}.so.1"],
+                    pkgname="glib",
+                    provides=[],
+                    version="2.31.1-r0",
+                    origin=None,
+                    provider_priority=None,
+                    timestamp=None,
+                    from_pmaports=False,
                 )
             case "device-oneplus-fajita":
-                return PackageMetadata(arch, ["glib"], pkgname, [], "34-r0", True)
+                return ApkPackage(
+                    arch=arch,
+                    depends=["glib"],
+                    pkgname=pkgname,
+                    provides=[],
+                    version="34-r0",
+                    origin=None,
+                    provider_priority=None,
+                    timestamp=None,
+                    from_pmaports=True,
+                )
             case _:
                 raise AssertionError("This is unreachable code")
 
@@ -69,17 +103,43 @@ def test_depends_recurse_providers(monkeypatch: MonkeyPatch) -> None:
 
 
 def test_depends_recurse_alternative_names(monkeypatch: MonkeyPatch) -> None:
-    def _get_package(pkgname: str, arch: Arch) -> PackageMetadata:
+    def _get_package(pkgname: str, arch: Arch) -> ApkPackage:
         match pkgname:
             case "dbus" | "dbus-dev<99990":
-                return PackageMetadata(arch, ["dbus-libs"], "dbus", [], "1.16.2-r0", False)
+                return ApkPackage(
+                    arch=arch,
+                    depends=["dbus-libs"],
+                    pkgname="dbus",
+                    provides=[],
+                    version="1.16.2-r0",
+                    origin=None,
+                    provider_priority=None,
+                    timestamp=None,
+                    from_pmaports=False,
+                )
             case "dbus-libs":
-                return PackageMetadata(
-                    arch, ["systemd-stage0-libs"], "dbus", [], "99991.16.2-r0", True
+                return ApkPackage(
+                    arch=arch,
+                    depends=["systemd-stage0-libs"],
+                    pkgname="dbus",
+                    provides=[],
+                    version="99991.16.2-r0",
+                    origin=None,
+                    provider_priority=None,
+                    timestamp=None,
+                    from_pmaports=True,
                 )
             case "systemd-stage0-libs" | "systemd-stage0":
-                return PackageMetadata(
-                    arch, ["dbus-dev<99990"], "systemd-stage0", [], "34-r0", True
+                return ApkPackage(
+                    arch=arch,
+                    depends=["dbus-dev<99990"],
+                    pkgname="systemd-stage0",
+                    provides=[],
+                    version="34-r0",
+                    origin=None,
+                    provider_priority=None,
+                    timestamp=None,
+                    from_pmaports=True,
                 )
             case _:
                 raise AssertionError("This is unreachable code")

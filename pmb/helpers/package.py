@@ -15,8 +15,8 @@ from typing import overload
 import pmb.helpers.pmaports
 import pmb.helpers.repo
 import pmb.parse.version
+from pmb.core.apk_package import ApkPackage
 from pmb.core.arch import Arch
-from pmb.core.package_metadata import PackageMetadata
 from pmb.helpers import logging
 from pmb.meta import Cache
 
@@ -58,11 +58,11 @@ def check_version_constraints(pkgname_with_op: str, version: str) -> bool:
 
 
 @overload
-def get(pkgname: str, arch: Arch) -> PackageMetadata: ...
+def get(pkgname: str, arch: Arch) -> ApkPackage: ...
 
 
 @overload
-def get(pkgname: str, arch: Arch, must_exist: bool = ...) -> PackageMetadata | None: ...
+def get(pkgname: str, arch: Arch, must_exist: bool = ...) -> ApkPackage | None: ...
 
 
 @Cache("pkgname", "arch")
@@ -70,7 +70,7 @@ def get(
     pkgname: str,
     arch: Arch,
     must_exist: bool = True,
-) -> PackageMetadata | None:
+) -> ApkPackage | None:
     """
     Find a package in pmaports, and as fallback in the APKINDEXes of the binary packages.
 
@@ -88,13 +88,13 @@ def get(
     # Find in pmaports
     pmaport = pmb.helpers.pmaports.get(pkgname, False)
     if pmaport and arch in Arch.from_arch_field(pmaport["arch"]):
-        return PackageMetadata.from_pmaport(pmaport, arch)
+        return ApkPackage.from_apkbuild(pmaport, arch)
 
     # Find in APKINDEX
     pmb.helpers.repo.update(arch)
     ret_repo = pmb.parse.apkindex.package(pkgname, arch, False)
     if ret_repo:
-        return PackageMetadata.from_apkindex_block(ret_repo)
+        return ret_repo
 
     # Could not find the package
     if not must_exist:

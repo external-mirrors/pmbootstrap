@@ -6,6 +6,7 @@ from json import JSONEncoder
 from typing import Any
 
 from pmb.core.arch import Arch
+from pmb.types import Apkbuild
 
 apkindex_map = {
     "A": "arch",
@@ -34,6 +35,7 @@ class ApkPackage:
         provider_priority: int | None,
         timestamp: str | None,
         version: str,
+        from_pmaports: bool = False,
     ):
         self._arch = arch
         self._depends = depends
@@ -43,6 +45,7 @@ class ApkPackage:
         self._provider_priority = provider_priority
         self._timestamp = timestamp
         self._version = version
+        self._from_pmaports = from_pmaports
 
     @classmethod
     def from_apkindex_block(cls, block_lines: list[str]) -> ApkPackage:
@@ -101,6 +104,26 @@ class ApkPackage:
             provider_priority=provider_priority,
             timestamp=ret.get("timestamp"),
             version=ret["version"],
+            from_pmaports=False,
+        )
+
+    @classmethod
+    def from_apkbuild(cls, apkbuild: Apkbuild, arch: Arch) -> ApkPackage:
+        depends = apkbuild["depends"]
+        pkgname = apkbuild["pkgname"]
+        provides = apkbuild["provides"]
+        version = apkbuild["pkgver"] + "-r" + apkbuild["pkgrel"]
+
+        return cls(
+            arch=arch,
+            depends=depends or [],
+            origin=None,
+            pkgname=pkgname,
+            provides=provides,
+            provider_priority=None,
+            timestamp=None,
+            version=version,
+            from_pmaports=True,
         )
 
     @property
@@ -151,6 +174,15 @@ class ApkPackage:
         """The package version."""
         return self._version
 
+    @property
+    def from_pmaports(self) -> bool:
+        """
+        Whether the object was created from an APKBUILD from pmaports.
+
+        False in every other case.
+        """
+        return self._from_pmaports
+
 
 # This is needed since "apkindex_parse" command requires ApkPackage to
 # be json-serializable
@@ -159,5 +191,6 @@ class ApkPackageEncoder(JSONEncoder):
         if isinstance(o, ApkPackage):
             ret = {k[1:]: v for k, v in vars(o).items()}
             ret["arch"] = str(ret["arch"])
+            del ret["from_pmaports"]
             return ret
         return super().default(o)

@@ -52,14 +52,6 @@ pmb.core.dps module
    :undoc-members:
    :show-inheritance:
 
-pmb.core.package_metadata module
---------------------------------
-
-.. automodule:: pmb.core.package_metadata
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pmb.core.pkgrepo module
 -----------------------
 
