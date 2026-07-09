@@ -1201,6 +1201,9 @@ def get_parser() -> argparse.ArgumentParser:
     # Action: apkbuild_parse
     apkbuild_parse = sub.add_parser("apkbuild_parse")
     add_packages_arg(apkbuild_parse, nargs="*")
+    apkbuild_parse.add_argument(
+        "--arch", choices=arch_choices, dest="arch", type=lambda x: Arch.from_str(x)
+    )
 
     # Action: apkindex_parse
     apkindex_parse = sub.add_parser("apkindex_parse")

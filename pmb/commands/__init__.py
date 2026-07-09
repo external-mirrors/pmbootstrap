@@ -68,7 +68,7 @@ def _parse_suffix(buildroot: str, image: bool, rootfs: bool, suffix: str) -> Chr
 def run_command(args: PmbArgs) -> None:
     match args.action:
         case "apkbuild_parse":
-            apkbuild_parse(args.packages)
+            apkbuild_parse(args.packages, args.arch)
         case "apkindex_parse":
             apkindex_parse(args.apkindex_path, args.package)
         case "aportgen":
