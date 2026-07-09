@@ -307,7 +307,7 @@ def get_with_path(
         if pkgname_no_op == pkgname or pmb.helpers.package.check_version_constraints(
             pkgname, apkbuild["pkgver"]
         ):
-            return pmaport, pmb.parse.apkbuild(pmaport / "APKBUILD")
+            return pmaport, apkbuild
     return None, None
 
 
