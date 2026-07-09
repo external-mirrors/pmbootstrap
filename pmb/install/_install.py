@@ -58,32 +58,6 @@ def get_subpartitions_size(chroot: Chroot) -> tuple[int, int]:
     return (boot, round(root))
 
 
-def get_nonfree_packages(device: str) -> list[str]:
-    """
-    Get any legacy non-free subpackages in the APKBUILD.
-    Also see: https://postmarketos.org/edge/2024/02/15/default-nonfree-fw/
-
-    :returns: list of non-free packages to be installed. Example:
-              ["device-nokia-n900-nonfree-firmware"]
-    """
-    # Read subpackages
-    device_path = pmb.helpers.devices.find_path(device, "APKBUILD")
-    if not device_path:
-        raise RuntimeError(f"Device package not found for {device}")
-
-    apkbuild = pmb.parse.apkbuild(device_path)
-    subpackages = apkbuild["subpackages"]
-
-    # Check for firmware and userland
-    ret = []
-    prefix = "device-" + device + "-nonfree-"
-    if prefix + "firmware" in subpackages:
-        ret += [prefix + "firmware"]
-    if prefix + "userland" in subpackages:
-        ret += [prefix + "userland"]
-    return ret
-
-
 def get_kernel_package(config: Config) -> list[str]:
     """
     Get the device's kernel subpackage based on the user's choice in
@@ -1285,7 +1259,6 @@ def create_device_rootfs(
     install_packages += get_selected_providers(install_packages)
 
     install_packages += get_kernel_package(config)
-    install_packages += get_nonfree_packages(device)
     if context.config.ui.lower() != "none":
         ui_package = pmb.helpers.pmaports.get(ui_package_name, subpackages=False, must_exist=False)
         if ui_package and context.config.ui_extras:
