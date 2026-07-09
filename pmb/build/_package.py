@@ -46,7 +46,7 @@ def check_build_for_arch(pkgname: str, arch: Arch) -> bool:
     # Check for binary package
     binary = pmb.parse.apkindex.package(pkgname, arch, False)
     if binary:
-        pmaport = pmb.helpers.pmaports.get(pkgname)
+        pmaport = pmb.helpers.pmaports.get(pkgname, arch=arch)
         pmaport_version = pmaport["pkgver"] + "-r" + pmaport["pkgrel"]
         logging.debug(
             pkgname + ": found pmaport (" + pmaport_version + ") and"
@@ -184,7 +184,7 @@ def is_cached_or_cache(arch: Arch, pkgname: str) -> bool:
     return visited
 
 
-def get_apkbuild(pkgname: str) -> tuple[Path | None, Apkbuild | None]:
+def get_apkbuild(pkgname: str, arch: Arch | None) -> tuple[Path | None, Apkbuild | None]:
     """
     Parse the APKBUILD path for pkgname.
 
@@ -194,7 +194,7 @@ def get_apkbuild(pkgname: str) -> tuple[Path | None, Apkbuild | None]:
     :returns: None or parsed APKBUILD
     """
     # Get pmaport, skip upstream only packages
-    pmaport, apkbuild = pmb.helpers.pmaports.get_with_path(pkgname, False)
+    pmaport, apkbuild = pmb.helpers.pmaports.get_with_path(pkgname, arch=arch, must_exist=False)
     if pmaport:
         pmaport = pkgrepo_relative_path(pmaport)[0]
         return pmaport, apkbuild
@@ -327,7 +327,7 @@ def process_package(
 ) -> list[str]:
     """:param arch: Set if we should build for a specific arch."""
     # Only build when APKBUILD exists
-    base_aports, base_apkbuild = get_apkbuild(pkgname)
+    base_aports, base_apkbuild = get_apkbuild(pkgname, arch)
     if not base_apkbuild:
         # We allow this function to be called for packages that aren't in pmaports
         # and just do nothing in this case. However this can be quite confusing
@@ -388,7 +388,7 @@ def process_package(
         if index_data:
             dep = index_data.pkgname
 
-        aports, apkbuild = get_apkbuild(dep)
+        aports, apkbuild = get_apkbuild(dep, arch)
         if not apkbuild:
             continue
 
@@ -539,7 +539,7 @@ def packages(
     if not src:
         for pkgname in pmb.config.build_packages:
             if pkgname not in pkgnames:
-                aport, apkbuild = get_apkbuild(pkgname)
+                aport, apkbuild = get_apkbuild(pkgname, arch)
                 if not aport or not apkbuild:
                     continue
                 bstatus = pmb.build.get_status(arch, apkbuild)

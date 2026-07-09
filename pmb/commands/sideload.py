@@ -145,7 +145,7 @@ def sideload(
             else:
                 raise RuntimeError(f"Couldn't find APKINDEX data for {pkgname}!")
 
-        base_aports, _ = pmb.build.get_apkbuild(pkgname)
+        base_aports, _ = pmb.build.get_apkbuild(pkgname, arch)
         channel = pmb.config.pmaports.read_config(base_aports)["channel"]
 
         apk_file = f"{pkgname}-{data_repo.version}.apk"

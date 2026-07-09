@@ -86,7 +86,7 @@ def get(
         * None if the package was not found
     """
     # Find in pmaports
-    pmaport = pmb.helpers.pmaports.get(pkgname, False)
+    pmaport = pmb.helpers.pmaports.get(pkgname, arch=None, must_exist=False)
     if pmaport and pmb.helpers.pmaports.check_arches(pmaport["arch"], arch):
         return PackageMetadata.from_pmaport(pmaport)
 

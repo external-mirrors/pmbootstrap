@@ -27,7 +27,11 @@ def is_abuild_forked(repo: str | None) -> bool:
     else:
         raise RuntimeError(f"Unexpected repo value: {repo}")
 
-    return bool(pmb.helpers.pmaports.find("abuild", False, False, with_extra_repos))
+    return bool(
+        pmb.helpers.pmaports.find(
+            "abuild", must_exist=False, subpackages=False, with_extra_repos=with_extra_repos
+        )
+    )
 
 
 def generate(arch: Arch) -> list[dict[str, list[str] | str | None]]:

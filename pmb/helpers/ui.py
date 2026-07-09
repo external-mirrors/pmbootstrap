@@ -55,6 +55,6 @@ def check_option(
 
     pkgname = f"postmarketos-ui-{ui}"
     apkbuild = pmb.helpers.pmaports.get(
-        pkgname, must_exist, subpackages=False, with_extra_repos=with_extra_repos
+        pkgname, must_exist=must_exist, subpackages=False, with_extra_repos=with_extra_repos
     )
     return option in apkbuild["options"] if apkbuild is not None else False

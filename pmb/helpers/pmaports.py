@@ -134,16 +134,22 @@ def guess_main(subpkgname: str) -> Path | None:
     return None
 
 
-def _find_package_in_apkbuild(package: str, path: Path) -> bool:
+def _find_package_in_apkbuild(package: str, path: Path, arch: Arch | None = None) -> bool:
     """
     Look through subpackages and all provides to see if the APKBUILD at the specified path
     contains (or provides) the specified package.
 
     :param package: The package to search for
     :param path: The path to the apkbuild
+    :param arch: If set, check that the package can be built for this arch
     :return: True if the APKBUILD contains or provides the package
     """
     apkbuild = pmb.parse.apkbuild(path)
+
+    # We might have different providers per-arch, make sure
+    # we don't select a package for the wrong architecture
+    if arch is not None and str(arch) not in apkbuild["arch"]:
+        return False
 
     # Subpackages
     if package in apkbuild["subpackages"]:
@@ -177,7 +183,7 @@ def show_pkg_not_found_systemd_hint(package: str, with_extra_repos: WithExtraRep
     if with_extra_repos != WithExtraRepos.DEFAULT or pmb.config.other.is_systemd_selected():
         return
 
-    if find(package, False, with_extra_repos=WithExtraRepos.ENABLED):
+    if find(package, must_exist=False, with_extra_repos=WithExtraRepos.ENABLED):
         logging.info(
             f"NOTE: The package '{package}' exists in extra-repos/systemd, but systemd is currently disabled"
         )
@@ -186,6 +192,7 @@ def show_pkg_not_found_systemd_hint(package: str, with_extra_repos: WithExtraRep
 @overload
 def find(
     package: str,
+    arch: Arch | None = ...,
     must_exist: Literal[True] = ...,
     subpackages: bool = ...,
     with_extra_repos: WithExtraRepos = ...,
@@ -195,15 +202,17 @@ def find(
 @overload
 def find(
     package: str,
+    arch: Arch | None = ...,
     must_exist: bool = ...,
     subpackages: bool = ...,
     with_extra_repos: WithExtraRepos = ...,
 ) -> Path | None: ...
 
 
-@Cache("package", "must_exist", "subpackages", "with_extra_repos")
+@Cache("package", "arch", "must_exist", "subpackages", "with_extra_repos")
 def find(
     package: str,
+    arch: Arch | None = None,
     must_exist: bool = True,
     subpackages: bool = True,
     with_extra_repos: WithExtraRepos = WithExtraRepos.DEFAULT,
@@ -212,6 +221,7 @@ def find(
     Find the directory in pmaports that provides a package or subpackage.
     If you want the parsed APKBUILD instead, use pmb.helpers.pmaports.get().
 
+    :param arch: match the supported arch of provider packages
     :param must_exist: Raise an exception, when not found
     :param subpackages: set to False as speed optimization, if you know that
                         the package is not a subpackage of another package
@@ -238,14 +248,14 @@ def find(
         # looking for as subpackage
         guess = guess_main(package)
         # Parse the APKBUILD and verify if the guess was right
-        if guess and _find_package_in_apkbuild(package, guess / "APKBUILD"):
+        if guess and _find_package_in_apkbuild(package, guess / "APKBUILD", arch):
             ret = guess
 
         if not ret:
             # Otherwise parse all APKBUILDs (takes time!), is the
             # package we are looking for a subpackage of any of those?
             for path_current in _find_apkbuilds().values():
-                if _find_package_in_apkbuild(package, path_current):
+                if _find_package_in_apkbuild(package, path_current, arch):
                     ret = path_current.parent
                     break
 
@@ -272,9 +282,10 @@ def find_optional(package: str) -> Path | None:
 
 
 # The only caller with subpackages=False is ui.check_option()
-@Cache("pkgname", "with_extra_repos", subpackages=True)
+@Cache("pkgname", "arch", "with_extra_repos", subpackages=True)
 def get_with_path(
     pkgname: str,
+    arch: Arch | None = None,
     must_exist: bool = True,
     subpackages: bool = True,
     with_extra_repos: WithExtraRepos = WithExtraRepos.DEFAULT,
@@ -286,6 +297,7 @@ def get_with_path(
     Relevant variables are defined in pmb.config.apkbuild_attributes.
 
     :param pkgname: the package name [+ version constraint] to find
+    :param arch: architecture that the package must support (only for virtual packages)
     :param must_exist: raise an exception when it can't be found
     :param subpackages: also search for subpackages with the specified
         names (slow! might need to parse all APKBUILDs to find it)
@@ -301,7 +313,13 @@ def get_with_path(
                   ... }
     """
     pkgname_no_op = pmb.helpers.package.remove_operators(pkgname)
-    pmaport = find(pkgname_no_op, must_exist, subpackages, with_extra_repos)
+    pmaport = find(
+        pkgname_no_op,
+        arch=arch,
+        must_exist=must_exist,
+        subpackages=subpackages,
+        with_extra_repos=with_extra_repos,
+    )
     if pmaport:
         apkbuild = pmb.parse.apkbuild(pmaport / "APKBUILD")
         if pkgname_no_op == pkgname or pmb.helpers.package.check_version_constraints(
@@ -314,6 +332,7 @@ def get_with_path(
 @overload
 def get(
     pkgname: str,
+    arch: Arch | None = ...,
     must_exist: Literal[True] = ...,
     subpackages: bool = ...,
     with_extra_repos: WithExtraRepos = ...,
@@ -323,6 +342,7 @@ def get(
 @overload
 def get(
     pkgname: str,
+    arch: Arch | None = ...,
     must_exist: bool = ...,
     subpackages: bool = ...,
     with_extra_repos: WithExtraRepos = ...,
@@ -331,11 +351,12 @@ def get(
 
 def get(
     pkgname: str,
+    arch: Arch | None = None,
     must_exist: bool = True,
     subpackages: bool = True,
     with_extra_repos: WithExtraRepos = WithExtraRepos.DEFAULT,
 ) -> Apkbuild | None:
-    return get_with_path(pkgname, must_exist, subpackages, with_extra_repos)[1]
+    return get_with_path(pkgname, arch, must_exist, subpackages, with_extra_repos)[1]
 
 
 def find_providers(provide: str, default: list[str]) -> list[tuple[Any, Any]]:
