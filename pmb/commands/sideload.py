@@ -243,4 +243,17 @@ def sideload(
     if copy_key:
         scp_abuild_key(remote)
 
+    # Check if we have internet otherwise we will run offline
+    if not install_offline:
+        logging.info("Checking if remote has internet connectivity")
+        cmd = ssh_make_cmd(remote, "nm-online -t 3")
+        result = pmb.helpers.run.user_output(cmd, output=RunOutputTypeDefault.STDOUT, check=False)
+        # Look for "offline" rather than "online" so we don't get false
+        # negatives if the nm-online command isn't available.
+        if "[offline]" in result:
+            logging.warning(
+                "WARNING: The remote is offline, apk may fail due to missing dependencies!"
+            )
+            install_offline = True
+
     ssh_install_apks(remote, paths, install_offline, allow_untrusted)
