@@ -299,6 +299,12 @@ def arguments_sideload(
         action="store_true",
         dest="allow_untrusted",
     )
+    ret.add_argument(
+        "--strict",
+        help="Don't automatically sideload relevant subpackages",
+        action="store_true",
+        dest="strict",
+    )
     return ret
 
 
