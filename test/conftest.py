@@ -1,6 +1,7 @@
 # Copyright 2024 Casey Connolly
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -183,6 +184,8 @@ def pmaports(pmb_args: None, monkeypatch: MonkeyPatch) -> None:
         # Override the URL to the local path so we can later look up the
         # remote by URL
         pmb.config.git_repos["pmaports"] = [str(Config.aports)]
+    elif not os.environ.get("CI"):
+        raise RuntimeError(f"Missing pmaports dir and not running in CI: {Config.aports}")
 
     if not cfg.aports.exists():
         pmb.helpers.git.clone("pmaports")
