@@ -176,6 +176,7 @@ def run_command(args: PmbArgs) -> None:
                 str(args.port),
                 args.arch,
                 args.install_key,
+                args.strict,
                 args.packages,
             )
         case "test":
