@@ -728,8 +728,8 @@ def get_partition_layout(kernel: bool, prep: bool | None) -> PartitionLayout:
     """
     :param kernel: create a separate kernel partition before all other
                    partitions, e.g. for the ChromeOS devices with cgpt
-    :param prep: create a PReP Boot partition before root and no boot partition,
-                 e.g. for PowerVM or OpenFirmware POWER machines
+    :param prep: create a PReP Boot partition before root, e.g. for PowerVM
+                 or OpenFirmware POWER machines
     :returns: the partition layout, e.g. without reserve and kernel:
               {"kernel": None, "boot": 1, "reserve": None, "root": 2}
     """
@@ -743,7 +743,8 @@ def get_partition_layout(kernel: bool, prep: bool | None) -> PartitionLayout:
 
     if prep:
         ret["prep"] = 1
-        ret["boot"] = None
+        ret["boot"] = 2
+        ret["root"] = 3
     else:
         if kernel:
             ret["kernel"] = 1
@@ -800,13 +801,8 @@ def create_fstab(
     :param layout: partition layout from get_partition_layout() or None
     :param chroot: of the chroot, which fstab will be created to
     """
-    uses_prep = layout and layout["prep"] is not None
-
-    if layout and not uses_prep:
+    if layout:
         boot_dev = Path(f"/dev/installp{layout['boot']}")
-        root_dev = Path(f"/dev/installp{layout['root']}")
-    elif layout and uses_prep:
-        boot_dev = None
         root_dev = Path(f"/dev/installp{layout['root']}")
     else:
         boot_dev = None
@@ -902,7 +898,7 @@ def install_system_image(
             if pmb.parse.deviceinfo().cgpt_kpart and install_cgpt:
                 pmb.install.partition_cgpt(layout, size_boot)
             elif pmb.parse.deviceinfo().create_prep_boot:
-                pmb.install.partition_prep(layout)
+                pmb.install.partition_prep(layout, size_boot)
             else:
                 pmb.install.partition(layout, size_boot)
 
@@ -960,22 +956,15 @@ def install_system_image(
         embed_firmware(chroot)
         write_cgpt_kpart(layout, chroot, install_cgpt)
 
-    # Install GRUB to the PReP boot partition
+    # Install powervm-boot to the PReP boot partition
     if pmb.parse.deviceinfo().create_prep_boot and layout:
-        pmb.chroot.apk.install(["grub"], Chroot.native())
-        # GRUB is incapable of installing to /dev/installp1, it *needs* to install to
-        # /dev/loop0p1
         pmb.chroot.root(
             [
-                "grub-install",
-                "--target=powerpc-ieee1275",
-                "--directory=/mnt/install/usr/lib/grub/powerpc-ieee1275",
-                "--boot-directory=/mnt/install/boot",
-                # Since we are in a chroot, it cannot properly autodetect the modules,
-                # so we need to give it a hint
-                "--modules=part_gpt part_msdos disk normal linux boot search terminal",
-                "--no-nvram",
-                f"/dev/loop0p{layout['prep']}",
+                "dd",
+                "if=/mnt/install/usr/lib/powervm-boot/powervm-boot",
+                f"of=/dev/installp{layout['prep']}",
+                "bs=512",
+                "conv=notrunc",
             ]
         )
 

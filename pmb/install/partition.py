@@ -207,15 +207,17 @@ def partition_cgpt(layout: PartitionLayout, size_boot: int) -> None:
         pmb.chroot.root(command, check=False)
 
 
-def partition_prep(layout: PartitionLayout) -> None:
+def partition_prep(layout: PartitionLayout, size_boot: int) -> None:
     """
-    Partition /dev/install and create /dev/install{p1,p2}:
+    Partition /dev/install and create /dev/installp{1,2,3}:
     * /dev/installp1: PReP boot
-    * /dev/installp2: root
+    * /dev/installp2: boot
+    * /dev/installp3: root
 
     :param layout: partition layout from get_partition_layout()
+    :param size_boot: size of the boot partition in MiB
     """
-    logging.info("(native) partition /dev/install (PReP boot: 8MB, root: the rest)")
+    logging.info(f"(native) partition /dev/install (PReP boot: 8MB, boot: {size_boot}MB)")
 
     # Actual partitioning with 'parted'. Using check=False, because parted
     # sometimes "fails to inform the kernel". In case it really failed with
@@ -228,7 +230,8 @@ def partition_prep(layout: PartitionLayout) -> None:
     commands = [
         ["mktable", partition_type],
         ["mkpart", "primary", "1MiB", "9MiB"],
-        ["mkpart", "primary", "9MiB", "100%"],
+        ["mkpart", "primary", "9MiB", f"{size_boot + 9}MiB"],
+        ["mkpart", "primary", f"{size_boot + 9}MiB", "100%"],
         ["set", str(layout["prep"]), "PREP", "on"],
         ["set", str(layout["prep"]), "boot", "on"],
     ]
@@ -238,10 +241,13 @@ def partition_prep(layout: PartitionLayout) -> None:
     if partition_type.lower() == "gpt":
         commands += [
             ["type", str(layout["prep"]), pmb.core.dps.boot["prep"][1]],
+            ["set", str(layout["boot"]), "esp", "on"],
+            ["type", str(layout["boot"]), pmb.core.dps.boot["esp"][1]],
             ["type", str(layout["root"]), pmb.core.dps.root[arch][1]],
         ]
     elif partition_type.lower() == "msdos":
         commands += [["type", str(layout["prep"]), "0x41"]]  # PReP boot type
+        commands += [["type", str(layout["boot"]), "0xEF"]]  # ESP type
 
     for command in commands:
         pmb.chroot.root(["parted", "-s", "/dev/install", *command], check=False)
