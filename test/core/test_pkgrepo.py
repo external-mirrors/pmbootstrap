@@ -25,8 +25,9 @@ def test_pkgrepo_pmaports(pmaports: None, monkeypatch: MonkeyPatch) -> None:
 
     paths = pkgrepo_paths()
     print(f"[main] pkgrepo_paths: {paths}")
-    assert len(paths) == 1
-    assert "pmaports" in paths[0].name
+    assert len(paths) == 2
+    assert "systemd" in paths[0].name
+    assert "pmaports" in paths[1].name
 
     default_path = pkgrepo_default_path()
 

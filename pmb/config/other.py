@@ -26,8 +26,6 @@ def service_managers_from_packaging(
     pkgname_ui = f"postmarketos-ui-{ui}"
     apkbuild_ui = pmb.helpers.pmaports.get(pkgname_ui, False, False, WithExtraRepos.DISABLED)
     if not apkbuild_ui:
-        default = ServiceManagerConfig.OPENRC
-        available = [ServiceManagerConfig.OPENRC]
         reason = f"{pkgname_ui} does not exist on current pmaports branch"
     else:
         opts = apkbuild_ui["options"]
