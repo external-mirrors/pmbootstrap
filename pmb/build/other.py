@@ -173,7 +173,7 @@ def index_repo(arch: Arch | None = None) -> None:
         pmb.parse.apkindex.clear_cache(path / "APKINDEX.tar.gz")
 
 
-def configure_abuild(chroot: Chroot, verify: bool = False) -> None:
+def configure_abuild(chroot: Chroot, _verify: bool = False) -> None:
     """
     Set the correct JOBS count in ``abuild.conf``.
 
