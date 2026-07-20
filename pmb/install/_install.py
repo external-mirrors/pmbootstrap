@@ -113,8 +113,7 @@ def get_kernel_package(config: Config) -> list[str]:
 def copy_files_from_chroot(chroot: Chroot, rsync: bool, verbose: bool) -> None:
     """
     Copy all files from the rootfs chroot to /mnt/install, except
-    for the home folder (because /home will contain some empty
-    mountpoint folders).
+    for /home, /work, /cache, and /mnt which shouldn't be included.
 
     :param suffix: the chroot suffix, e.g. "rootfs_qemu-amd64"
     """
@@ -137,7 +136,7 @@ def copy_files_from_chroot(chroot: Chroot, rsync: bool, verbose: bool) -> None:
     # Get all folders inside the device rootfs (except for home)
     folders: list[str] = []
     for path in mountpoint_outside.glob("*"):
-        if path.name == "home":
+        if path.name in ["home", "cache", "work"]:
             continue
         folders.append(path.name)
 
