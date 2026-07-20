@@ -47,24 +47,46 @@ from pmb.types import PmbArgs
 """
 
 
+def find_config(config: Path|None) -> tuple[Path, bool]:
+    """
+    Find the config file for pmbootstrap to use, search for a local
+    config file in the current working dir and walk up the filesystem tree.
+    Fall back to the global config file if we don't find one.
+
+    :param config: user specified config file
+    :returns: path to config file and bool indicating if it's local
+    """
+    local = False
+
+    if config:
+        return (config, False)
+
+    # Try to find a local config either in the current directory
+    # or any parents
+    cwd = Path.cwd()
+    for i in range(len(cwd.parts)):
+        local_conf = Path(*cwd.parts[:-i], "pmbootstrap.conf")
+        # Check that we have write access to the path
+        if not os.access(local_conf, os.W_OK):
+            print(f"Found {local_conf} but it isn't writable! Falling back to global")
+            break
+        if local_conf.exists():
+            print(f"Using local config {local_conf}")
+            config = local_conf
+            local = True
+            break
+
+    if not config:
+        config = Path(pmb.config.defaults["config"])
+
+    return (config, local)
+
+
 def init(args: PmbArgs) -> PmbArgs:
     args_ = PmbArgs()
     local = False
     # Basic initialization
-    if not args.config:
-        cwd = Path.cwd()
-        for i in range(len(cwd.parts)):
-            local_conf = Path(*cwd.parts[:-i], "pmbootstrap.conf")
-            # If the path isn't owned by the user then we have gone too far.
-            if local_conf.parent.owner() != os.getlogin():
-                break
-            if local_conf.exists():
-                print(f"Using local config {local_conf}")
-                args.config = local_conf
-                local = True
-                break
-        if not args.config:
-            args.config = Path(pmb.config.defaults["config"])
+    args.config, local = find_config(args.config)
     config = pmb.config.load(args.config)
 
     # We must be using a local config file AND a local work dir
