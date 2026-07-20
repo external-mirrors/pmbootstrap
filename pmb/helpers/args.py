@@ -50,9 +50,8 @@ from pmb.types import PmbArgs
 
 def init(args: PmbArgs) -> PmbArgs:
     args_ = PmbArgs()
+    local = False
     # Basic initialization
-    # print(json.dumps(args.__dict__))
-    # sys.exit(0)
     if not args.config:
         cwd = Path.cwd()
         for i in range(len(cwd.parts)):
@@ -63,11 +62,14 @@ def init(args: PmbArgs) -> PmbArgs:
             if local_conf.exists():
                 print(f"Using local config {local_conf}")
                 args.config = local_conf
-                os.chdir(local_conf.parent)
+                local = True
                 break
         if not args.config:
             args.config = Path(pmb.config.defaults["config"])
     config = pmb.config.load(args.config)
+
+    # We must be using a local config file AND a local work dir
+    local = local and config.work.is_relative_to(args.config.parent)
 
     if args.aports:
         for pmaports_dir in args.aports:
@@ -109,6 +111,7 @@ def init(args: PmbArgs) -> PmbArgs:
     context.assume_yes = getattr(args, "assume_yes", False)
     context.force = getattr(args, "force", False)
     context.no_depends = getattr(args, "no_depends", False)
+    context.local = local
 
     # Initialize context
     pmb.core.context.set_context(context)

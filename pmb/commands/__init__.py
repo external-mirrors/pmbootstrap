@@ -113,7 +113,7 @@ def run_command(args: PmbArgs) -> None:
         case "ci":
             ci(args.scripts, args.all, args.fast)
         case "config":
-            config(args.name, args.value, args.reset, args.config)
+            config(args.name, args.value, args.reset, args.config, get_context().local)
         case "export":
             export(args.export_folder, args.autoinstall, args.odin_flashable_tar)
         case "flasher":

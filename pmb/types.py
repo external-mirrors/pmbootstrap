@@ -251,6 +251,7 @@ class PmbArgs(Namespace):
     keep_going: bool
     lax: bool
     lines: int
+    local: bool
     log: Path
     memory: int
     mirror_alpine: str

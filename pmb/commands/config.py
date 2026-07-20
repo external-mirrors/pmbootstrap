@@ -8,7 +8,7 @@ from pmb.core import Config
 from pmb.helpers import logging
 
 
-def config(name: str | None, value: str | None, reset: bool, configpath: Path) -> None:
+def config(name: str | None, value: str | None, reset: bool, configpath: Path, local: bool) -> None:
     keys = Config.keys()
     if name and name not in keys:
         logging.info("NOTE: Valid config keys: " + ", ".join(keys))
@@ -23,7 +23,7 @@ def config(name: str | None, value: str | None, reset: bool, configpath: Path) -
         def_value = Config.get_default(name)
         setattr(config, name, def_value)
         logging.info(f"Config changed to default: {name}='{def_value}'")
-        pmb.config.save(configpath, config)
+        pmb.config.save(configpath, config, local=local)
     elif value is not None and name:
         if name.startswith("mirrors."):
             mirror = name.split(".", 1)[1]
@@ -40,7 +40,7 @@ def config(name: str | None, value: str | None, reset: bool, configpath: Path) -
                 setattr(config, name, value)
         if value_changed:
             print(f"{name} = {value}")
-        pmb.config.save(configpath, config)
+        pmb.config.save(configpath, config, local=local)
     elif name:
         to_print = getattr(config, name, "")
         if isinstance(to_print, list) and len(to_print) == 1:

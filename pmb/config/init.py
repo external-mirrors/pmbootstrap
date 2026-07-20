@@ -136,17 +136,6 @@ def ask_for_work_path(default: Path | None) -> tuple[Path, bool]:
 
             # Create the folder with a version file
             work.mkdir(mode=0o700, parents=True, exist_ok=True)
-
-            # If the version file doesn't exists yet because we either just
-            # created the work directory or the user has deleted it for
-            # whatever reason then we need to write initialize it.
-            work_version_file = work / "version"
-            if not os.path.isfile(work_version_file):
-                work_version_file.write_text(f"{pmb.config.work_version}\n")
-
-            # Create cache_git dir, so it is owned by the host system's user
-            # (otherwise pmb.helpers.mount.bind would create it as root)
-            work.joinpath("cache_git").mkdir(mode=0o700, parents=True, exist_ok=True)
             return (work, exists)
         except OSError:
             logging.fatal(
@@ -958,18 +947,24 @@ def frontend(args: PmbArgs) -> None:
     # (otherwise pmb.helpers.mount.bind would create it as root)
     (config.cache / "git").mkdir(mode=0o700, parents=True, exist_ok=True)
 
-    config.work, work_exists = ask_for_work_path(config.work)
+    # If the version file doesn't exists yet because we either just
+    # created the work directory or the user has deleted it for
+    # whatever reason then we need to write initialize it.
+    work_version_file = config.work / "version"
+    if not os.path.isfile(work_version_file):
+        work_version_file.write_text(f"{pmb.config.work_version}\n")
 
     # If the work dir changed then we need to update the pmaports path
     # to be relative to the new workdir
     if using_default_pmaports:
         config.aports = [config.work / "pmaports"]
 
-    config.aports[-1] = ask_for_pmaports_path(config.aports[-1])
+    if not local:
+        config.aports[-1] = ask_for_pmaports_path(config.aports[-1])
 
     # Update args and save config (so chroots and 'pmbootstrap log' work)
     # pmb.helpers.args.update_work(args, config.work)
-    pmb.config.save(args.config, config)
+    pmb.config.save(args.config, config, local=local)
 
     # Migrate work dir if necessary
     pmb.helpers.other.migrate_work_folder()
@@ -1039,7 +1034,7 @@ def frontend(args: PmbArgs) -> None:
     config.build_pkgs_on_install = ask_build_pkgs_on_install(config.build_pkgs_on_install)
 
     # Save config
-    pmb.config.save(args.config, config)
+    pmb.config.save(args.config, config, local=local)
 
     # Zap existing chroots
     if (

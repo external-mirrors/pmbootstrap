@@ -897,6 +897,11 @@ def get_parser() -> argparse.ArgumentParser:
         help="do a shallow clone if pmaports has to be cloned. Primarily useful to speed up scripts.",
         action="store_true",
     )
+    init.add_argument(
+        "--local",
+        help="Initialise a local workdir at ./.pmb",
+        action="store_true",
+    )
 
     # Action: log
     log = sub.add_parser("log", help="follow the pmbootstrap logfile")

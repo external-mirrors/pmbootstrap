@@ -60,18 +60,23 @@ def load(path: Path) -> Config:
     return config
 
 
-def serialize(config: Config, skip_defaults: bool = True) -> configparser.ConfigParser:
+def serialize(
+    config: Config, skip_defaults: bool = True, local: bool = False
+) -> configparser.ConfigParser:
     """
     Serialize the config object into a ConfigParser to write it out
     in the pmbootstrap_v3.cfg INI format.
 
     :param config: The config object to serialize
     :param skip_defaults: Skip writing out default values
+    :param local: convert absolute paths to local paths for a local config
     """
     cfg = configparser.ConfigParser()
     cfg["pmbootstrap"] = {}
     cfg["providers"] = {}
     cfg["mirrors"] = {}
+
+    pwd = Path(os.getcwd())
 
     # .keys() flat maps dictionaries like config.mirrors with
     # dotted notation
@@ -86,13 +91,23 @@ def serialize(config: Config, skip_defaults: bool = True) -> configparser.Config
         elif key.startswith("mirrors."):
             key_ = key.split(".")[1]
             cfg["mirrors"][key_] = getattr(config, key)
-        # Convert strings to paths
+        # Convert paths to strings
         elif type(getattr(Config, key)) is PosixPath:
-            cfg["pmbootstrap"][key] = str(getattr(config, key))
+            val = getattr(config, key)
+            if local:
+                val = Path(val).relative_to(pwd)
+            cfg["pmbootstrap"][key] = str(val)
         elif isinstance(getattr(Config, key), list) and isinstance(
             getattr(Config, key)[0], PosixPath
         ):
-            cfg["pmbootstrap"][key] = ",".join(os.fspath(p) for p in getattr(config, key))
+            # Make paths relative if this is a local work dir
+            val = []
+            for p in getattr(config, key):
+                if local:
+                    p = Path(p).relative_to(pwd)
+                val.append(os.fspath(p))
+
+            cfg["pmbootstrap"][key] = ",".join(val)
         elif isinstance(getattr(Config, key), bool):
             cfg["pmbootstrap"][key] = str(getattr(config, key))
         else:
@@ -102,7 +117,7 @@ def serialize(config: Config, skip_defaults: bool = True) -> configparser.Config
 
 
 # FIXME: we should have distinct Config and ConfigFile types
-def save(output: Path, config: Config) -> None:
+def save(output: Path, config: Config, local: bool = False) -> None:
     """
     Save the config object to the specified path.
 
@@ -114,7 +129,7 @@ def save(output: Path, config: Config) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.touch(0o600, exist_ok=True)
 
-    cfg = serialize(config)
+    cfg = serialize(config, local=local)
 
     with output.open("w") as handle:
         cfg.write(handle)
