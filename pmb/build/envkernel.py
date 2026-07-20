@@ -192,7 +192,7 @@ def run_abuild(
             ]
         )
 
-    pmb.chroot.rootm(
+    pmb.chroot.userm(
         [
             ["mkdir", "-p", "/home/pmos/packages"],
             ["rm", "-f", "/home/pmos/packages/pmos"],
