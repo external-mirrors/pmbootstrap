@@ -173,12 +173,8 @@ def index_repo(arch: Arch | None = None) -> None:
         pmb.parse.apkindex.clear_cache(path / "APKINDEX.tar.gz")
 
 
-def configure_abuild(chroot: Chroot, _verify: bool = False) -> None:
-    """
-    Set the correct JOBS count in ``abuild.conf``.
-
-    :param verify: internally used to test if changing the config has worked.
-    """
+def configure_abuild(chroot: Chroot) -> None:
+    """Set the correct JOBS count in ``abuild.conf``."""
     jobs = get_context().config.jobs
 
     # Use the global distfiles cache
