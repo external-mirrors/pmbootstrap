@@ -113,7 +113,7 @@ def get_kernel_package(config: Config) -> list[str]:
 def copy_files_from_chroot(chroot: Chroot, rsync: bool, verbose: bool) -> None:
     """
     Copy all files from the rootfs chroot to /mnt/install, except
-    for /home, /work, /cache, and /mnt which shouldn't be included.
+    for /home, /work, and /cache which shouldn't be included.
 
     :param suffix: the chroot suffix, e.g. "rootfs_qemu-amd64"
     """
