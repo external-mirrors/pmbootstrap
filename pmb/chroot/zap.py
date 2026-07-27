@@ -96,7 +96,6 @@ def zap(
             f"Failed to shut down all chroots. Ensure they're not doing any work and you're not chrooted into any. ({exception})"
         ) from exception
 
-    # Deletion patterns for folders inside get_context().config.cache
     cache = get_context().config.cache
     work = get_context().config.work
 
