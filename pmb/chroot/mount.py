@@ -194,9 +194,5 @@ def remove_mnt_pmbootstrap(chroot: Chroot) -> None:
     """
     for d in ["work", "cache"]:
         mnt_dir = chroot / d
-
-        if not mnt_dir.exists():
-            return
-
-        for path in [*mnt_dir.glob("*"), mnt_dir]:
-            pmb.helpers.run.root(["rmdir", path])
+        if mnt_dir.exists():
+            pmb.helpers.run.root(["rmdir", mnt_dir])
