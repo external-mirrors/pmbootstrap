@@ -50,27 +50,21 @@ def clone(name_repo: str, do_shallow_clone: bool = False) -> None:
     if name_repo not in pmb.config.git_repos:
         raise ValueError("No git repository configured for " + name_repo)
 
-    from_default = False
-
     path = get_path(name_repo)
     if not path.exists():
         # Build git command
         url = pmb.config.git_repos[name_repo][0]
 
+        command = ["git", "clone"]
+        if do_shallow_clone:
+            command.append("--depth=1")
         # If we already have a local copy of pmaports in the default workdir
         # then clone from it
         default_path = Config.aports[-1]
         if (default_path / ".git").exists():
-            url = str(default_path)
-            from_default = True
+            command += ["--reference-if-able", default_path]
 
-        command = ["git", "clone"]
-        if do_shallow_clone:
-            command.append("--depth=1")
         command += [url, str(path)]
-
-        if from_default:
-            command += ["--branch", "main"]
 
         # Create parent dir and clone
         logging.info(f"Clone git repository: {url}")
@@ -82,21 +76,6 @@ def clone(name_repo: str, do_shallow_clone: bool = False) -> None:
     fetch_head = path / ".git/FETCH_HEAD"
     if not fetch_head.exists():
         open(fetch_head, "w").close()
-
-    if from_default:
-        logging.info("Configuring origin and fetching latest changes")
-        url = pmb.config.git_repos[name_repo][0]
-        pmb.helpers.run.user(
-            ["git", "remote", "set-url", "origin", url],
-            working_dir=path,
-            output=RunOutputTypeDefault.STDOUT,
-        )
-        pmb.helpers.run.user(
-            ["git", "checkout", "--no-guess", "main"],
-            working_dir=path,
-            output=RunOutputTypeDefault.STDOUT,
-        )
-        pmb.helpers.run.user(["git", "pull"], working_dir=path, output=RunOutputTypeDefault.STDOUT)
 
 
 def rev_parse(
