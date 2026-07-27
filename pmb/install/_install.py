@@ -442,7 +442,6 @@ def setup_appstream(offline: bool, chroot: Chroot) -> None:
         return
 
     target_dir = Path("/cache/appstream") / chroot.arch
-    logging.info(f"appstream target dir: {target_dir}")
 
     # FIXME: it would be great to run this on the host and not potentially
     # through QEMU!
