@@ -936,7 +936,10 @@ def frontend(args: PmbArgs) -> None:
         config.aports = [cwd / "pmaports"]
         args.config = cwd / "pmbootstrap.conf"
 
-        config.work.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if config.work.exists():
+            work_exists = True
+        else:
+            config.work.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     using_default_pmaports = config.aports[-1].is_relative_to(config.work)
 
