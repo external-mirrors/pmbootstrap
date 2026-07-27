@@ -991,7 +991,7 @@ def install_system_image(
     if sparse and not split and not disk:
         workdir = Path("/home/pmos/rootfs")
         logging.info("(native) make sparse rootfs")
-        pmb.chroot.apk.install(["android-tools"], Chroot.native())
+        pmb.chroot.apk.install(["android-tools-img2simg"], Chroot.native())
         sys_image = device + ".img"
         sys_image_sparse = device + "-sparse.img"
         pmb.chroot.user(["img2simg", sys_image, sys_image_sparse], working_dir=workdir)

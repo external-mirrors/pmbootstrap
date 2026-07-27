@@ -415,7 +415,7 @@ flashers: dict[str, dict[str, bool | list[str] | dict[str, list[list[str]]]]] = 
     # This flasher allows flashing the split image files using Fastboot.
     "fastboot-bootpart": {
         "split": True,
-        "depends": ["android-tools"],
+        "depends": ["android-tools-fastboot"],
         "actions": {
             "list_devices": [["fastboot", "devices", "-l"]],
             "flash_rootfs": [["fastboot", "flash", "$PARTITION_ROOTFS", "$IMAGE_SPLIT_ROOT"]],
@@ -511,7 +511,7 @@ flashers: dict[str, dict[str, bool | list[str] | dict[str, list[list[str]]]]] = 
         },
     },
     "adb": {
-        "depends": ["android-tools"],
+        "depends": ["android-tools-adb"],
         "actions": {
             "list_devices": [["adb", "-P", "5038", "devices"]],
             "sideload": [
