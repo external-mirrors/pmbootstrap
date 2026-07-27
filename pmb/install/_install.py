@@ -944,7 +944,7 @@ def install_system_image(
     # Clean up after running mkinitfs in chroot
     pmb.helpers.mount.umount_all(chroot.path)
     pmb.helpers.run.root(["rm", chroot / "in-pmbootstrap"])
-    pmb.chroot.remove_mnt_pmbootstrap(chroot)
+    pmb.chroot.remove_work_cache(chroot)
 
     # Just copy all the files
     logging.info(f"*** ({step + 1}/{steps}) FILL INSTALL BLOCKDEVICE ***")

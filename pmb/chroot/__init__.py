@@ -7,7 +7,7 @@ from pmb.chroot.init import (
 from pmb.chroot.mount import (
     mount as mount,
     mount_native_into_foreign as mount_native_into_foreign,
-    remove_mnt_pmbootstrap as remove_mnt_pmbootstrap,
+    remove_work_cache as remove_work_cache,
 )
 from pmb.chroot.run import (
     root as root,

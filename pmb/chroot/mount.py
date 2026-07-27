@@ -183,7 +183,7 @@ def mount_native_into_foreign(chroot: Chroot) -> None:
         pmb.helpers.run.root(["ln", "-s", "/native/lib/" + musl, musl_link])
 
 
-def remove_mnt_pmbootstrap(chroot: Chroot) -> None:
+def remove_work_cache(chroot: Chroot) -> None:
     """
     Safely remove /cache and /work directories from the chroot, without
     running rm -r as root and potentially removing data inside the

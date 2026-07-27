@@ -159,7 +159,7 @@ host_path = os.environ["PATH"] + ":/usr/sbin/"
 # $CACHE gets replaced with get_context().config.cache
 # $ARCH gets replaced with the chroot architecture (eg. x86_64, armhf)
 # $CHANNEL gets replaced with the release channel (e.g. edge, v21.03)
-# Use no more than one dir after /cache, see remove_mnt_pmbootstrap.
+# Use no more than one dir after /cache, see remove_work_cache.
 chroot_mount_bind = {
     "/proc": "/proc",
     "/sys": "/sys",
