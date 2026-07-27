@@ -164,6 +164,9 @@ chroot_mount_bind = {
     "/proc": "/proc",
     "/sys": "/sys",
     "$CACHE": "/cache",
+    # DO NOT MOUNT $WORK! This will introduce filesystem recursion
+    # since $WORK is where the chroots live and we don't yet support
+    # mount namespaces.
     "$WORK/packages": "/work/packages",
 }
 
