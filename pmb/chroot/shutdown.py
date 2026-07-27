@@ -100,8 +100,6 @@ def shutdown(only_install_related: bool = False, only_build_related: bool = Fals
         return
 
     # Umount /work and /cache
-    # The folders are explicitly iterated over, so folders symlinked inside
-    # work dir get umounted as well (used in test_pkgrel_bump.py, #1595)
     for path in (get_context().config.work, get_context().config.cache):
         pmb.helpers.mount.umount_all(path)
 
