@@ -3,7 +3,6 @@
 import logging
 from pathlib import Path
 
-import pmb.config
 from pmb.core.arch import Arch
 from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.helpers.exceptions import NonBugError
@@ -21,11 +20,7 @@ def get_path() -> Path:
     if ret.exists():
         return ret
 
-    logging.info(
-        "NOTE: couldn't find kconfigcheck.toml in pmaports dir, using"
-        " the version from postmarketOS v24.06"
-    )
-    return pmb.config.pmb_src / "pmb/data/kconfigcheck.toml"
+    raise FileNotFoundError("Couldn't find kconfigcheck.toml in the pmaports directory")
 
 
 def sanity_check(toml: dict) -> None:
