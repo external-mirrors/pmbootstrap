@@ -33,7 +33,7 @@ def test_basic(pmb_args: None, copy_kconfigcheck_toml: None) -> None:
     sanity_check(toml)
 
 
-def test_no_aliases() -> None:
+def test_no_aliases(pmb_args: None, copy_kconfigcheck_toml: None) -> None:
     toml = {
         "category:default": {">=0.0.0": {"all": {"CGROUPS": "y"}}},
     }
@@ -42,7 +42,7 @@ def test_no_aliases() -> None:
     assert "missing [aliases] section" in str(no_aliases.value)
 
 
-def test_missing_category() -> None:
+def test_missing_category(pmb_args: None, copy_kconfigcheck_toml: None) -> None:
     toml = {
         "aliases": {"community": ["default"]},
         "default": {">=0.0.0": {"all": {"CGROUPS": "y"}}},
@@ -52,7 +52,7 @@ def test_missing_category() -> None:
     assert "all categories must start with 'category:'!" in str(missing_category.value)
 
 
-def test_bad_arch() -> None:
+def test_bad_arch(pmb_args: None, copy_kconfigcheck_toml: None) -> None:
     toml = {
         "aliases": {"community": ["category:default"]},
         "category:default": {">=0.0.0": {"x86 x64_64": {"CGROUPS": "y"}}},
@@ -62,7 +62,7 @@ def test_bad_arch() -> None:
     assert "Invalid architecture: 'x64_64'" in str(bad_arch.value)
 
 
-def test_missing_arch() -> None:
+def test_missing_arch(pmb_args: None, copy_kconfigcheck_toml: None) -> None:
     toml = {
         "aliases": {"community": ["category:default"]},
         "category:default": {">=0.0.0": {"all": {"NET": "y"}}},
@@ -73,7 +73,7 @@ def test_missing_arch() -> None:
     assert "category:containers is missing architecture information" in str(missing_arch.value)
 
 
-def test_multiple_categories(pmb_args: None) -> None:
+def test_multiple_categories(pmb_args: None, copy_kconfigcheck_toml: None) -> None:
     toml = {
         "aliases": {"community": ["category:default"]},
         "category:default category:uefi": {">=0.0.0": {"all": {"CGROUPS": "y"}}},
@@ -81,7 +81,7 @@ def test_multiple_categories(pmb_args: None) -> None:
     sanity_check(toml)
 
 
-def test_multiple_categories_missing_category(pmb_args: None) -> None:
+def test_multiple_categories_missing_category(pmb_args: None, copy_kconfigcheck_toml: None) -> None:
     toml = {
         "aliases": {"community": ["category:default"]},
         "category:default uefi": {">=0.0.0": {"all": {"CGROUPS": "y"}}},
