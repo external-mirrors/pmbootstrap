@@ -1,12 +1,31 @@
 # Copyright 2025 Pablo Correa Gomez
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import shutil
+from collections.abc import Iterator
+from pathlib import Path
+from typing import Final
+
 import pytest
 
+from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.parse.kconfigcheck import sanity_check
 
+TESTDIR: Final[Path] = Path(__file__).parent.parent / "data/tests"
 
-def test_basic(pmb_args: None) -> None:
+
+@pytest.fixture
+def copy_kconfigcheck_toml() -> Iterator[None]:
+    pkgrepo_default_path().mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(TESTDIR / "kconfigcheck.toml", pkgrepo_default_path() / "kconfigcheck.toml")
+
+    yield
+
+    (pkgrepo_default_path() / "kconfigcheck.toml").unlink()
+    pkgrepo_default_path().rmdir()
+
+
+def test_basic(pmb_args: None, copy_kconfigcheck_toml: None) -> None:
     toml = {
         "aliases": {"community": ["category:default"]},
         "category:default": {">=0.0.0": {"all": {"CGROUPS": "y"}}},
