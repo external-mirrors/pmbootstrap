@@ -71,7 +71,7 @@ def clone(name_repo: str, do_shallow_clone: bool = False) -> None:
 
 
 def rev_parse(
-    path: Path, revision: str = "HEAD", extra_args: list = [], silent: bool = False
+    path: Path, revision: str = "HEAD", extra_args: list[str] = [], silent: bool = False
 ) -> str:
     """
     Run "git rev-parse" in a specific repository dir.
