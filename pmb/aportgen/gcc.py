@@ -11,7 +11,7 @@ from pmb.core.context import get_context
 from pmb.core.pkgrepo import pkgrepo_default_path
 
 
-def depends_for_sonames(libraries: dict[str, str], arch_libc: Arch) -> list:
+def depends_for_sonames(libraries: dict[str, str], arch_libc: Arch) -> list[str]:
     """
     Get packages providing specific sonames from Alpine's main repo. Usually
     this would be done during package builds using abuild's "tracedeps". But
