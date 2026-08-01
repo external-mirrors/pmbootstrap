@@ -224,17 +224,21 @@ def generate_deviceinfo(
         deviceinfo_generate_legacy_uboot_initfs="true"
         """
 
-    if flash_method == "fastboot":
-        content += generate_deviceinfo_fastboot_content(bootimg)
-    elif flash_method == "heimdall-bootimg":
-        content += generate_deviceinfo_fastboot_content(bootimg)
-        content += content_heimdall_bootimg
-    elif flash_method == "heimdall-isorec":
-        content += content_heimdall_isorec
-    elif flash_method == "0xffff":
-        content += content_0xffff
-    elif flash_method == "uuu":
-        content += content_uuu
+    match flash_method:
+        case "fastboot":
+            content += generate_deviceinfo_fastboot_content(bootimg)
+        case "heimdall-bootimg":
+            content += generate_deviceinfo_fastboot_content(bootimg)
+            content += content_heimdall_bootimg
+        case "heimdall-isorec":
+            content += content_heimdall_isorec
+        case "0xffff":
+            content += content_0xffff
+        case "uuu":
+            content += content_uuu
+        # TODO: Do other flash methods meed handling here? Many aren't even available in aportgen.
+        case _:
+            pass
 
     # Write to file
     work = get_context().config.work
