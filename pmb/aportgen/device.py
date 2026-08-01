@@ -177,6 +177,7 @@ def generate_deviceinfo(
     arch: Arch,
     chassis: str,
     flash_method: str,
+    device_category: pmb.helpers.devices.DeviceCategory,
     bootimg: Bootimg | None = None,
 ) -> None:
     codename = "-".join(pkgname.split("-")[1:])
@@ -198,6 +199,9 @@ def generate_deviceinfo(
         """
 
     content += f'deviceinfo_chassis="{chassis}"\n' if chassis != "None" else ""
+
+    if device_category == pmb.helpers.devices.DeviceCategory.DOWNSTREAM:
+        content += 'deviceinfo_initfs_compression="gzip"\n'
 
     content += f"""\
 
@@ -347,6 +351,7 @@ def generate(pkgname: str, device_category: pmb.helpers.devices.DeviceCategory) 
         arch,
         chassis,
         flash_method,
+        device_category,
         bootimg,
     )
     generate_modules_initfs()
