@@ -1299,10 +1299,9 @@ def create_device_rootfs(
     if add:
         install_packages += add.split(",")
 
-    pmaports_cfg = pmb.config.pmaports.read_config()
     # postmarketos-base supports a dummy package for blocking unl0kr install
     # when not required
-    if pmaports_cfg.get("supported_base_nofde", None) and not full_disk_encryption:
+    if not full_disk_encryption:
         install_packages += ["postmarketos-base-nofde"]
 
     pmb.helpers.repo.update(pmb.parse.deviceinfo().arch)
