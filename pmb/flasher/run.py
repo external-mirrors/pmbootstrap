@@ -23,7 +23,6 @@ def run(
     deviceinfo: Deviceinfo,
     method: str,
     action: str,
-    flavor: str | None = None,
     cmdline: str | None = None,
     no_reboot: bool = False,
     partition: str | None = None,
@@ -43,7 +42,7 @@ def run(
         )
 
     # Variable setup
-    fvars = pmb.flasher.variables(flavor, method, cmdline, no_reboot, partition, resume)
+    fvars = pmb.flasher.variables(method, cmdline, no_reboot, partition, resume)
 
     # vbmeta flasher requires vbmeta partition to be explicitly specified
     if action == "flash_vbmeta" and not fvars["$PARTITION_VBMETA"]:

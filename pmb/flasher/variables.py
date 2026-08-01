@@ -6,7 +6,6 @@ from pmb.core.context import get_context
 
 
 def variables(
-    flavor: str | None,
     method: str,
     cmdline: str | None,
     no_reboot: bool,
@@ -89,6 +88,7 @@ def variables(
     fvars = {
         "$BOOT": "/mnt/rootfs_" + device + "/boot",
         "$DTB": dtb,
+        "$FLAVOR": "",
         "$IMAGE_SPLIT_BOOT": "/home/pmos/rootfs/" + device + "-boot.img",
         "$IMAGE_SPLIT_ROOT": "/home/pmos/rootfs/" + device + "-root.img",
         "$IMAGE": "/home/pmos/rootfs/" + device + ".img",
@@ -107,12 +107,5 @@ def variables(
         "$NO_REBOOT": no_reboot_,
         "$RESUME": resume_,
     }
-
-    # Backwards compatibility with old mkinitfs (pma#660)
-    pmaports_cfg = pmb.config.pmaports.read_config()
-    if pmaports_cfg.get("supported_mkinitfs_without_flavors", False):
-        fvars["$FLAVOR"] = ""
-    else:
-        fvars["$FLAVOR"] = f"-{flavor}" if flavor is not None else "-"
 
     return fvars

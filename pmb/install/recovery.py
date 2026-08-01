@@ -5,7 +5,6 @@ from pathlib import Path
 import pmb.chroot
 import pmb.chroot.apk
 import pmb.flasher
-import pmb.helpers.frontend
 from pmb.core.chroot import Chroot
 from pmb.helpers import logging
 
@@ -25,11 +24,9 @@ def create_zip(
     """Create android recovery compatible installer zip."""
     zip_root = Path("/var/lib/postmarketos-android-recovery-installer/")
     rootfs = "/mnt/rootfs_" + device
-    flavor = pmb.helpers.frontend._parse_flavor(device)
     deviceinfo = pmb.parse.deviceinfo()
     method = deviceinfo.flash_method
     fvars = pmb.flasher.variables(
-        flavor,
         method,
         cmdline,
         no_reboot,
