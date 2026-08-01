@@ -120,17 +120,16 @@ def init(chroot: Chroot) -> None:
 
     pmb.helpers.repo.update(chroot.arch)
     # Create the /usr-merge-related symlinks, which needs to be done manually
-    if pmb.config.pmaports.read_config().get("supported_usr_merge", False):
-        pmb.helpers.run.root(
-            [
-                "mkdir",
-                "-p",
-                f"{chroot.path}/usr/bin",
-                f"{chroot.path}/usr/sbin",
-                f"{chroot.path}/usr/lib",
-            ]
-        )
-        pmb.helpers.run.root(["ln", "-s", "usr/bin", "usr/sbin", "usr/lib", f"{chroot.path}/"])
+    pmb.helpers.run.root(
+        [
+            "mkdir",
+            "-p",
+            f"{chroot.path}/usr/bin",
+            f"{chroot.path}/usr/sbin",
+            f"{chroot.path}/usr/lib",
+        ]
+    )
+    pmb.helpers.run.root(["ln", "-s", "usr/bin", "usr/sbin", "usr/lib", f"{chroot.path}/"])
     # Create the bin-merge-related symlinks, which are done manually to be
     # consistent with the /usr-merge
     if pmb.config.pmaports.read_config().get("supported_bin_merge", False):
