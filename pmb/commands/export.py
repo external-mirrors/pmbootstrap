@@ -130,9 +130,9 @@ def symlinks(target: Path) -> None:
         "uInitrd": "Initramfs, legacy u-boot image format",
         "uImage": "Kernel, legacy u-boot image format",
         "vmlinuz": "Linux kernel",
-        f"{device}.img": "Rootfs with partitions for /boot and /",
-        f"{device}-boot.img": "Boot partition image",
-        f"{device}-root.img": "Root partition image",
+        f"{device}.img": "Rootfs with subpartitions for /boot and /",
+        f"{device}-boot.img": "Boot partition image (used in split installation)",
+        f"{device}-root.img": "Root partition image (used in split installation)",
         f"pmos-{device}.zip": "Android recovery flashable zip",
         "lk2nd.img": "Secondary Android bootloader",
     }
@@ -162,13 +162,14 @@ def symlinks(target: Path) -> None:
         basename = file.name
         link = target / basename
 
-        # Display a readable message
-        msg = " * " + basename
-        if basename in info:
-            msg += " (" + info[basename] + ")"
-        logging.info(msg)
+        # Display a message and create a symlink only if target file actually exists
+        if file.exists() and file.is_file():
+            msg = " * " + basename
+            if basename in info:
+                msg += " (" + info[basename] + ")"
+            logging.info(msg)
 
-        pmb.helpers.file.symlink(file, link)
+            pmb.helpers.file.symlink(file, link)
 
     # Create dtbs in folder
     dtbs = list(path_boot.glob("*.dtb"))
