@@ -418,7 +418,7 @@ def generate_config(pkgname: str, arch: Arch | None) -> None:
     _make(chroot, fragments, env, pkgname, arch, apkbuild, outputdir)
 
     # Validate that all fragment options made it to the final config
-    if not pmb.parse.kconfig.check(pkgname, details=True):
+    if not pmb.parse.kconfig.check(pkgname, details=True, architecture=arch):
         raise RuntimeError("Generated kernel config does not pass all checks")
 
     config = get_kconfig_name(apkbuild, arch)

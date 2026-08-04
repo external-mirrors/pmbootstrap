@@ -152,7 +152,7 @@ def check_option(
 def check_config_options_set(
     config: str,
     config_path: Path,
-    config_arch: str,  # TODO: Replace with Arch type?
+    config_arch: Arch,
     options: dict[str, dict],
     component: str,
     pkgver: str,
@@ -185,13 +185,10 @@ def check_config_options_set(
             continue
 
         for archs, arch_options in archs_options.items():
-            if archs != "all":
-                # Split and check if the device's architecture architecture has
-                # special config options. If option does not contain the
-                # architecture of the device kernel, then just skip the option.
-                architectures = archs.split(" ")
-                if config_arch not in architectures:
-                    continue
+            # If option does not contain the architecture of the device kernel,
+            # then just skip the option
+            if config_arch not in Arch.from_arch_field(archs.split()):
+                continue
 
             for option, option_value in arch_options.items():
                 if not check_option(component, details, config, config_path, option, option_value):
@@ -202,10 +199,9 @@ def check_config_options_set(
     return ret
 
 
-# TODO: This should probably use Arch and not str for config_arch
 def check_config(
     config_path: Path,
-    config_arch: str,
+    config_arch: Arch,
     pkgver: str,
     categories: list[str],
     details: bool = False,
@@ -247,6 +243,7 @@ def check(
     categories: list[str] = ...,
     details: bool = ...,
     must_exist: Literal[False] = ...,
+    architecture: Arch | None = None,
 ) -> bool | None: ...
 
 
@@ -256,11 +253,16 @@ def check(
     categories: list[str] = ...,
     details: bool = ...,
     must_exist: Literal[True] = ...,
+    architecture: Arch | None = None,
 ) -> bool: ...
 
 
 def check(
-    pkgname: str, categories: list[str] = [], details: bool = False, must_exist: bool = True
+    pkgname: str,
+    categories: list[str] = [],
+    details: bool = False,
+    must_exist: bool = True,
+    architecture: Arch | None = None,
 ) -> bool | None:
     """
     Check for necessary kernel config options in a package.
@@ -269,6 +271,7 @@ def check(
     :param categories: what to check for, e.g. ["waydroid", "iwd"]
     :param details: print all warnings if True, otherwise one generic warning
     :param must_exist: if False, just return if the package does not exist
+    :param architecture: if not None, check only for the specified architecture
     :returns: True when the check was successful, False otherwise
               None if the aport cannot be found (only if must_exist=False)
     """
@@ -314,7 +317,11 @@ def check(
                 "elsewhere in the name."
             )
 
-        config_arch = config_name_split[1]
+        config_arch = Arch.from_str(config_name_split[1])
+
+        if architecture is not None and architecture != config_arch:
+            continue
+
         ret &= check_config(
             config_path,
             config_arch,
@@ -325,24 +332,22 @@ def check(
     return ret
 
 
-# TODO: Make this use the Arch type probably
-def extract_arch(config_path: Path) -> str:
+def extract_arch(config_path: Path) -> Arch:
     # Extract the architecture out of the config
     config = config_path.read_text()
     if is_set(config, "ARM"):
-        return "armv7"
+        return Arch.armv7
     elif is_set(config, "ARM64"):
-        return "aarch64"
+        return Arch.aarch64
     elif is_set(config, "RISCV"):
-        return "riscv64"
+        return Arch.riscv64
     elif is_set(config, "X86_32"):
-        return "x86"
+        return Arch.x86
     elif is_set(config, "X86_64"):
-        return "x86_64"
+        return Arch.x86_64
 
     # No match
-    logging.info("WARNING: failed to extract arch from kernel config")
-    return "unknown"
+    raise NonBugError("failed to extract arch from kernel config, unsupported architecture?")
 
 
 def extract_version(config_path: Path) -> str:
