@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import urllib
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, Final, NamedTuple
 
 import pmb.aportgen
 import pmb.chroot.zap
@@ -932,6 +932,9 @@ def print_systemd_warning(device_is_new: bool, apkbuild: Apkbuild, kernel: str) 
         logging.warning(warning_text)
 
 
+PACKAGE_SPEC_PATTERN: Final[str] = r"[-.+:\w]+"
+
+
 def frontend(args: PmbArgs) -> None:
     # Work folder (needs to be first, so we can create chroots early)
     config = get_context().config
@@ -999,7 +1002,7 @@ def frontend(args: PmbArgs) -> None:
         "Extra packages",
         None,
         config.extra_packages,
-        validation_regex=r"^([-.+:\w]+)(,[-.+:\w]+)*$",
+        validation_regex=rf"^({PACKAGE_SPEC_PATTERN})(,{PACKAGE_SPEC_PATTERN})*$",
     )
     config.extra_packages = extra
 
