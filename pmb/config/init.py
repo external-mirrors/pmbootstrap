@@ -996,7 +996,10 @@ def frontend(args: PmbArgs) -> None:
         ' list (e.g.: vim,file) or "none"'
     )
     extra = pmb.helpers.cli.ask(
-        "Extra packages", None, config.extra_packages, validation_regex=r"^([-.+\w]+)(,[-.+\w]+)*$"
+        "Extra packages",
+        None,
+        config.extra_packages,
+        validation_regex=r"^([-.+:\w]+)(,[-.+:\w]+)*$",
     )
     config.extra_packages = extra
 
