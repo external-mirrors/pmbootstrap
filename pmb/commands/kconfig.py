@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Final
 
 import pmb.config
 import pmb.helpers.git
@@ -13,6 +14,8 @@ from pmb.build.kconfig import FragmentValidationFailedError, KConfigUI
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.helpers.exceptions import NonBugError
+
+_ERROR_MSG: Final[str] = "kconfig check failed! More info: https://postmarketos.org/kconfig"
 
 
 class KConfigCheck:
@@ -31,14 +34,12 @@ class KConfigCheck:
         self.categories = categories
 
     def run(self) -> None:
-        error_msg = "kconfig check failed! More info: https://postmarketos.org/kconfig"
-
         # Handle passing a file directly
         if self.file:
             if pmb.parse.kconfig.check_file(self.file, self.categories, details=self.details):
                 logging.info("kconfig check succeeded!")
                 return
-            raise NonBugError(error_msg)
+            raise NonBugError(_ERROR_MSG)
 
         # Default to all kernel packages
         if not self.pkgname_list:
@@ -65,7 +66,7 @@ class KConfigCheck:
 
         # At least one failure
         if error:
-            raise NonBugError(error_msg)
+            raise NonBugError(_ERROR_MSG)
         else:
             if skipped:
                 logging.info(
