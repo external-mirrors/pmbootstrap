@@ -187,7 +187,7 @@ class ApkPackage:
 # This is needed since "apkindex_parse" command requires ApkPackage to
 # be json-serializable
 class ApkPackageEncoder(JSONEncoder):
-    def default(self, o: Any) -> dict:
+    def default(self, o: object) -> dict:
         if isinstance(o, ApkPackage):
             ret = {k[1:]: v for k, v in vars(o).items()}
             ret["arch"] = str(ret["arch"])
