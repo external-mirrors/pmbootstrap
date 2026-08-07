@@ -177,6 +177,7 @@ def run_command(args: PmbArgs) -> None:
                 args.arch,
                 args.install_key,
                 args.packages,
+                args.allow_untrusted,
             )
         case "test":
             test(args.action_test)

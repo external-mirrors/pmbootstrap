@@ -187,6 +187,7 @@ class PmbArgs(Namespace):
     all: bool
     all_git: bool
     all_stable: bool
+    allow_untrusted: bool
     android_recovery_zip: bool
     apkindex_path: Path
     aports: list[Path] | None
