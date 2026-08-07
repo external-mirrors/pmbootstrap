@@ -79,6 +79,7 @@ def ssh_install_apks(
     port: str,
     paths: list[Path],
     install_offline: bool,
+    allow_untrusted: bool,
 ) -> None:
     """
     Copy binary packages via SCP and install them via SSH.
@@ -98,6 +99,8 @@ def ssh_install_apks(
     add_cmd_list = ["apk", "--wait", "30", "--timeout", "5"]
     if install_offline:
         add_cmd_list.append("--no-network")
+    if allow_untrusted:
+        add_cmd_list.append("--allow-untrusted")
     add_cmd_list.extend(["add", *remote_paths])
     add_cmd = pmb.helpers.run_core.flat_cmd([add_cmd_list])
     clean_cmd = pmb.helpers.run_core.flat_cmd([["rm", *remote_paths]])
@@ -114,6 +117,7 @@ def sideload(
     arch: Arch | None,
     copy_key: bool,
     pkgnames: list[str],
+    allow_untrusted: bool,
 ) -> None:
     """
     Build packages if necessary and install them via SSH.
@@ -124,6 +128,7 @@ def sideload(
     :param arch: target device architecture
     :param copy_key: copy the abuild key too
     :param pkgnames: list of pkgnames to be built
+    :param allow_untrusted: whether to add --allow-untrusted to the apk add invocation
     """
     paths = []
 
@@ -171,4 +176,4 @@ def sideload(
     if copy_key:
         scp_abuild_key(user, host, port)
 
-    ssh_install_apks(user, host, port, paths, install_offline)
+    ssh_install_apks(user, host, port, paths, install_offline, allow_untrusted)

@@ -283,6 +283,12 @@ def arguments_sideload(subparser: argparse._SubParsersAction) -> argparse.Argume
         action="store_true",
         dest="install_key",
     )
+    ret.add_argument(
+        "--allow-untrusted",
+        help="allow installing packages with untrusted signature or no signature",
+        action="store_true",
+        dest="allow_untrusted",
+    )
     return ret
 
 
