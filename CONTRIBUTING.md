@@ -122,8 +122,7 @@ chroot. Use one of the following methods.
 #### Short files
 
 ```py
-pmb.chroot.user(["sh", "-c", f"echo {shlex.quote(hostname)}"
-                       " > /etc/hostname"], suffix)
+pmb.chroot.user(["sh", "-c", f"echo {shlex.quote(hostname)} > /etc/hostname"], suffix)
 ```
 
 #### Long files

@@ -38,9 +38,11 @@ def list_ui(arch: Arch) -> list[tuple[str, str]]:
     ret = [
         (
             "none",
-            "Bare minimum OS image for testing and manual"
-            ' customization. The "console" UI should be selected if'
-            " a graphical UI is not desired.",
+            (
+                "Bare minimum OS image for testing and manual"
+                ' customization. The "console" UI should be selected if'
+                " a graphical UI is not desired."
+            ),
         )
     ]
     for path in sorted(pkgrepo_iglob("main/postmarketos-ui-*")):
