@@ -7,7 +7,6 @@ from pathlib import Path
 import pmb.config
 import pmb.helpers.git
 from pmb.core.context import CommandTimeout, Context, TimeoutReason
-from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.types import PmbArgs
 
 """This file constructs the args variable, which is passed to almost all
@@ -124,20 +123,6 @@ def init(args: PmbArgs) -> PmbArgs:
         pmb.helpers.logging.info(
             f"NOTE: Timeout enabled, commands will be killed after {context.command_timeout.length} seconds of not writing any output. Reason: {context.command_timeout.reason}"
         )
-
-    # Initialization code which may raise errors
-    if args.action not in [
-        "init",
-        "checksum",
-        "config",
-        "bootimg_analyze",
-        "log",
-        "pull",
-        "shutdown",
-        "zap",
-    ]:
-        pmb.config.pmaports.read_config()
-        pmb.helpers.git.parse_channels_cfg(pkgrepo_default_path())
 
     # Remove attributes from args so they don't get used by mistake
     if hasattr(args, "timeout"):

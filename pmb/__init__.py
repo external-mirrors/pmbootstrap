@@ -21,7 +21,8 @@ from .config import (
 )
 from .core import Chroot, Config
 from .core.context import get_context
-from .helpers import logging, mount, other
+from .core.pkgrepo import pkgrepo_default_path
+from .helpers import git, logging, mount, other
 
 # pmbootstrap version
 __version__ = "3.11.1"
@@ -107,6 +108,20 @@ def main() -> int:
         # Migrate work folder if necessary
         if args.action not in ["shutdown", "zap", "log"]:
             other.migrate_work_folder()
+
+        # Initialization code which may raise errors
+        if args.action not in [
+            "init",
+            "checksum",
+            "config",
+            "bootimg_analyze",
+            "log",
+            "pull",
+            "shutdown",
+            "zap",
+        ]:
+            config.pmaports.read_config()
+            git.parse_channels_cfg(pkgrepo_default_path())
 
         # Run the function with the action's name (in pmb/helpers/frontend.py)
         if args.action:
