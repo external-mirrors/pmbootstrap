@@ -144,8 +144,8 @@ def generate_apkbuild(
 
             rm -f "$pkgdir"/usr/lib/modules/*/build "$pkgdir"/usr/lib/modules/*/source
 
-            install -D "$builddir"/include/config/kernel.release \\
-                "$pkgdir"/usr/share/kernel/"${pkgname#linux-}"/kernel.release"""
+            install -Dm644 "$builddir"/include/config/kernel.release \\
+                -t "$pkgdir"/usr/share/kernel/"${pkgname#linux-}"/"""
 
     makedepends.sort()
     makedepends_fmt = ("\n" + " " * 12).join(makedepends)
