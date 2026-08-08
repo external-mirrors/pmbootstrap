@@ -238,7 +238,7 @@ def installed(suffix: Chroot = Chroot.native()) -> dict[str, pmb.core.apk_packag
     an APKINDEX, but with more keys).
 
     :returns: a dictionary with the following structure:
-              { "postmarketos-mkinitfs": ApkindexBlock }
+              { "postmarketos-mkinitfs": ApkPackage }
 
     """
     path = suffix / "lib/apk/db/installed"

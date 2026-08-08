@@ -357,7 +357,7 @@ def test_apkindex_parse_cache_hit(valid_apkindex_file: Path, monkeypatch: Monkey
     def mock_assert(cls: type[NoReturn], lines: list[str]) -> ApkPackage:
         assert False
 
-    # ApkindexBlock.from_block() is only called on cache miss
+    # ApkPackage.from_apkindex_block() is only called on cache miss
     monkeypatch.setattr(ApkPackage, "from_apkindex_block", classmethod(mock_assert))
 
     # Now we expect the cache to be hit and thus the mock won't be called, so no assertion error
