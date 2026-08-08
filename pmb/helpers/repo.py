@@ -16,6 +16,7 @@ from typing import Literal
 import pmb.config.pmaports
 import pmb.helpers.http
 import pmb.helpers.run
+from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.core.pkgrepo import pkgrepo_names
@@ -127,7 +128,7 @@ def get_repos_from_config(
 
 def apkindex_files(
     arch: Arch | None = None, user_repository: bool = True, exclude_mirrors: list[str] = []
-) -> list[Path]:
+) -> list[Apkindex]:
     """
     Get a list of outside paths to all resolved APKINDEX.tar.gz files for a specific arch.
 
@@ -139,17 +140,17 @@ def apkindex_files(
     if not arch:
         arch = Arch.native()
 
-    ret: list[Path] = []
+    ret: list[Apkindex] = []
     # Local user repository (for packages compiled with pmbootstrap)
     if user_repository:
         ret.extend(
-            get_context().config.work / "packages" / channel / arch / "APKINDEX.tar.gz"
+            Apkindex(get_context().config.work / "packages" / channel / arch / "APKINDEX.tar.gz")
             for channel in pmb.config.pmaports.all_channels()
         )
 
     # Resolve the APKINDEX.$HASH.tar.gz files
     ret.extend(
-        file
+        Apkindex(file)
         for url in get_repos_from_config(None, exclude_mirrors)
         if (file := get_context().config.work / f"cache_apk_{arch}" / apkindex_hash(url)).exists()
     )
@@ -182,7 +183,7 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
     retention_seconds = retention_hours * 3600
 
     # Find outdated APKINDEX files. Formats:
-    # outdated: {URL: apkindex_path, ... }
+    # outdated: {URL: apkindex, ... }
     # outdated_arches: ["armhf", "x86_64", ... ]
     outdated = {}
     outdated_arches: list[Arch] = []
@@ -252,7 +253,7 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
     return True
 
 
-def alpine_apkindex_path(repo: str = "main", arch: Arch | None = None) -> Path:
+def alpine_apkindex(repo: str = "main", arch: Arch | None = None) -> Apkindex:
     """
     Get the path to a specific Alpine APKINDEX file on disk and download it if necessary.
 
@@ -272,4 +273,4 @@ def alpine_apkindex_path(repo: str = "main", arch: Arch | None = None) -> Path:
     channel_cfg = pmb.config.pmaports.read_config_channel()
     repo_link = f"{get_context().config.mirrors['alpine']}{channel_cfg['mirrordir_alpine']}/{repo}"
     cache_folder = get_context().config.work / (f"cache_apk_{arch}")
-    return cache_folder / apkindex_hash(repo_link)
+    return Apkindex(cache_folder / apkindex_hash(repo_link))

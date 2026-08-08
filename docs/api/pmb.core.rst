@@ -12,6 +12,14 @@ pmb.core.apk_package module
    :undoc-members:
    :show-inheritance:
 
+pmb.core.apkindex module
+------------------------
+
+.. automodule:: pmb.core.apkindex
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pmb.core.arch module
 --------------------
 

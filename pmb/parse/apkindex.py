@@ -2,26 +2,26 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import collections
 import tarfile
-from pathlib import Path
 from typing import Literal, cast, overload
 
 import pmb.helpers.package
 import pmb.helpers.repo
 import pmb.parse.version
 from pmb.core.apk_package import ApkPackage
+from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.helpers import logging
 
 
-def _read_apkindex(path: Path) -> list[str]:
-    if tarfile.is_tarfile(path):
+def _read_apkindex(index: Apkindex) -> list[str]:
+    if tarfile.is_tarfile(index):
         with (
-            tarfile.open(path, "r:gz") as tar,
+            tarfile.open(index, "r:gz") as tar,
             tar.extractfile(tar.getmember("APKINDEX")) as handle,  # type:ignore[union-attr]
         ):
             return handle.read().decode().split("\n\n")
     else:
-        with path.open("r", encoding="utf-8") as handle:
+        with index.open("r", encoding="utf-8") as handle:
             return handle.read().split("\n\n")
 
 
@@ -112,26 +112,26 @@ def parse_add_block(
 
 
 @overload
-def parse(path: Path) -> dict[str, dict[str, ApkPackage]]: ...
+def parse(index: Apkindex) -> dict[str, dict[str, ApkPackage]]: ...
 
 
 @overload
-def parse(path: Path, multiple_providers: Literal[False] = ...) -> dict[str, ApkPackage]: ...
+def parse(index: Apkindex, multiple_providers: Literal[False] = ...) -> dict[str, ApkPackage]: ...
 
 
 @overload
 def parse(
-    path: Path, multiple_providers: Literal[True] = ...
+    index: Apkindex, multiple_providers: Literal[True] = ...
 ) -> dict[str, dict[str, ApkPackage]]: ...
 
 
 def parse(
-    path: Path, multiple_providers: bool = True
+    index: Apkindex, multiple_providers: bool = True
 ) -> dict[str, ApkPackage] | dict[str, dict[str, ApkPackage]]:
     r"""
     Parse an APKINDEX.tar.gz file, and return its content as dictionary.
 
-    :param path: path to an APKINDEX.tar.gz file or apk package database
+    :param index: APKINDEX.tar.gz file or apk package database
                  (almost the same format, but not compressed).
     :param multiple_providers: assume that there are more than one provider for
                                the package. This makes sense when parsing the
@@ -154,26 +154,26 @@ def parse(
         ``{ "postmarketos-mkinitfs": {"postmarketos-mkinitfs": ApkPackage},"so:libGL.so.1": {"mesa-egl": ApkPackage, "libhybris": ApkPackage}, ...}``
     """
     # Require the file to exist
-    if not path.is_file():
+    if not index.is_file():
         logging.verbose(
             "NOTE: APKINDEX not found, assuming no binary packages"
-            f" exist for that architecture: {path}"
+            f" exist for that architecture: {index}"
         )
         return {}
 
     # Try to get a cached result first
-    lastmod = path.lstat().st_mtime
+    lastmod = index.lstat().st_mtime
     cache_key_ = "multiple" if multiple_providers else "single"
-    key = cache_key(path)
+    key = cache_key(index)
     if key in pmb.helpers.other.cache["apkindex"]:
         cache = pmb.helpers.other.cache["apkindex"][key]
         if cache["lastmod"] == lastmod:
             if cache_key_ in cache:
                 return cache[cache_key_]
         else:
-            clear_cache(path)
+            clear_cache(index)
 
-    block_lines = _read_apkindex(path)
+    block_lines = _read_apkindex(index)
 
     # The APKINDEX might be empty, for example if you run "pmbootstrap index" and have no local
     # packages
@@ -190,7 +190,7 @@ def parse(
         block = ApkPackage.from_apkindex_block(block_line.splitlines())
         # Skip virtual packages
         if block.timestamp is None:
-            logging.verbose(f"Skipped virtual package {block} in file: {path}")
+            logging.verbose(f"Skipped virtual package {block} in file: {index}")
             continue
 
         # Add the next package and all provides
@@ -199,23 +199,23 @@ def parse(
             parse_add_block(ret, block, provide, multiple_providers)
 
     # Update the cache
-    key = cache_key(path)
+    key = cache_key(index)
     if key not in pmb.helpers.other.cache["apkindex"]:
         pmb.helpers.other.cache["apkindex"][key] = {"lastmod": lastmod}
     pmb.helpers.other.cache["apkindex"][key][cache_key_] = ret
     return ret
 
 
-def parse_blocks(path: Path) -> list[ApkPackage]:
+def parse_blocks(index: Apkindex) -> list[ApkPackage]:
     """
     Read all blocks from an APKINDEX.tar.gz into a list.
 
-    :path: full path to the APKINDEX.tar.gz file.
+    :index: the APKINDEX.tar.gz file.
     :returns: all blocks in the APKINDEX, without restructuring them by
               pkgname or removing duplicates with lower versions (use
               parse() if you need these features).
     """
-    block_lines = _read_apkindex(path)
+    block_lines = _read_apkindex(index)
 
     # Parse lines into blocks
     return [
@@ -226,24 +226,24 @@ def parse_blocks(path: Path) -> list[ApkPackage]:
 
 
 # FIXME: come up with something better here...
-def cache_key(path: Path) -> int:
-    return hash(path)
+def cache_key(index: Apkindex) -> int:
+    return hash(index)
 
 
-def clear_cache(path: Path) -> bool:
+def clear_cache(index: Apkindex) -> bool:
     """
     Clear the APKINDEX parsing cache.
 
     :returns: True on successful deletion, False otherwise
     """
-    key = cache_key(path)
+    key = cache_key(index)
     logging.verbose(f"Clear APKINDEX cache for: {key}")
     if key in pmb.helpers.other.cache["apkindex"]:
         del pmb.helpers.other.cache["apkindex"][key]
         return True
     else:
         logging.verbose(
-            "Nothing to do, path was not in cache:"
+            "Nothing to do, index was not in cache:"
             + str(pmb.helpers.other.cache["apkindex"].keys())
         )
         return False
@@ -253,7 +253,7 @@ def providers(
     package: str,
     arch: Arch | None = None,
     must_exist: bool = True,
-    indexes: list[Path] | None = None,
+    indexes: list[Apkindex] | None = None,
     user_repository: bool = True,
 ) -> dict[str, ApkPackage]:
     """
@@ -263,7 +263,7 @@ def providers(
     :param arch: defaults to native arch, only relevant for indexes=None
     :param must_exist: When set to true, raise an exception when the package is
                        not provided at all.
-    :param indexes: list of APKINDEX.tar.gz paths, defaults to all index files
+    :param indexes: list of APKINDEX.tar.gz files, defaults to all index files
                     (depending on arch)
     :param user_repository: add path to index of locally built packages
     :returns: list of parsed packages. Example for package="so:libGL.so.1":
@@ -276,9 +276,9 @@ def providers(
     package = pmb.helpers.package.remove_operators(pkgname_with_op)
 
     ret: dict[str, ApkPackage] = collections.OrderedDict()
-    for path in indexes:
+    for index in indexes:
         # Skip indexes not providing the package
-        index_packages = parse(path)
+        index_packages = parse(index)
         if package not in index_packages:
             continue
 
@@ -295,12 +295,12 @@ def providers(
                 if pmb.parse.version.compare(version, version_last) == -1:
                     logging.verbose(
                         f"{package}: provided by: {provider_pkgname}-{version}"
-                        f"in {path} (but {version_last} is higher)"
+                        f"in {index} (but {version_last} is higher)"
                     )
                     continue
 
             # Add the provider to ret
-            logging.verbose(f"{package}: provided by: {provider_pkgname}-{version} in {path}")
+            logging.verbose(f"{package}: provided by: {provider_pkgname}-{version} in {index}")
             ret[provider_pkgname] = provider
 
     if ret == {} and must_exist:
@@ -365,7 +365,7 @@ def package(
     package: str,
     arch: Arch | None = ...,
     must_exist: Literal[True] = ...,
-    indexes: list[Path] | None = ...,
+    indexes: list[Apkindex] | None = ...,
     user_repository: bool = ...,
 ) -> ApkPackage: ...
 
@@ -375,7 +375,7 @@ def package(
     package: str,
     arch: Arch | None = ...,
     must_exist: bool = ...,
-    indexes: list[Path] | None = ...,
+    indexes: list[Apkindex] | None = ...,
     user_repository: bool = ...,
 ) -> ApkPackage | None: ...
 
@@ -385,7 +385,7 @@ def package(
     package: str,
     arch: Arch | None = None,
     must_exist: bool = True,
-    indexes: list[Path] | None = None,
+    indexes: list[Apkindex] | None = None,
     user_repository: bool = True,
 ) -> ApkPackage | None:
     """
@@ -395,7 +395,7 @@ def package(
     :param arch: defaults to native arch, only relevant for indexes=None
     :param must_exist: When set to true, raise an exception when the package is
                        not provided at all.
-    :param indexes: list of APKINDEX.tar.gz paths, defaults to all index files
+    :param indexes: list of APKINDEX.tar.gz, defaults to all index files
                     (depending on arch)
     :param user_repository: add path to index of locally built packages
     :returns: ApkPackage or None when the package was not found.

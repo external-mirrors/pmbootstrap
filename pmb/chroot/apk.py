@@ -15,6 +15,7 @@ import pmb.config
 import pmb.helpers.apk
 import pmb.parse.apkindex
 from pmb.core import Chroot
+from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.helpers import logging
@@ -241,9 +242,9 @@ def installed(suffix: Chroot = Chroot.native()) -> dict[str, pmb.core.apk_packag
               { "postmarketos-mkinitfs": ApkPackage }
 
     """
-    path = suffix / "lib/apk/db/installed"
+    index = Apkindex(suffix / "lib/apk/db/installed")
     try:
-        return {block.pkgname: block for block in pmb.parse.apkindex.parse_blocks(path)}
+        return {block.pkgname: block for block in pmb.parse.apkindex.parse_blocks(index)}
     except FileNotFoundError:
-        logging.verbose(f"NOTE: installed db file does not exist for this architecture {path}")
+        logging.verbose(f"NOTE: installed db file does not exist for this architecture {index}")
         return {}

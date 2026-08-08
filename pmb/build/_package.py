@@ -17,6 +17,7 @@ import pmb.parse
 import pmb.parse.apkindex
 from pmb.build.other import BuildStatus
 from pmb.core import Chroot
+from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.core.context import Context, get_context
 from pmb.core.pkgrepo import pkgrepo_relative_path
@@ -142,7 +143,7 @@ def finish(
     # Clear APKINDEX cache (we only parse APKINDEX files once per session and
     # cache the result for faster dependency resolving, but after we built a
     # package we need to parse it again)
-    pmb.parse.apkindex.clear_cache(out_dir / arch / "APKINDEX.tar.gz")
+    pmb.parse.apkindex.clear_cache(Apkindex(out_dir / arch / "APKINDEX.tar.gz"))
 
     # Zap chroots (strict mode)
     if strict:
