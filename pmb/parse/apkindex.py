@@ -63,7 +63,7 @@ def parse_add_block(
 
     :param ret: dictionary of all packages in the APKINDEX that is
                 getting built right now. This function will extend it.
-    :param block: an ApkindexBlock to potentially add to ret.
+    :param block: an ApkPackage to potentially add to ret.
     :param provide: defaults to the pkgname, could be a provide from the
                     "provides" list.
     :param multiple_providers: assume that there are more than one provider for
@@ -140,18 +140,18 @@ def parse(
     :returns: (without multiple_providers)
 
     Generic format:
-        ``{ pkgname: ApkindexBlock, ... }``
+        ``{ pkgname: ApkPackage, ... }``
 
     Example:
-        ``{ "postmarketos-mkinitfs": ApkindexBlock, "so:libGL.so.1": ApkindexBlock, ...}``
+        ``{ "postmarketos-mkinitfs": ApkPackage, "so:libGL.so.1": ApkPackage, ...}``
 
     :returns: (with multiple_providers)
 
     Generic format:
-        ``{ provide: { pkgname: ApkindexBlock, ... }, ... }``
+        ``{ provide: { pkgname: ApkPackage, ... }, ... }``
 
     Example:
-        ``{ "postmarketos-mkinitfs": {"postmarketos-mkinitfs": ApkindexBlock},"so:libGL.so.1": {"mesa-egl": ApkindexBlock, "libhybris": ApkindexBlock}, ...}``
+        ``{ "postmarketos-mkinitfs": {"postmarketos-mkinitfs": ApkPackage},"so:libGL.so.1": {"mesa-egl": ApkPackage, "libhybris": ApkPackage}, ...}``
     """
     # Require the file to exist
     if not path.is_file():
@@ -267,7 +267,7 @@ def providers(
                     (depending on arch)
     :param user_repository: add path to index of locally built packages
     :returns: list of parsed packages. Example for package="so:libGL.so.1":
-        ``{"mesa-egl": ApkindexBlock, "libhybris": ApkindexBlock}``
+        ``{"mesa-egl": ApkPackage, "libhybris": ApkPackage}``
     """
     if not indexes:
         indexes = pmb.helpers.repo.apkindex_files(arch, user_repository=user_repository)
@@ -398,7 +398,7 @@ def package(
     :param indexes: list of APKINDEX.tar.gz paths, defaults to all index files
                     (depending on arch)
     :param user_repository: add path to index of locally built packages
-    :returns: ApkindexBlock or None when the package was not found.
+    :returns: ApkPackage or None when the package was not found.
     """
     # Provider with the same package
     package_providers = providers(
