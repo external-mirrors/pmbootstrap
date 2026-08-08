@@ -111,7 +111,7 @@ def rewrite(
                 if have_maintainer:
                     line = ""  # APKBUILDs may use the variable + comment
                 else:
-                    line = 'maintainer="YOUR NAME <EMAIL@ADDRESS> (CHANGEME!)"\n'
+                    line = 'maintainer="YOUR NAME (CHANGEME!) <EMAIL-ADDRESS@EXAMPLE.COM>"\n'
                     have_maintainer = True
 
             # Contributor
