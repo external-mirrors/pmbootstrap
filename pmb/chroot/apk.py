@@ -242,4 +242,8 @@ def installed(suffix: Chroot = Chroot.native()) -> dict[str, pmb.core.apk_packag
 
     """
     path = suffix / "lib/apk/db/installed"
-    return {block.pkgname: block for block in pmb.parse.apkindex.parse_blocks(path)}
+    try:
+        return {block.pkgname: block for block in pmb.parse.apkindex.parse_blocks(path)}
+    except FileNotFoundError:
+        logging.verbose(f"NOTE: installed db file does not exist for this architecture {path}")
+        return {}
