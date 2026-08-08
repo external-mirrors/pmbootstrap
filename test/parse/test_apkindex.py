@@ -9,6 +9,7 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from pmb.core.apk_package import ApkPackage
+from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.parse.apkindex import (
     clear_cache as clear_apkindex_cache,
@@ -246,16 +247,16 @@ p:postmarketos-ramdisk=3.3.5-r2"""
 
 
 @pytest.fixture
-def valid_apkindex_file(tmp_path: Path) -> Path:
+def valid_apkindex_file(tmp_path: Path) -> Apkindex:
     # FIXME: use tmpfile fixture from !2453
-    tmpfile = tmp_path / "APKINDEX.1"
+    tmpfile = Apkindex(tmp_path / "APKINDEX.1")
     print(tmp_path)
     tmpfile.write_text(example_apkindex)
 
     return tmpfile
 
 
-def test_apkindex_parse(valid_apkindex_file: Path) -> None:
+def test_apkindex_parse(valid_apkindex_file: Apkindex) -> None:
     tmpfile = valid_apkindex_file
     blocks = parse_apkindex(tmpfile, True)
     for k, v in blocks.items():
@@ -323,7 +324,7 @@ def test_apkindex_parse(valid_apkindex_file: Path) -> None:
 
 
 def test_apkindex_parse_trailing_newline(tmp_path: Path) -> None:
-    tmpfile = tmp_path / "APKINDEX.4"
+    tmpfile = Apkindex(tmp_path / "APKINDEX.4")
     # A snippet of the above example but with additional
     # trailing newlines
     tmpfile.write_text("""
@@ -349,7 +350,7 @@ i:postmarketos-base-ui=29-r1 xorg-server
     parse_apkindex(tmpfile, True)
 
 
-def test_apkindex_parse_cache_hit(valid_apkindex_file: Path, monkeypatch: MonkeyPatch) -> None:
+def test_apkindex_parse_cache_hit(valid_apkindex_file: Apkindex, monkeypatch: MonkeyPatch) -> None:
     # First parse normally, filling the cache
     parse_apkindex(valid_apkindex_file)
 
@@ -370,7 +371,7 @@ def test_apkindex_parse_cache_hit(valid_apkindex_file: Path, monkeypatch: Monkey
         parse_apkindex(valid_apkindex_file)
 
 
-def test_apkindex_package(valid_apkindex_file: Path) -> None:
+def test_apkindex_package(valid_apkindex_file: Apkindex) -> None:
     index_block = package_apkindex(
         "postmarketos-base-ui-networkmanager", arch=Arch.aarch64, indexes=[valid_apkindex_file]
     )
@@ -385,7 +386,7 @@ def test_apkindex_package(valid_apkindex_file: Path) -> None:
 
 
 def test_apkindex_package_provider_priority(tmp_path: Path) -> None:
-    tmpfile = tmp_path / "APKINDEX.5"
+    tmpfile = Apkindex(tmp_path / "APKINDEX.5")
     # A snippet of the above example but with a missing timestamp
     # and origin fields
     tmpfile.write_text("""
@@ -432,7 +433,7 @@ k:100
 
 
 def test_apkindex_package_provider_shortest(tmp_path: Path) -> None:
-    tmpfile = tmp_path / "APKINDEX.6"
+    tmpfile = Apkindex(tmp_path / "APKINDEX.6")
     # A snippet of the above example but with a missing timestamp
     # and origin fields
     tmpfile.write_text("""
@@ -473,7 +474,7 @@ p:so:libGL.so.1=22-r0
     assert index_block.origin == "mesa"
 
 
-def test_apkindex_parse_blocks(valid_apkindex_file: Path) -> None:
+def test_apkindex_parse_blocks(valid_apkindex_file: Apkindex) -> None:
     tmpfile = valid_apkindex_file
     blocks = parse_blocks(tmpfile)
     assert len(blocks) == 14

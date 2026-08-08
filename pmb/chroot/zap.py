@@ -15,6 +15,7 @@ import pmb.helpers.pmaports
 import pmb.helpers.run
 import pmb.parse.apkindex
 from pmb.core import Chroot
+from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.helpers import logging
@@ -151,7 +152,7 @@ def zap_pkgs_local_mismatch(confirm: bool = True, dry: bool = False) -> None:
         "*/APKINDEX.tar.gz"
     ):
         # Delete packages without same version in aports
-        blocks = pmb.parse.apkindex.parse_blocks(apkindex_path)
+        blocks = pmb.parse.apkindex.parse_blocks(Apkindex(apkindex_path))
         for block in blocks:
             pkgname = block.pkgname
             origin = block.origin

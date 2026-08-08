@@ -9,6 +9,7 @@ from argparse import Namespace
 from pathlib import Path
 from typing import Any, Literal, TypedDict
 
+from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
 
@@ -189,7 +190,6 @@ class PmbArgs(Namespace):
     all_stable: bool
     allow_untrusted: bool
     android_recovery_zip: bool
-    apkindex_path: Path
     aports: list[Path] | None
     arch: Arch | None
     as_root: bool
@@ -237,6 +237,7 @@ class PmbArgs(Namespace):
     ignore_depends: bool
     image_size: str | None
     image: bool
+    index: Apkindex
     install_base: bool
     install_blockdev: bool
     install_cgpt: bool

@@ -218,7 +218,7 @@ def get_upstream_aport(pkgname: str, arch: Arch | None = None, retain_branch: bo
     pkgname = split[-1]
     # Update or create APKINDEX for relevant arch so we know it exists and is recent.
     pmb.helpers.repo.update(arch)
-    index_path = pmb.helpers.repo.alpine_apkindex_path(repo, arch)
+    index_path = pmb.helpers.repo.alpine_apkindex(repo, arch)
     package = pmb.parse.apkindex.package(pkgname, indexes=[index_path], arch=arch)
 
     # Compare version (return when equal)

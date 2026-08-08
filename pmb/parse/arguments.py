@@ -9,6 +9,7 @@ from types import GenericAlias
 from typing import Any
 
 from pmb.core import Config
+from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.helpers.exceptions import NonBugError
 from pmb.types import PmbArgs, RunOutputTypeDefault
@@ -1216,7 +1217,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     # Action: apkindex_parse
     apkindex_parse = sub.add_parser("apkindex_parse")
-    apkindex_parse.add_argument("apkindex_path", type=Path)
+    apkindex_parse.add_argument("apkindex_path", type=Apkindex)
     add_packages_arg(apkindex_parse, "package", nargs="?")
 
     # Action: config

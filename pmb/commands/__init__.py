@@ -70,7 +70,7 @@ def run_command(args: PmbArgs) -> None:
         case "apkbuild_parse":
             apkbuild_parse(args.packages)
         case "apkindex_parse":
-            apkindex_parse(args.apkindex_path, args.package)
+            apkindex_parse(args.index, args.package)
         case "aportgen":
             aportgen(args.packages, args.fork_alpine, args.fork_alpine_retain_branch)
         case "bootimg_analyze":
