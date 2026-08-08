@@ -80,7 +80,7 @@ def generate(
     folder: Path | None = None,
     device_category: pmb.helpers.devices.DeviceCategory | None = None,
 ) -> Path:
-    if pkgname.startswith(("device", "linux")) and not device_category:
+    if pkgname.startswith(("device", "linux")) and not device_category and not fork_alpine:
         device_category = pmb.config.ask_for_mainline_downstream()
 
     if fork_alpine:
