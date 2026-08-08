@@ -177,7 +177,8 @@ def generate_apkbuild(
 
         # Used internally by pmbootstrap. Don't touch.
         # TODO: Remove once minimum default pmbootstrap version supports
-        # kernel packages without '_flavor'.
+        # kernel packages without '_flavor' and '_config'.
+        _config="{config}"
         _flavor="{flavor}"
 
         prepare() {{{prepare}
