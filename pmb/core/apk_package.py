@@ -25,7 +25,7 @@ Apkbuild = dict[str, Any]
 
 
 class ApkPackage:
-    """A representation of a package block as parsed from APKINDEX file."""
+    """Representation of a package as parsed from e.g. an APKINDEX file or an APKBUILD."""
 
     def __init__(
         self,
