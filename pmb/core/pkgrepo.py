@@ -15,10 +15,7 @@ from pmb.types import WithExtraRepos
 @Cache("with_extra_repos")
 def pkgrepo_paths(with_extra_repos: WithExtraRepos = WithExtraRepos.DEFAULT) -> list[Path]:
     config = get_context().config
-    paths = [Path(x) for x in config.aports]
-    if not paths:
-        raise RuntimeError("No package repositories specified?")
-
+    paths = [config.aports]
     with_systemd = False
 
     match with_extra_repos:
@@ -61,7 +58,7 @@ def pkgrepo_name(path: Path) -> str:
     MUST be used instead of "path.name" as we need special handling
     for the pmaports repository.
     """
-    if path == get_context().config.aports[-1]:
+    if path == get_context().config.aports:
         return "pmaports"
 
     return path.name
@@ -71,7 +68,7 @@ def pkgrepo_path(name: str) -> Path:
     """Return the absolute path to the package repository with the given name."""
     # The pmaports repo is always last, and we hardcode the name.
     if name == "pmaports":
-        return get_context().config.aports[-1]
+        return get_context().config.aports
 
     for aports in pkgrepo_paths():
         if aports.name == name:

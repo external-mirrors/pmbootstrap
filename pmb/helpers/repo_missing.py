@@ -9,7 +9,7 @@ import pmb.build
 import pmb.helpers.package
 import pmb.helpers.pmaports
 from pmb.core.arch import Arch
-from pmb.core.context import get_context
+from pmb.core.pkgrepo import pkgrepo_paths
 from pmb.helpers.devices import DeviceCategory, get_device_category_by_apkbuild_path
 from pmb.meta import Cache
 from pmb.types import WithExtraRepos
@@ -43,7 +43,7 @@ def generate(arch: Arch) -> list[dict[str, list[str] | str | None]]:
     """
     ret = []
 
-    for pmaports_dir in get_context().config.aports:
+    for pmaports_dir in pkgrepo_paths(WithExtraRepos.ENABLED):
         pattern = os.path.join(pmaports_dir, "**/*/APKBUILD")
 
         for apkbuild_path_str in glob.glob(pattern, recursive=True):
