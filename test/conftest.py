@@ -178,15 +178,15 @@ def pmaports(pmb_args: None, monkeypatch: MonkeyPatch) -> None:
     # As an optimisation, we check the default workdir for pmaports
     # and clone it from there if it exists. This saves a bunch of bandwidth
     # and time.
-    if Config.aports[-1].exists():
+    if Config.aports.exists():
         # Override the URL to the local path so we can later look up the
         # remote by URL
-        pmb.config.git_repos["pmaports"] = [str(Config.aports[-1])]
+        pmb.config.git_repos["pmaports"] = [str(Config.aports)]
 
-    if not cfg.aports[-1].exists():
+    if not cfg.aports.exists():
         pmb.helpers.git.clone("pmaports")
         # Now operate on the cloned repo
-        assert pmb.helpers.run.user(["git", "switch", "main"], working_dir=cfg.aports[-1]) == 0
+        assert pmb.helpers.run.user(["git", "switch", "main"], working_dir=cfg.aports) == 0
 
 
 @pytest.fixture

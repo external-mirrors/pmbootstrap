@@ -48,11 +48,7 @@ class AutoZapConfig(enum.Enum):
 
 
 class Config:
-    # This is a class variable that gets treated as an instance variable. It's wrong, but since we
-    # only ever have one config (for now?) it doesn't cause any issues. Would be good to fix though.
-    aports: list[Path] = [  # ruff:ignore[mutable-class-default]
-        Path(os.path.expanduser("~") + "/.local/var/pmbootstrap/cache_git/pmaports")
-    ]
+    aports: Path = Path(os.path.expanduser("~") + "/.local/var/pmbootstrap/cache_git/pmaports")
     boot_size: int = 512
     build_default_device_arch: bool = False
     build_pkgs_on_install: bool = True
@@ -123,6 +119,14 @@ class Config:
         keys = key.split(".")
         if len(keys) == 1:
             type_ = type(getattr(Config, key))
+            try:
+                value = type_(value)
+            except TypeError:
+                # Handle transition from aports as list[Path] to Path.
+                if key == "aports" and isinstance(value, list):
+                    value = value[-1]
+                else:
+                    raise
             try:
                 if type_ is bool and isinstance(value, str):
                     if value.lower() in ["true", "false"]:
