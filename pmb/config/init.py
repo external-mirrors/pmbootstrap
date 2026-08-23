@@ -347,7 +347,7 @@ def ask_for_timezone() -> str:
     return "GMT"
 
 
-def ask_for_provider_select(apkbuild: dict[str, Any], providers_cfg: dict[str, str]) -> None:
+def ask_for_provider_select(apkbuild: Apkbuild, providers_cfg: dict[str, str]) -> None:
     """
     Ask for selectable providers that are specified using "_pmb_select" in a APKBUILD.
 
