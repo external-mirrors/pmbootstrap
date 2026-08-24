@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import configparser
 import os
+from dataclasses import fields
 from pathlib import Path, PosixPath
 
 from pmb.core import Config
@@ -20,30 +21,31 @@ def load(path: Path) -> Config:
     if "providers" not in cfg:
         cfg["providers"] = {}
 
-    for key in Config.__dict__:
+    for config_field in fields(Config):
+        key = config_field.name
         if key == "providers":
             setattr(config, key, cfg["providers"])
         if key == "mirrors" and key in cfg:
-            for subkey in Config.mirrors:
+            for subkey in config.mirrors:
                 if subkey in cfg["mirrors"]:
                     setattr(config, f"mirrors.{subkey}", cfg["mirrors"][subkey])
         # default values won't be set in the config file
         if key not in cfg["pmbootstrap"]:
             continue
         # Convert strings to paths
-        elif type(getattr(Config, key)) is PosixPath:
+        elif type(getattr(config, key)) is PosixPath:
             setattr(config, key, Path(cfg["pmbootstrap"][key]))
         # Yeah this really sucks and there isn't a better way to do it without external
         # libraries
-        elif isinstance(getattr(Config, key), list) and isinstance(
-            getattr(Config, key)[0], PosixPath
+        elif isinstance(getattr(config, key), list) and isinstance(
+            getattr(config, key)[0], PosixPath
         ):
             value = cfg["pmbootstrap"][key]
             if not value:
                 setattr(config, key, value)
             else:
                 setattr(config, key, [Path(p) for p in value.split(",")])
-        elif isinstance(getattr(Config, key), bool):
+        elif isinstance(getattr(config, key), bool):
             setattr(config, key, cfg["pmbootstrap"][key].lower() == "true")
         elif key in cfg["pmbootstrap"]:
             setattr(config, key, cfg["pmbootstrap"][key])
@@ -66,11 +68,11 @@ def serialize(config: Config, skip_defaults: bool = True) -> configparser.Config
 
     # .keys() flat maps dictionaries like config.mirrors with
     # dotted notation
-    for key in Config.keys():  # ruff:ignore[in-dict-keys]
+    for key in config.keys():  # ruff:ignore[in-dict-keys]
         # If the default value hasn't changed then don't write out,
         # this makes it possible to update the default, otherwise
         # we wouldn't be able to tell if the user overwrote it.
-        if skip_defaults and Config.get_default(key) == getattr(config, key):
+        if skip_defaults and config.get_default(key) == getattr(config, key):
             continue
         if key == "providers":
             cfg["providers"] = config.providers
@@ -78,13 +80,13 @@ def serialize(config: Config, skip_defaults: bool = True) -> configparser.Config
             key_ = key.split(".")[1]
             cfg["mirrors"][key_] = getattr(config, key)
         # Convert strings to paths
-        elif type(getattr(Config, key)) is PosixPath:
+        elif type(getattr(config, key)) is PosixPath:
             cfg["pmbootstrap"][key] = str(getattr(config, key))
-        elif isinstance(getattr(Config, key), list) and isinstance(
-            getattr(Config, key)[0], PosixPath
+        elif isinstance(getattr(config, key), list) and isinstance(
+            getattr(config, key)[0], PosixPath
         ):
             cfg["pmbootstrap"][key] = ",".join(os.fspath(p) for p in getattr(config, key))
-        elif isinstance(getattr(Config, key), bool):
+        elif isinstance(getattr(config, key), bool):
             cfg["pmbootstrap"][key] = str(getattr(config, key))
         else:
             cfg["pmbootstrap"][key] = str(getattr(config, key))

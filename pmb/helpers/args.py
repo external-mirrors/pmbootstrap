@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import sys
+from dataclasses import fields
 
 import pmb.config
 import pmb.helpers.git
+from pmb.core.config import Config
 from pmb.core.context import CommandTimeout, Context, TimeoutReason
 from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.types import PmbArgs
@@ -63,7 +65,8 @@ def init(args: PmbArgs) -> PmbArgs:
             )
 
     # Override config at runtime with command line arguments
-    for key in vars(config):
+    for config_field in fields(Config):
+        key = config_field.name
         if key.startswith("_") or key == "user":
             continue
         value = getattr(args, key, None)

@@ -5,9 +5,9 @@ import enum
 import inspect
 import multiprocessing
 import os
-from copy import deepcopy
+from dataclasses import MISSING, Field, dataclass, field, fields
 from pathlib import Path
-from typing import Any, ClassVar, TypedDict
+from typing import Any, TypedDict
 
 
 class Mirrors(TypedDict):
@@ -47,6 +47,16 @@ class AutoZapConfig(enum.Enum):
         return self == AutoZapConfig.YES
 
 
+def _get_default_from_field(config_field: Field[Any]) -> Any:
+    if config_field.default is not MISSING:
+        return config_field.default
+    elif config_field.default_factory is not MISSING:
+        return config_field.default_factory()
+    else:
+        raise AssertionError
+
+
+@dataclass
 class Config:
     aports: Path = Path(os.path.expanduser("~") + "/.local/var/pmbootstrap/cache_git/pmaports")
     boot_size: int = 512
@@ -62,14 +72,18 @@ class Config:
     kernel: str = "stable"
     keymap: str = ""
     locale: str = "en_US.UTF-8"
-    mirrors: ClassVar[Mirrors] = {
-        "alpine_custom": "none",
-        "alpine": "http://dl-cdn.alpinelinux.org/alpine/",
-        "pmaports_custom": "none",
-        "pmaports": "http://mirror.postmarketos.org/postmarketos/",
-        "systemd_custom": "none",
-        "systemd": "http://mirror.postmarketos.org/postmarketos/extra-repos/systemd/",
-    }
+    mirrors: Mirrors = field(
+        default_factory=lambda: Mirrors(
+            {
+                "alpine_custom": "none",
+                "alpine": "http://dl-cdn.alpinelinux.org/alpine/",
+                "pmaports_custom": "none",
+                "pmaports": "http://mirror.postmarketos.org/postmarketos/",
+                "systemd_custom": "none",
+                "systemd": "http://mirror.postmarketos.org/postmarketos/extra-repos/systemd/",
+            }
+        )
+    )
     qemu_redir_stdio: bool = False
     service_manager: ServiceManagerConfig = ServiceManagerConfig.DEFAULT
     ssh_key_glob: str = "~/.ssh/*.pub"
@@ -83,16 +97,16 @@ class Config:
     # automatically zap chroots that are for the wrong channel
     auto_zap_misconfigured_chroots: AutoZapConfig = AutoZapConfig.NO
 
-    providers: ClassVar[dict[str, str]] = {}
+    providers: dict[str, str] = field(default_factory=dict)
 
-    def __init__(self) -> None:
-        # Make sure we aren't modifying the class defaults
-        for key in inspect.get_annotations(Config):
-            setattr(self, key, deepcopy(Config.get_default(key)))
+    # def __init__(self) -> None:
+    # Make sure we aren't modifying the class defaults
+    # for key in inspect.get_annotations(Config):
+    # setattr(self, key, deepcopy(Config.get_default(key)))
 
     @staticmethod
     def keys() -> list[str]:
-        keys = list(inspect.get_annotations(Config).keys())
+        keys = [field.name for field in fields(Config)]
         keys.remove("mirrors")
         keys += [f"mirrors.{k}" for k in inspect.get_annotations(Mirrors)]
         return sorted(keys)
@@ -104,12 +118,23 @@ class Config:
         nested dictionaries (e.g. "mirrors.alpine").
         """
         keys = dotted_key.split(".")
-        if len(keys) == 1:
-            return getattr(Config, keys[0])
-        elif len(keys) == 2:
-            return getattr(Config, keys[0])[keys[1]]
-        else:
+
+        config_field = next(
+            (f for f in fields(Config) if f.name == keys[0]),
+            None,
+        )
+
+        if config_field is None:
+            raise AssertionError
+
+        value = _get_default_from_field(config_field)
+
+        if len(keys) == 2:
+            return value[keys[1]]
+        elif len(keys) > 2:
             raise ValueError(f"Invalid dotted key: {dotted_key}")
+
+        return value
 
     def __setattr__(self, key: str, value: Any) -> None:
         """
@@ -118,7 +143,14 @@ class Config:
         """
         keys = key.split(".")
         if len(keys) == 1:
-            type_ = type(getattr(Config, key))
+            config_field = next(
+                (f for f in fields(Config) if f.name == keys[0]),
+                None,
+            )
+            if config_field is None:
+                raise AssertionError
+            default = _get_default_from_field(config_field)
+            type_ = type(default)
             try:
                 value = type_(value)
             except TypeError:
@@ -160,3 +192,7 @@ class Config:
             return super().__getattribute__(keys[0])[keys[1]]
         else:
             raise ValueError(f"Invalid dotted key: {key}")
+
+
+
+

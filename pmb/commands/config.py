@@ -31,7 +31,7 @@ def config(name: str | None, value: str | None, reset: bool, configpath: Path) -
             # Argparse already ensures 'mirror' is a valid Config.Mirrors key.
             if value_changed := (config.mirrors[mirror] != value):  # type: ignore[literal-required]
                 config.mirrors[mirror] = value  # type: ignore[literal-required]
-        elif isinstance(getattr(Config, name), list):
+        elif isinstance(getattr(config, name), list):
             new_list = value.split(",")
             if value_changed := (getattr(config, name, None) != new_list):
                 setattr(config, name, new_list)
