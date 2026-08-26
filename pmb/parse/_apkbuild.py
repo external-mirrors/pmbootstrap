@@ -61,7 +61,7 @@ DEFAULT_FUNCTION_SUBPACKAGES: Final[frozenset[str]] = frozenset(
 
 
 def replace_variable(apkbuild: Apkbuild, value: str) -> str:
-    def log_key_not_found(match: re.Match) -> None:
+    def log_key_not_found(match: re.Match[str]) -> None:
         logging.verbose(
             f"{apkbuild['pkgname']}: key '{match.group(1)}' for"
             f" replacing '{match.group(0)}' not found, ignoring"
