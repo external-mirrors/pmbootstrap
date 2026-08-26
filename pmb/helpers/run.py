@@ -35,7 +35,7 @@ def user(
     check: bool | None = ...,
     env: Env = ...,
     sudo: bool = ...,
-) -> subprocess.Popen: ...
+) -> subprocess.Popen[bytes]: ...
 
 
 @overload
@@ -132,7 +132,7 @@ def root(
     output_return: Literal[False] = ...,
     check: bool | None = ...,
     env: Env = ...,
-) -> subprocess.Popen: ...
+) -> subprocess.Popen[bytes]: ...
 
 
 @overload

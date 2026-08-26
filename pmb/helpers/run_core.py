@@ -83,7 +83,7 @@ def sanity_checks(
 
 def background(
     cmd: PathString | Sequence[PathString], working_dir: PathString | None = None
-) -> subprocess.Popen:
+) -> subprocess.Popen[bytes]:
     """Run a subprocess in background and redirect its output to the log."""
     ret = subprocess.Popen(
         cmd, stdout=pmb.helpers.logging.logfd, stderr=pmb.helpers.logging.logfd, cwd=working_dir
@@ -94,7 +94,7 @@ def background(
 
 def pipe(
     cmd: PathString | Sequence[PathString], working_dir: PathString | None = None
-) -> subprocess.Popen:
+) -> subprocess.Popen[bytes]:
     """Run a subprocess in background and redirect its output to a pipe."""
     ret = subprocess.Popen(
         cmd,
@@ -109,7 +109,7 @@ def pipe(
 
 @overload
 def pipe_read(
-    process: subprocess.Popen,
+    process: subprocess.Popen[bytes],
     output_to_stdout: bool = ...,
     output_log: bool = ...,
     output_return: Literal[False] = ...,
@@ -119,7 +119,7 @@ def pipe_read(
 
 @overload
 def pipe_read(
-    process: subprocess.Popen,
+    process: subprocess.Popen[bytes],
     output_to_stdout: bool = ...,
     output_log: bool = ...,
     output_return: Literal[True] = ...,
@@ -129,7 +129,7 @@ def pipe_read(
 
 @overload
 def pipe_read(
-    process: subprocess.Popen,
+    process: subprocess.Popen[bytes],
     output_to_stdout: bool = ...,
     output_log: bool = ...,
     output_return: bool = ...,
@@ -138,7 +138,7 @@ def pipe_read(
 
 
 def pipe_read(
-    process: subprocess.Popen,
+    process: subprocess.Popen[bytes],
     output_to_stdout: bool = False,
     output_log: bool = True,
     output_return: bool = False,

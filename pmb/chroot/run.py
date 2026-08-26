@@ -118,7 +118,7 @@ def root(
     env: Env = ...,
     disable_timeout: bool = ...,
     add_proxy_env_vars: bool = ...,
-) -> subprocess.Popen: ...
+) -> subprocess.Popen[bytes]: ...
 
 
 @overload
@@ -160,7 +160,7 @@ def root(
     env: Env = ...,
     disable_timeout: bool = ...,
     add_proxy_env_vars: bool = ...,
-) -> subprocess.Popen | int | str: ...
+) -> subprocess.Popen[bytes] | int | str: ...
 
 
 def root(
@@ -229,7 +229,7 @@ def user(
     output_return: Literal[False] = ...,
     check: bool | None = ...,
     env: Env = ...,
-) -> subprocess.Popen: ...
+) -> subprocess.Popen[bytes]: ...
 
 
 @overload

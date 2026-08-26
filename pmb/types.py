@@ -137,7 +137,7 @@ class WithExtraRepos(enum.Enum):
 
 
 RunOutputType = RunOutputTypeDefault | RunOutputTypePopen
-RunReturnType = str | int | subprocess.Popen
+RunReturnType = str | int | subprocess.Popen[bytes]
 PathString = Path | str
 Env = dict[str, PathString]
 Apkbuild = dict[str, Any]
