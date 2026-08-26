@@ -5,6 +5,7 @@ import contextlib
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from types import GenericAlias
 from typing import Any
 
 from pmb.core import Config
@@ -27,6 +28,10 @@ import pmb.helpers.pmaports
 
    See pmb/helpers/args.py for more information about the args variable.
 """
+
+
+# Ugly hack from https://github.com/python/typeshed/issues/7539#issuecomment-1076640854
+argparse._SubParsersAction.__class_getitem__ = classmethod(GenericAlias)  # type: ignore[attr-defined]
 
 
 def toggle_other_boolean_flags(
@@ -58,7 +63,7 @@ def toggle_other_boolean_flags(
     return SetOtherDestinationsAction
 
 
-def arguments_install(subparser: argparse._SubParsersAction) -> None:
+def arguments_install(subparser: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     ret = subparser.add_parser(
         "install", help="set up device specific chroot and install to SD card or image file"
     )
@@ -110,7 +115,7 @@ def arguments_install(subparser: argparse._SubParsersAction) -> None:
         " partitions, then --split is the default.) Related:"
         " https://postmarketos.org/partitions",
     )
-    group = group_desc.add_mutually_exclusive_group()
+    group: argparse._ActionsContainer = group_desc.add_mutually_exclusive_group()
     group.add_argument(
         "--no-split",
         help="create combined boot and root image file",
@@ -226,7 +231,9 @@ def arguments_install(subparser: argparse._SubParsersAction) -> None:
     )
 
 
-def arguments_export(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_export(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     ret = subparser.add_parser(
         "export",
         help="create convenience symlinks"
@@ -257,7 +264,9 @@ def arguments_export(subparser: argparse._SubParsersAction) -> argparse.Argument
     return ret
 
 
-def arguments_sideload(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_sideload(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     ret = subparser.add_parser(
         "sideload", help="Push packages to a running phone connected over usb or wifi"
     )
@@ -286,7 +295,9 @@ def arguments_sideload(subparser: argparse._SubParsersAction) -> argparse.Argume
     return ret
 
 
-def arguments_flasher(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_flasher(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     ret = subparser.add_parser("flasher", help="flash something to the target device")
     ret.add_argument("--method", help="override flash method", dest="flash_method", default=None)
     sub = ret.add_subparsers(dest="action_flasher")
@@ -391,7 +402,9 @@ def arguments_flasher(subparser: argparse._SubParsersAction) -> argparse.Argumen
     return ret
 
 
-def arguments_initfs(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_initfs(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     ret = subparser.add_parser("initfs", help="do something with the initramfs")
     sub = ret.add_subparsers(dest="action_initfs")
 
@@ -417,7 +430,9 @@ def arguments_initfs(subparser: argparse._SubParsersAction) -> argparse.Argument
     return ret
 
 
-def arguments_qemu(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_qemu(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     ret = subparser.add_parser("qemu")
     ret.add_argument("--image-size", help="set rootfs size (e.g. 2048M or 2G)")
     ret.add_argument(
@@ -495,7 +510,9 @@ def arguments_qemu(subparser: argparse._SubParsersAction) -> argparse.ArgumentPa
     return ret
 
 
-def arguments_pkgrel_bump(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_pkgrel_bump(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     ret = subparser.add_parser(
         "pkgrel_bump",
         help="increase the pkgrel to"
@@ -521,7 +538,9 @@ def arguments_pkgrel_bump(subparser: argparse._SubParsersAction) -> argparse.Arg
     return ret
 
 
-def arguments_pkgver_bump(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_pkgver_bump(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     ret = subparser.add_parser(
         "pkgver_bump",
         help="increase the pkgver and reset pkgrel to 0. useful when dealing with metapackages.",
@@ -531,7 +550,7 @@ def arguments_pkgver_bump(subparser: argparse._SubParsersAction) -> argparse.Arg
     return ret
 
 
-def arguments_newapkbuild(subparser: argparse._SubParsersAction) -> None:
+def arguments_newapkbuild(subparser: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """
     Wrapper for Alpine's "newapkbuild" command.
 
@@ -573,7 +592,7 @@ def arguments_newapkbuild(subparser: argparse._SubParsersAction) -> None:
     )
 
 
-def arguments_kconfig(subparser: argparse._SubParsersAction) -> None:
+def arguments_kconfig(subparser: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     # Allowed architectures
     arch_choices = Arch.supported()
 
@@ -645,7 +664,9 @@ def arguments_kconfig(subparser: argparse._SubParsersAction) -> None:
     add_kernel_arg(generate, nargs=1)
 
 
-def arguments_repo_missing(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_repo_missing(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     ret = subparser.add_parser(
         "repo_missing",
         help="list all packages + depends from pmaports for building the repository (used by bpo)",
@@ -654,17 +675,21 @@ def arguments_repo_missing(subparser: argparse._SubParsersAction) -> argparse.Ar
     return ret
 
 
-def arguments_test(subparser: argparse._SubParsersAction) -> None:
+def arguments_test(subparser: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     test = subparser.add_parser("test", help="Internal pmbootstrap test tools")
     sub = test.add_subparsers(dest="action_test", required=True)
     sub.add_parser("apkindex_parse_all", help="parse all APKINDEX files")
 
 
-def arguments_status(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_status(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     return subparser.add_parser("status", help="show a config and pmaports overview")
 
 
-def arguments_netboot(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_netboot(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     ret = subparser.add_parser("netboot", help="launch nbd server with pmOS rootfs")
     sub = ret.add_subparsers(dest="action_netboot")
     sub.required = True
@@ -675,7 +700,9 @@ def arguments_netboot(subparser: argparse._SubParsersAction) -> argparse.Argumen
     return ret
 
 
-def arguments_ci(subparser: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def arguments_ci(
+    subparser: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     ret = subparser.add_parser(
         "ci",
         help="run continuous integration scripts locally of git repo in current directory",
