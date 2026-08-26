@@ -7,7 +7,7 @@ import pmb.config
 from pmb.core.arch import Arch
 from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.helpers.exceptions import NonBugError
-from pmb.helpers.toml import load_toml_file
+from pmb.helpers.toml import TomlTable, load_toml_file
 from pmb.meta import Cache
 
 
@@ -28,7 +28,7 @@ def get_path() -> Path:
     return pmb.config.pmb_src / "pmb/data/kconfigcheck.toml"
 
 
-def sanity_check(toml: dict) -> None:
+def sanity_check(toml: TomlTable) -> None:
     """Ensure the kconfigcheck.toml file has the expected structure."""
     path = get_path()
 
@@ -105,7 +105,7 @@ def read_categories(categories: list[str]) -> dict[str, dict]:
     return ret
 
 
-def get_generic_kconfig() -> dict[str, dict]:
+def get_generic_kconfig() -> TomlTable:
     """Reads the contents of kconfig-generic.toml and returns the parsed TOML."""
     path = Path(pkgrepo_default_path(), "kconfig-generic.toml")
     try:
