@@ -6,6 +6,7 @@ import stat
 import tarfile
 import tempfile
 from pathlib import Path
+from typing import Any
 
 import pmb.config
 import pmb.helpers.apk
@@ -54,7 +55,7 @@ def read_signature_info(tar: tarfile.TarFile) -> tuple[str, Path]:
     return (sigfilename, sigkey_path)
 
 
-def extract_temp(tar: tarfile.TarFile, sigfilename: str) -> dict[str, dict]:
+def extract_temp(tar: tarfile.TarFile, sigfilename: str) -> dict[str, dict[str, Any]]:
     """Extract apk.static and signature as temporary files."""
     ret = {
         "apk": {"filename": "sbin/apk.static", "temp_path": None},
@@ -78,7 +79,7 @@ def extract_temp(tar: tarfile.TarFile, sigfilename: str) -> dict[str, dict]:
     return ret
 
 
-def verify_signature(files: dict[str, dict], sigkey_path: Path) -> None:
+def verify_signature(files: dict[str, dict[str, Any]], sigkey_path: Path) -> None:
     """
     Verify the signature with openssl.
 
