@@ -174,7 +174,7 @@ def sideload(
 
     # Mount the buildroot
     chroot = Chroot.buildroot(deviceinfo.arch)
-    mountpoint = "mnt" / PosixPath(chroot.__str__())
+    mountpoint = "mnt" / PosixPath(str(chroot))
     pmb.helpers.mount.bind(chroot.path, Chroot.native().path / mountpoint)
 
     # Missing recovery zip error
