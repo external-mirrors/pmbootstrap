@@ -325,7 +325,7 @@ def setup_keymap(config: Config) -> None:
     chroot = Chroot(ChrootType.ROOTFS, config.device)
     deviceinfo = pmb.parse.deviceinfo(device=config.device)
     if not deviceinfo.keymaps or deviceinfo.keymaps.strip() == "":
-        logging.info("NOTE: No valid keymap specified for device")
+        logging.debug("DEBUG: No keymap specified for device")
         return
     options = deviceinfo.keymaps.split(" ")
     if config.keymap != "" and config.keymap in options:
@@ -372,7 +372,7 @@ def setup_keymap(config: Config) -> None:
             new_text = 'Option \\"XkbLayout\\" \\"' + layout + '\\"'
             pmb.chroot.root(["sed", "-i", "s/" + old_text + "/" + new_text + "/", xconfig], chroot)
     else:
-        logging.info("NOTE: No valid keymap specified for device")
+        logging.warning("WARNING: Configured keymap is not supported by device")
 
 
 def setup_locale(chroot: Chroot, locale: str) -> None:
