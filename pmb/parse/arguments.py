@@ -128,7 +128,7 @@ def arguments_install(subparser: argparse._SubParsersAction) -> None:
         " write to the given block device (SD card, USB"
         " stick, etc.), for example: '/dev/mmcblk0'",
         metavar="BLOCKDEV",
-        type=lambda x: Path(x),
+        type=Path,
     )
     group.add_argument(
         "--android-recovery-zip",
@@ -239,7 +239,7 @@ def arguments_export(subparser: argparse._SubParsersAction) -> argparse.Argument
         help="export folder, defaults to /tmp/postmarketOS-export",
         default=Path("/tmp/postmarketOS-export"),
         nargs="?",
-        type=lambda x: Path(x),
+        type=Path,
     )
     ret.add_argument(
         "--odin",
@@ -275,7 +275,7 @@ def arguments_sideload(subparser: argparse._SubParsersAction) -> argparse.Argume
         "--arch",
         choices=Arch.supported(),
         help="skip automatic architecture deduction and use the given value",
-        type=lambda x: Arch.from_str(x),
+        type=Arch.from_str,
     )
     ret.add_argument(
         "--install-key",
@@ -590,7 +590,7 @@ def arguments_kconfig(subparser: argparse._SubParsersAction) -> None:
         action="store_true",
         help="check all kernels, even the ones that would be ignored by default",
     )
-    check.add_argument("--arch", choices=arch_choices, dest="arch", type=lambda x: Arch.from_str(x))
+    check.add_argument("--arch", choices=arch_choices, dest="arch", type=Arch.from_str)
     check.add_argument("--file", help="check a file directly instead of a config in a package")
     check.add_argument(
         "--no-details",
@@ -612,7 +612,7 @@ def arguments_kconfig(subparser: argparse._SubParsersAction) -> None:
 
     # "pmbootstrap kconfig edit"
     edit = sub.add_parser("edit", help="edit kernel aport config")
-    edit.add_argument("--arch", choices=arch_choices, dest="arch", type=lambda x: Arch.from_str(x))
+    edit.add_argument("--arch", choices=arch_choices, dest="arch", type=Arch.from_str)
     edit.add_argument("--fragment", help="fragment filename to save changes")
     edit_ui_chooser = edit.add_mutually_exclusive_group()
     edit_ui_chooser.add_argument(
@@ -637,15 +637,11 @@ def arguments_kconfig(subparser: argparse._SubParsersAction) -> None:
         "which asks question for every new kernel "
         "config option.",
     )
-    migrate.add_argument(
-        "--arch", choices=arch_choices, dest="arch", type=lambda x: Arch.from_str(x)
-    )
+    migrate.add_argument("--arch", choices=arch_choices, dest="arch", type=Arch.from_str)
     add_kernel_arg(migrate, nargs=1)
 
     generate = sub.add_parser("generate", help="generate kernel config from fragments")
-    generate.add_argument(
-        "--arch", choices=arch_choices, dest="arch", type=lambda x: Arch.from_str(x)
-    )
+    generate.add_argument("--arch", choices=arch_choices, dest="arch", type=Arch.from_str)
     add_kernel_arg(generate, nargs=1)
 
 
@@ -654,9 +650,7 @@ def arguments_repo_missing(subparser: argparse._SubParsersAction) -> argparse.Ar
         "repo_missing",
         help="list all packages + depends from pmaports for building the repository (used by bpo)",
     )
-    ret.add_argument(
-        "--arch", choices=Arch.supported(), default=Arch.native(), type=lambda x: Arch.from_str(x)
-    )
+    ret.add_argument("--arch", choices=Arch.supported(), default=Arch.native(), type=Arch.from_str)
     return ret
 
 
@@ -756,7 +750,7 @@ def get_parser() -> argparse.ArgumentParser:
         "-c",
         "--config",
         dest="config",
-        type=lambda x: Path(x),
+        type=Path,
         default=pmb.config.defaults["config"],
         help="path to pmbootstrap_v3.cfg file (default in ~/.config/)",
     )
@@ -960,9 +954,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     # Action: stats
     stats = sub.add_parser("stats", help="show ccache stats")
-    stats.add_argument(
-        "--arch", default=arch_native, choices=arch_choices, type=lambda x: Arch.from_str(x)
-    )
+    stats.add_argument("--arch", default=arch_native, choices=arch_choices, type=Arch.from_str)
 
     # Action: update
     update = sub.add_parser("update", help="update all existing APKINDEX files")
@@ -971,7 +963,7 @@ def get_parser() -> argparse.ArgumentParser:
         default=None,
         choices=arch_choices,
         help="only update a specific architecture",
-        type=lambda x: Arch.from_str(x),
+        type=Arch.from_str,
     )
     update.add_argument(
         "--non-existing",
@@ -1107,7 +1099,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="CPU architecture to build for (default: "
         f"{arch_native} or first available architecture in"
         " APKBUILD)",
-        type=lambda x: Arch.from_str(x),
+        type=Arch.from_str,
     )
     build.add_argument("--force", action="store_true", help="even build if not necessary")
     build.add_argument(
@@ -1191,7 +1183,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     # Action: apkindex_parse
     apkindex_parse = sub.add_parser("apkindex_parse")
-    apkindex_parse.add_argument("apkindex_path", type=lambda x: Path(x))
+    apkindex_parse.add_argument("apkindex_path", type=Path)
     add_packages_arg(apkindex_parse, "package", nargs="?")
 
     # Action: config
@@ -1215,7 +1207,7 @@ def get_parser() -> argparse.ArgumentParser:
     bootimg_analyze = sub.add_parser(
         "bootimg_analyze", help="Extract all the information from an existing boot.img"
     )
-    bootimg_analyze.add_argument("path", help="path to the boot.img", type=lambda x: Path(x))
+    bootimg_analyze.add_argument("path", help="path to the boot.img", type=Path)
     bootimg_analyze.add_argument(
         "--force", "-f", action="store_true", help="force even if the file seems to be invalid"
     )
