@@ -65,7 +65,7 @@ def depends_for_sonames(libraries: dict[str, str], arch_libc: Arch) -> list[str]
 
 def generate(pkgname: str) -> None:
     # Copy original aport
-    prefix = pkgname.split("-")[0]
+    prefix = pkgname.split("-", maxsplit=1)[0]
     arch = Arch.from_str(pkgname.split("-")[1])
     # Until pmb#2517 is resolved properly, we set the tracedeps manually. The
     # musl soname contains the architecture name, support cross compiling from

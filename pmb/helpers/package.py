@@ -24,7 +24,7 @@ from pmb.meta import Cache
 def remove_operators(package: str) -> str:
     for operator in [">", ">=", "<=", "=", "<", "~"]:
         if operator in package:
-            package = package.split(operator)[0]
+            package = package.split(operator, maxsplit=1)[0]
             break
     return package
 

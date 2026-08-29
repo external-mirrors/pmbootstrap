@@ -106,7 +106,7 @@ def _compute_progress(line: str) -> float:
     """
     if not line:
         return 1
-    cur_tot = line.split(" ")[0].rstrip().split("/")
+    cur_tot = line.split(" ", maxsplit=1)[0].rstrip().split("/")
     if len(cur_tot) != 2:
         return 0
     cur = float(cur_tot[0])
