@@ -13,8 +13,7 @@ def test_pkgrepo_paths_no_repos(pmb_args: None) -> None:
     """Test pkgrepo_paths() with no repositories. Should raise a RuntimeError."""
     pkgrepo_paths.cache_disable()
     with pytest.raises(RuntimeError):
-        paths = pkgrepo_paths()
-        print(paths)
+        pkgrepo_paths()
 
 
 def test_pkgrepo_pmaports(pmaports: None, monkeypatch: MonkeyPatch) -> None:
