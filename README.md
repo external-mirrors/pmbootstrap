@@ -63,6 +63,10 @@ failures and is not supported. See `pmbootstrap_min_version` in
 the oldest supported pmbootstrap version for a given pmaports revision. The
 upper bound is not documented.
 
+Please note that this compatibility guarantee does not apply to the the pmaports
+testsuite—only the latest pmbootstrap from the "main" branch is guaranteed to
+work with it.
+
 ## Usage Examples
 
 Please refer to the [postmarketOS wiki](https://wiki.postmarketos.org) for
