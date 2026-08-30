@@ -240,10 +240,10 @@ def prioritise_build_queue(disarray: list[BuildQueueItem]) -> list[BuildQueueIte
                 break
 
     # list of packages in pmaports
-    all_pkgnames = []
+    all_pkgnames = set()
     for item in disarray:
-        all_pkgnames.append(item.name)
-        all_pkgnames += item.apkbuild["subpackages"].keys()
+        all_pkgnames.add(item.name)
+        all_pkgnames.update(item.apkbuild["subpackages"].keys())
 
     def queue_item(item: BuildQueueItem) -> None:
         queue.append(item)
