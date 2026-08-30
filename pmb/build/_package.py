@@ -571,9 +571,8 @@ def packages(
         if context.no_depends:
             raise NonBugError(
                 "Additional packages need building, but pmbootstrap was"
-                " started with --no-depends. If you see this error in BPO, it"
-                " might be this bug:"
-                " https://gitlab.postmarketos.org/postmarketOS/pmbootstrap/-/work_items/2762"
+                " started with --no-depends. If you see this error in BPO, a"
+                " package might be depending on an archived package."
             )
 
     cross: CrossCompile | None = None
