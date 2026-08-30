@@ -3,7 +3,7 @@
 import datetime
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import TypedDict
 
 import pmb.build
 import pmb.build.autodetect
@@ -66,7 +66,7 @@ def check_build_for_arch(pkgname: str, arch: Arch) -> bool:
     raise RuntimeError(f"Can't build '{pkgname}' for architecture {arch}")
 
 
-def get_depends(context: Context, apkbuild: dict[str, Any]) -> list[str]:
+def get_depends(context: Context, apkbuild: Apkbuild) -> list[str]:
     """
     Alpine's abuild always builds/installs the "depends" and "makedepends" of a package
     before building it.
@@ -126,7 +126,7 @@ def output_path(arch: Arch, pkgname: str, pkgver: str, pkgrel: str) -> Path:
 
 
 def finish(
-    apkbuild: dict[str, Any],
+    apkbuild: Apkbuild,
     channel: str,
     arch: Arch,
     output: Path,
@@ -206,7 +206,7 @@ class BuildQueueItem(TypedDict):
     name: str
     arch: Arch  # Arch to build for
     aports: str
-    apkbuild: dict[str, Any]
+    apkbuild: Apkbuild
     has_binary: bool  # A binary package exists (even if outdated)
     pkgver: str
     output_path: Path
@@ -447,7 +447,7 @@ def packages(
     # add record build helpers to installed (e.g. sccache)
     def queue_build(
         aports: Path,
-        apkbuild: dict[str, Any],
+        apkbuild: Apkbuild,
         depends: list[str],
         cross: CrossCompile | None = None,
     ) -> list[str]:
