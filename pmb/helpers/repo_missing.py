@@ -43,7 +43,7 @@ def generate(arch: Arch) -> list[dict[str, list[str] | str | None]]:
     """
     ret = []
 
-    for pmaports_dir in pkgrepo_paths(WithExtraRepos.ENABLED):
+    for pmaports_dir in pkgrepo_paths(WithExtraRepos.DISABLED):
         pattern = os.path.join(pmaports_dir, "**/*/APKBUILD")
 
         for apkbuild_path_str in glob.glob(pattern, recursive=True):
