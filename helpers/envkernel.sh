@@ -323,6 +323,25 @@ set_alias_pmbroot_kernelroot() {
 	alias kernelroot="cd '$PWD'"
 }
 
+yank-config() {
+	local config_pattern
+	local config_path
+	local config_target
+
+	config_pattern="$("$pmbootstrap" config aports)/device/*/linux-$1/config-$1.$deviceinfo_arch"
+	config_path="$(compgen -G "$config_pattern")"
+
+	if [ -z "$config_path" ]; then
+		echo "⚠️ '$config_pattern' does not exist, did you get the kernel name right?"
+		return 1
+	fi
+
+	config_target="$PWD/.output/.config"
+
+	sudo cp "$config_path" "$config_target"
+	echo "✅ Yanked config from '$config_path' to '$config_target'"
+}
+
 cross_compiler_version() {
 	if [ "$need_cross_compiler" = 1 ]; then
 		"$pmbootstrap" chroot --user -- "${cross_compiler}gcc" --version \
@@ -462,9 +481,9 @@ main() {
 		echo " * cross compile:  $(cross_compiler_version)"
 		if [ -n "$pmbootstrap_dir" ]; then
 			echo " * aliases: make, kernelroot, pmbootstrap, pmbroot," \
-				"run-script (see 'type make' etc.)"
+				"run-script, yank-config (see 'type make' etc.)"
 		else
-			echo " * aliases: make, kernelroot, run-script" \
+			echo " * aliases: make, kernelroot, run-script, yank-config" \
 				"(see 'type make' etc.)"
 		fi
 		echo " * run 'deactivate' to revert all env changes"
