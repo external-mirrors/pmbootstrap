@@ -78,7 +78,7 @@ Read on for some generic examples of what can be done with `pmbootstrap`.
 
 ### Installing pmbootstrap
 
-<https://wiki.postmarketos.org/wiki/Installing_pmbootstrap>
+<https://wiki.nura.eco/wiki/Pmbootstrap/Installation>
 
 ### Basics
 
