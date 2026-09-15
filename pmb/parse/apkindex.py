@@ -193,25 +193,6 @@ def parse(
     return ret
 
 
-def parse_blocks(index: Apkindex) -> list[ApkPackage]:
-    """
-    Read all blocks from an APKINDEX.tar.gz into a list.
-
-    :index: the APKINDEX.tar.gz file.
-    :returns: all blocks in the APKINDEX, without restructuring them by
-              pkgname or removing duplicates with lower versions (use
-              parse() if you need these features).
-    """
-    block_lines = index.read_lines()
-
-    # Parse lines into blocks
-    return [
-        ApkPackage.from_apkindex_block(b.strip().splitlines())
-        for b in block_lines
-        if len(b.strip()) > 0
-    ]
-
-
 # FIXME: come up with something better here...
 def cache_key(index: Apkindex) -> int:
     return hash(index)

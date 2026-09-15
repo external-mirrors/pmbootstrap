@@ -4,6 +4,8 @@
 import tarfile
 from pathlib import Path
 
+from pmb.core.apk_package import ApkPackage
+
 
 class Apkindex(Path):
     def read_lines(self) -> list[str]:
@@ -16,3 +18,18 @@ class Apkindex(Path):
         else:
             with self.open("r", encoding="utf-8") as handle:
                 return handle.read().split("\n\n")
+
+    def get_apk_packages(self) -> list[ApkPackage]:
+        """
+        Read all blocks from the APKINDEX a list.
+
+        :returns: all blocks in the APKINDEX, without restructuring them by
+                  pkgname or removing duplicates with lower versions.
+        """
+        ret = [
+            ApkPackage.from_apkindex_block(b.strip().splitlines())
+            for b in self.read_lines()
+            if len(b.strip()) > 0
+        ]
+
+        return ret
