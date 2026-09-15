@@ -16,11 +16,12 @@ import pmb.helpers.run
 import pmb.parse
 import pmb.parse.kconfig
 from pmb.core import Chroot
+from pmb.core.apk_package import Apkbuild
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
-from pmb.types import Apkbuild, Env, RunOutputTypeDefault
+from pmb.types import Env, RunOutputTypeDefault
 
 
 class FragmentValidationFailedError(RuntimeError): ...

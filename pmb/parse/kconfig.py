@@ -8,10 +8,10 @@ from typing import Literal, overload
 import pmb.helpers.pmaports
 import pmb.parse
 import pmb.parse.kconfigcheck
+from pmb.core.apk_package import Apkbuild
 from pmb.core.arch import Arch
 from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
-from pmb.types import Apkbuild
 
 
 def is_set(config: str, option: str) -> bool:
