@@ -12,12 +12,13 @@ from pathlib import Path
 from typing import Any, Literal, overload
 
 import pmb.parse
+from pmb.core.apk_package import Apkbuild
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.core.pkgrepo import pkgrepo_iter_package_dirs
 from pmb.helpers import logging
 from pmb.meta import Cache
-from pmb.types import Apkbuild, WithExtraRepos
+from pmb.types import WithExtraRepos
 
 
 @Cache("with_extra_repos")

@@ -17,13 +17,14 @@ import pmb.parse
 import pmb.parse.apkindex
 from pmb.build.other import BuildStatus
 from pmb.core import Chroot
+from pmb.core.apk_package import Apkbuild
 from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.core.context import Context, get_context
 from pmb.core.pkgrepo import pkgrepo_relative_path
 from pmb.helpers import logging
 from pmb.helpers.exceptions import BuildFailedError, CommandFailedError, NonBugError
-from pmb.types import Apkbuild, CrossCompile
+from pmb.types import CrossCompile
 
 from .backend import BootstrapStage, run_abuild
 

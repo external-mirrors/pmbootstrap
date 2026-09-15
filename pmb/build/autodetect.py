@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import pmb.config
 import pmb.helpers.pmaports
+from pmb.core.apk_package import Apkbuild
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.meta import Cache
-from pmb.types import Apkbuild, CrossCompile
+from pmb.types import CrossCompile
 
 
 @Cache("package")

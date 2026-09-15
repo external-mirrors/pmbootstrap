@@ -14,11 +14,11 @@ import pmb.helpers.run
 import pmb.parse.apkindex
 import pmb.parse.version
 from pmb.core import Chroot
+from pmb.core.apk_package import Apkbuild
 from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.helpers import logging
-from pmb.types import Apkbuild
 
 
 def copy_to_buildpath(

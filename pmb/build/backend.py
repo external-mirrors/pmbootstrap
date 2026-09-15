@@ -7,11 +7,12 @@ from pathlib import Path
 import pmb.chroot
 import pmb.helpers.run
 from pmb.core import Context
+from pmb.core.apk_package import Apkbuild
 from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
 from pmb.core.pkgrepo import pkgrepo_name, pkgrepo_paths
 from pmb.helpers import logging
-from pmb.types import Apkbuild, CrossCompile, Env, RunOutputTypeDefault
+from pmb.types import CrossCompile, Env, RunOutputTypeDefault
 
 
 class BootstrapStage(enum.IntEnum):

@@ -27,6 +27,7 @@ import pmb.parse._apkbuild
 import pmb.parse.deviceinfo
 from pmb.config.pmaports import DEVELOPMENT_CHANNEL
 from pmb.core import Config
+from pmb.core.apk_package import Apkbuild
 from pmb.core.chroot import Chroot
 from pmb.core.config import ServiceManagerConfig
 from pmb.core.context import Context, get_context
@@ -34,7 +35,7 @@ from pmb.core.pkgrepo import pkgrepo_default_path
 from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
 from pmb.parse.deviceinfo import Deviceinfo
-from pmb.types import Apkbuild, PmbArgs
+from pmb.types import PmbArgs
 
 
 def require_programs() -> None:

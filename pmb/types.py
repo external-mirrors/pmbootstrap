@@ -7,7 +7,7 @@ import enum
 import subprocess
 from argparse import Namespace
 from pathlib import Path
-from typing import Any, Literal, TypedDict
+from typing import Literal, TypedDict
 
 from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
@@ -141,7 +141,6 @@ RunOutputType = RunOutputTypeDefault | RunOutputTypePopen
 RunReturnType = str | int | subprocess.Popen[bytes]
 PathString = Path | str
 Env = dict[str, PathString]
-Apkbuild = dict[str, Any]
 ActionKConfig = Literal["check", "edit", "migrate", "generate"]
 
 # These types are not definitive / API, they exist to describe the current

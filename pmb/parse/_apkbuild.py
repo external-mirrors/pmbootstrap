@@ -9,11 +9,11 @@ from typing import Any, Final
 import pmb.config
 import pmb.helpers.devices
 import pmb.parse.version
+from pmb.core.apk_package import Apkbuild
 from pmb.core.context import get_context
 from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
 from pmb.meta import Cache
-from pmb.types import Apkbuild
 
 # sh variable name regex: https://stackoverflow.com/a/2821201/3527128
 

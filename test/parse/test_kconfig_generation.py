@@ -5,9 +5,9 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 import pmb.parse.kconfigcheck
+from pmb.core.apk_package import Apkbuild
 from pmb.core.arch import Arch
 from pmb.parse.kconfig import create_pmos_fragment
-from pmb.types import Apkbuild
 
 
 @pytest.fixture

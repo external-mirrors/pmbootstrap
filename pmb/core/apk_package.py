@@ -6,7 +6,6 @@ from json import JSONEncoder
 from typing import Any
 
 from pmb.core.arch import Arch
-from pmb.types import Apkbuild
 
 apkindex_map = {
     "A": "arch",
@@ -20,6 +19,8 @@ apkindex_map = {
 }
 
 required_apkindex_keys = ["arch", "pkgname", "version"]
+
+Apkbuild = dict[str, Any]
 
 
 class ApkPackage:
