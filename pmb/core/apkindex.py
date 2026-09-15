@@ -4,6 +4,8 @@
 import tarfile
 from pathlib import PosixPath
 
+from pmb.core.apk_package import ApkPackage
+
 
 # pathlib.Path can only be directly subclassed since python3.12
 class Apkindex(PosixPath):
@@ -19,3 +21,16 @@ class Apkindex(PosixPath):
         else:
             with self.open("r", encoding="utf-8") as handle:
                 return handle.read().split("\n\n")
+
+    def get_apk_packages(self) -> list[ApkPackage]:
+        """
+        Read all blocks from the APKINDEX a list.
+
+        :returns: all blocks in the APKINDEX, without restructuring them by
+                  pkgname or removing duplicates with lower versions.
+        """
+        return [
+            ApkPackage.from_apkindex_block(b.strip().splitlines())
+            for b in self.read_lines()
+            if len(b.strip()) > 0
+        ]

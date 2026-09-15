@@ -152,27 +152,21 @@ def zap_pkgs_local_mismatch(confirm: bool = True, dry: bool = False) -> None:
         "*/APKINDEX.tar.gz"
     ):
         # Delete packages without same version in aports
-        blocks = pmb.parse.apkindex.parse_blocks(Apkindex(apkindex_path))
-        for block in blocks:
-            pkgname = block.pkgname
-            origin = block.origin
-            version = block.version
-            arch = block.arch
-
+        for pkg in Apkindex(apkindex_path).get_apk_packages():
             # Apk path
-            apk_path_short = f"{arch}/{pkgname}-{version}.apk"
+            apk_path_short = f"{pkg.arch}/{pkg.pkgname}-{pkg.version}.apk"
             apk_path = f"{get_context().config.work}/packages/{channel}/{apk_path_short}"
             if not os.path.exists(apk_path):
                 logging.info(f"WARNING: Package mentioned in index not found: {apk_path_short}")
                 continue
 
-            if origin is None:
+            if pkg.origin is None:
                 raise RuntimeError("Can't handle virtual packages")
 
             # Aport path
-            aport_path = pmb.helpers.pmaports.find_optional(origin)
+            aport_path = pmb.helpers.pmaports.find_optional(pkg.origin)
             if not aport_path:
-                logging.info(f"% rm {apk_path_short} ({origin} aport not found)")
+                logging.info(f"% rm {apk_path_short} ({pkg.origin} aport not found)")
                 if not dry:
                     pmb.helpers.run.root(["rm", apk_path])
                     reindex = True
@@ -181,8 +175,8 @@ def zap_pkgs_local_mismatch(confirm: bool = True, dry: bool = False) -> None:
             # Clear out any binary apks that do not match what is in aports
             apkbuild = pmb.parse.apkbuild(aport_path)
             version_aport = f"{apkbuild['pkgver']}-r{apkbuild['pkgrel']}"
-            if version != version_aport:
-                logging.info(f"% rm {apk_path_short} ({origin} aport: {version_aport})")
+            if pkg.version != version_aport:
+                logging.info(f"% rm {apk_path_short} ({pkg.origin} aport: {version_aport})")
                 if not dry:
                     pmb.helpers.run.root(["rm", apk_path])
                     reindex = True
