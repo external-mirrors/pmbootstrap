@@ -1,7 +1,6 @@
 # Copyright 2023 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import collections
-import tarfile
 from typing import Literal, cast, overload
 
 import pmb.helpers.package
@@ -11,18 +10,6 @@ from pmb.core.apk_package import ApkPackage
 from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.helpers import logging
-
-
-def _read_apkindex(index: Apkindex) -> list[str]:
-    if tarfile.is_tarfile(index):
-        with (
-            tarfile.open(index, "r:gz") as tar,
-            tar.extractfile(tar.getmember("APKINDEX")) as handle,  # type:ignore[union-attr]
-        ):
-            return handle.read().decode().split("\n\n")
-    else:
-        with index.open("r", encoding="utf-8") as handle:
-            return handle.read().split("\n\n")
 
 
 @overload
@@ -173,7 +160,7 @@ def parse(
         else:
             clear_cache(index)
 
-    block_lines = _read_apkindex(index)
+    block_lines = index.read_lines()
 
     # The APKINDEX might be empty, for example if you run "pmbootstrap index" and have no local
     # packages
@@ -215,7 +202,7 @@ def parse_blocks(index: Apkindex) -> list[ApkPackage]:
               pkgname or removing duplicates with lower versions (use
               parse() if you need these features).
     """
-    block_lines = _read_apkindex(index)
+    block_lines = index.read_lines()
 
     # Parse lines into blocks
     return [
