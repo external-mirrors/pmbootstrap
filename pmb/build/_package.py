@@ -333,7 +333,7 @@ def process_package(
         # We allow this function to be called for packages that aren't in pmaports
         # and just do nothing in this case. However this can be quite confusing
         # when building an Alpine package with --src since we'll just do nothing
-        if pmb.parse.apkindex.providers(pkgname, arch, False):
+        if pmb.parse.apkindex.providers(pkgname, arch or Arch.native(), False):
             if from_src:
                 raise NonBugError(
                     f"Package {pkgname} is not in pmaports, but exists in Alpine."
@@ -542,7 +542,9 @@ def packages(
                 aport, apkbuild = get_apkbuild(pkgname)
                 if not aport or not apkbuild:
                     continue
-                bstatus = pmb.build.get_status(arch, apkbuild)
+                bstatus = pmb.build.get_status(
+                    arch or pmb.build.autodetect.arch(apkbuild), apkbuild
+                )
                 if bstatus.necessary():
                     if strict:
                         raise RuntimeError(

@@ -127,19 +127,16 @@ def get_repos_from_config(
 
 
 def apkindex_files(
-    arch: Arch | None = None, user_repository: bool = True, exclude_mirrors: list[str] = []
+    arch: Arch, user_repository: bool = True, exclude_mirrors: list[str] = []
 ) -> list[Apkindex]:
     """
     Get a list of outside paths to all resolved APKINDEX.tar.gz files for a specific arch.
 
-    :param arch: defaults to native
+    :param arch: the Arch
     :param user_repository: add path to index of locally built packages
     :param exclude_mirrors: list of mirrors to exclude (e.g. ["alpine", "pmaports"])
     :returns: list of absolute APKINDEX.tar.gz file paths
     """
-    if not arch:
-        arch = Arch.native()
-
     ret: list[Apkindex] = []
     # Local user repository (for packages compiled with pmbootstrap)
     if user_repository:
@@ -253,12 +250,12 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
     return True
 
 
-def alpine_apkindex(repo: str = "main", arch: Arch | None = None) -> Apkindex:
+def alpine_apkindex(repo: str, arch: Arch) -> Apkindex:
     """
     Get the path to a specific Alpine APKINDEX file on disk and download it if necessary.
 
     :param repo: Alpine repository name (e.g. "main")
-    :param arch: Alpine architecture (e.g. "armhf"), defaults to native arch.
+    :param arch: Alpine architecture (e.g. "armhf")
     :returns: full path to the APKINDEX file
     """
     # Repo sanity check
@@ -266,7 +263,6 @@ def alpine_apkindex(repo: str = "main", arch: Arch | None = None) -> Apkindex:
         raise RuntimeError(f"Invalid Alpine repository: {repo}")
 
     # Download the file
-    arch = arch or Arch.native()
     update(arch)
 
     # Find it on disk
