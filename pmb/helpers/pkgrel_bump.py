@@ -106,12 +106,13 @@ def auto_apkindex_package(
     # Find missing depends
     logging.verbose("{}: checking depends: {}".format(pkgname, ", ".join(apk.depends)))
     missing = []
+    indexes = pmb.helpers.repo.apkindex_files(arch)
     for depend in apk.depends:
         if depend.startswith("!"):
             # Ignore conflict-dependencies
             continue
 
-        providers = pmb.parse.apkindex.providers(depend, arch, must_exist=False)
+        providers = pmb.parse.apkindex.providers(depend, indexes, must_exist=False)
         if providers == {} and (
             # We're only interested in missing depends starting with "so:"
             # (which means dynamic libraries that the package was linked

@@ -219,27 +219,19 @@ def clear_cache(index: Apkindex) -> bool:
 
 def providers(
     package: str,
-    arch: Arch,
+    indexes: list[Apkindex],
     must_exist: bool = True,
-    indexes: list[Apkindex] | None = None,
-    user_repository: bool = True,
 ) -> dict[str, ApkPackage]:
     """
     Get all packages, which provide one package.
 
     :param package: of which you want to have the providers
-    :param arch: defaults to native arch, only relevant for indexes=None
+    :param indexes: list of APKINDEX.tar.gz files
     :param must_exist: When set to true, raise an exception when the package is
                        not provided at all.
-    :param indexes: list of APKINDEX.tar.gz files, defaults to all index files
-                    (depending on arch)
-    :param user_repository: add path to index of locally built packages
     :returns: list of parsed packages. Example for package="so:libGL.so.1":
         ``{"mesa-egl": ApkPackage, "libhybris": ApkPackage}``
     """
-    if not indexes:
-        indexes = pmb.helpers.repo.apkindex_files(arch, user_repository=user_repository)
-
     pkgname_with_op = package
     package = pmb.helpers.package.remove_operators(pkgname_with_op)
 
@@ -368,10 +360,10 @@ def package(
     :param user_repository: add path to index of locally built packages
     :returns: ApkPackage or None when the package was not found.
     """
+    if not indexes:
+        indexes = pmb.helpers.repo.apkindex_files(arch, user_repository=user_repository)
     # Provider with the same package
-    package_providers = providers(
-        package, arch, must_exist, indexes, user_repository=user_repository
-    )
+    package_providers = providers(package, indexes, must_exist)
 
     if package_providers:
         providers_priority = _provider_highest_priority(package_providers, package)
