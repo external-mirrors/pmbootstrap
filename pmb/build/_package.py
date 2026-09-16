@@ -513,8 +513,16 @@ def packages(
 
     logging.debug(f"Attempting to build: {', '.join(pkgnames)}")
 
-    # Get existing binary package indexes
-    pmb.helpers.repo.update(arch)
+    # Update relevant binary package indexes
+    update_arches = set()
+    if arch is None:
+        for pkgname in pkgnames:
+            _, apkbuild = get_apkbuild(pkgname)
+            if apkbuild is None:
+                continue  # Let process_package error out for us
+            update_arches.add(pmb.build.autodetect.arch(apkbuild))
+    for update_arch in update_arches:
+        pmb.helpers.repo.update(update_arch)
 
     # Process the packages we've been asked to build, queuing up any
     # dependencies that need building as well as the package itself
