@@ -242,7 +242,7 @@ def installed(suffix: Chroot = Chroot.native()) -> dict[str, pmb.core.apk_packag
               { "postmarketos-mkinitfs": ApkPackage }
 
     """
-    index = Apkindex(suffix / "lib/apk/db/installed")
+    index = Apkindex.from_installed_db(suffix)
     try:
         return {block.pkgname: block for block in index.get_apk_packages()}
     except FileNotFoundError:
