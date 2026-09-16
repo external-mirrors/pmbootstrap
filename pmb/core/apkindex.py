@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import tarfile
+from collections.abc import Generator
 from pathlib import PosixPath
 
 from pmb.core.apk_package import ApkPackage
 from pmb.core.chroot import Chroot
+from pmb.core.context import get_context
 
 
 # pathlib.Path can only be directly subclassed since python3.12
@@ -26,6 +28,13 @@ class Apkindex(PosixPath):
                   pkgname or removing duplicates with lower versions.
         """
         return cls(chroot / "lib/apk/db/installed")
+
+    @classmethod
+    def iter_package_indexes_for_channel(cls, channel: str) -> Generator[Apkindex]:
+        """Iterate over local package indexes for all arches of a channel."""
+        channel_path = get_context().config.work / "packages" / channel
+        for index_path in channel_path.glob("*/APKINDEX.tar.gz"):
+            yield cls(index_path)
 
     def read_lines(self) -> list[str]:
         if tarfile.is_tarfile(self):

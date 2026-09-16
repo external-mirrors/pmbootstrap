@@ -148,11 +148,9 @@ def zap_pkgs_local_mismatch(confirm: bool = True, dry: bool = False) -> None:
         return
 
     reindex = False
-    for apkindex_path in (get_context().config.work / "packages" / channel).glob(
-        "*/APKINDEX.tar.gz"
-    ):
+    for apkindex in Apkindex.iter_package_indexes_for_channel(channel):
         # Delete packages without same version in aports
-        for pkg in Apkindex(apkindex_path).get_apk_packages():
+        for pkg in apkindex.get_apk_packages():
             # Apk path
             apk_path_short = f"{pkg.arch}/{pkg.pkgname}-{pkg.version}.apk"
             apk_path = f"{get_context().config.work}/packages/{channel}/{apk_path_short}"
