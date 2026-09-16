@@ -161,8 +161,8 @@ def init() -> None:
     """Download, verify, extract $WORK/apk.static."""
     # Get and parse the APKINDEX. alpine_apkindex() will implicitly
     # download the APKINDEX file if it's missing.
-    apkindex = pmb.helpers.repo.alpine_apkindex("main")
-    index_data = pmb.parse.apkindex.package("apk-tools-static", indexes=[apkindex])
+    apkindex = pmb.helpers.repo.alpine_apkindex("main", Arch.native())
+    index_data = pmb.parse.apkindex.package("apk-tools-static", Arch.native(), indexes=[apkindex])
     version = index_data.version
 
     # Verify the apk-tools-static version

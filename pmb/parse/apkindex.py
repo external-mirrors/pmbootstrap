@@ -219,7 +219,7 @@ def clear_cache(index: Apkindex) -> bool:
 
 def providers(
     package: str,
-    arch: Arch | None = None,
+    arch: Arch,
     must_exist: bool = True,
     indexes: list[Apkindex] | None = None,
     user_repository: bool = True,
@@ -331,7 +331,7 @@ def _provider_shortest(providers: dict[str, ApkPackage], pkgname: str) -> ApkPac
 @overload
 def package(
     package: str,
-    arch: Arch | None = ...,
+    arch: Arch,
     must_exist: Literal[True] = ...,
     indexes: list[Apkindex] | None = ...,
     user_repository: bool = ...,
@@ -341,7 +341,7 @@ def package(
 @overload
 def package(
     package: str,
-    arch: Arch | None = ...,
+    arch: Arch,
     must_exist: bool = ...,
     indexes: list[Apkindex] | None = ...,
     user_repository: bool = ...,
@@ -351,7 +351,7 @@ def package(
 # This can't be cached because the APKINDEX can change during pmbootstrap build!
 def package(
     package: str,
-    arch: Arch | None = None,
+    arch: Arch,
     must_exist: bool = True,
     indexes: list[Apkindex] | None = None,
     user_repository: bool = True,
