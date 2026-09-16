@@ -462,7 +462,7 @@ def packages(
         cross = cross or pmb.build.autodetect.crosscompile(apkbuild, pkg_arch)
         pkgver = get_pkgver(apkbuild["pkgver"], src is None)
         channel = pmb.config.pmaports.read_config(aports)["channel"]
-        index_data = pmb.parse.apkindex.package(name, arch, False)
+        index_data = pmb.parse.apkindex.package(name, pkg_arch, False)
         # Make sure we aren't building a package that will never be used! This can happen if
         # building with --src with an outdated pmaports checkout. Unless --force is used
         # in which case we assume it was intentional.
