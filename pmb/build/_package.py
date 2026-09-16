@@ -323,7 +323,6 @@ def process_package(
     queue_build: Callable,
     pkgname: str,
     arch: Arch | None,
-    fallback_arch: Arch,
     force: bool,
     from_src: bool,
 ) -> list[str]:
@@ -334,7 +333,7 @@ def process_package(
         # We allow this function to be called for packages that aren't in pmaports
         # and just do nothing in this case. However this can be quite confusing
         # when building an Alpine package with --src since we'll just do nothing
-        if pmb.parse.apkindex.providers(pkgname, fallback_arch, False):
+        if pmb.parse.apkindex.providers(pkgname, arch, False):
             if from_src:
                 raise NonBugError(
                     f"Package {pkgname} is not in pmaports, but exists in Alpine."
@@ -514,24 +513,15 @@ def packages(
 
     logging.debug(f"Attempting to build: {', '.join(pkgnames)}")
 
-    # We sorta-kind maybe supported building packages for multiple architectures in
-    # a single called to packages(). We need to do a check to make sure that the user
-    # didn't specify a package that doesn't exist, and we can't just check the source repo
-    # since we might get called with some perhaps bogus packages that do exist in the binary
-    # repo but not in the source one, but we need to error if we get a package that doesn't
-    # exist anywhere, as something is clearly wrong for that to happen.
-    # The problem is the APKINDEX parsing code doesn't have a way to check all architectures
-    # so we need this hack.
-    fallback_arch = arch if arch is not None else pmb.build.autodetect.arch(pkgnames[0])
     # Get existing binary package indexes
-    pmb.helpers.repo.update(fallback_arch)
+    pmb.helpers.repo.update(arch)
 
     # Process the packages we've been asked to build, queuing up any
     # dependencies that need building as well as the package itself
     all_dependencies: list[str] = []
     for pkgname in pkgnames:
         all_dependencies += process_package(
-            context, queue_build, pkgname, arch, fallback_arch, force, src is not None
+            context, queue_build, pkgname, arch, force, src is not None
         )
 
     # If any of our common build packages need to be built and are missing, then add them
