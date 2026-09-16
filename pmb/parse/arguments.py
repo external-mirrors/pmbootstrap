@@ -1130,9 +1130,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--arch",
         choices=arch_choices,
         default=None,
-        help="CPU architecture to build for (default: "
-        f"{arch_native} or first available architecture in"
-        " APKBUILD)",
+        help="CPU architecture to build for (default: autodetected for every package)",
         type=Arch.from_str,
     )
     build.add_argument("--force", action="store_true", help="even build if not necessary")
