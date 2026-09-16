@@ -423,7 +423,7 @@ def packages(
     Build a package and its dependencies with Alpine Linux' abuild.
 
     :param pkgname: package name to be built, as specified in the APKBUILD
-    :param arch: architecture we're building for (default: native)
+    :param arch: architecture we're building for (default: autodetected)
     :param force: always build, even if not necessary
     :param strict: avoid building with irrelevant dependencies installed by
                    letting abuild install and uninstall all dependencies.
