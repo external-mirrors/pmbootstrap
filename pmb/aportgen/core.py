@@ -177,6 +177,7 @@ def get_upstream_aport(pkgname: str, arch: Arch | None = None, retain_branch: bo
     :returns: absolute path on disk where the Alpine aport is checked out
               example: /opt/pmbootstrap_work/cache_git/aports/upstream/main/gcc
     """
+    arch = arch or Arch.native()
     # APKBUILD
     pmb.helpers.git.clone("aports_upstream")
     aports_upstream_path = get_context().config.work / "cache_git/aports_upstream"
