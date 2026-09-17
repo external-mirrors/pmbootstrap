@@ -18,21 +18,18 @@ def depends_for_sonames(libraries: dict[str, str], arch_libc: Arch) -> list[str]
     this leads to our cross gccs immediately breaking once Alpine gcc packages
     change. So we figure out depends on our own here.
     """
-    pmb.helpers.repo.update(arch_libc)
-    apkindex_main = pmb.helpers.repo.apkindex_files(
-        arch_libc, user_repository=False, exclude_mirrors=["pmaports", "systemd"]
-    )[0]
-    apkindex = pmb.parse.apkindex.parse(apkindex_main, True)
+    apkindex_main = pmb.helpers.repo.alpine_apkindex("main", arch_libc)
+    providers = pmb.parse.apkindex.parse(apkindex_main, True)
 
     result: dict[str, str] = {}
     for pattern_soname in libraries:
         pattern_pkgname = libraries[pattern_soname]
 
-        for provide in apkindex:
+        for provide, packages in providers.items():
             if not fnmatch.fnmatch(provide, pattern_soname):
                 continue
             match = None
-            for pkgname in apkindex[provide]:
+            for pkgname in packages:
                 if fnmatch.fnmatch(pkgname, pattern_pkgname):
                     logging.info(f"{provide}: provided by {pkgname}")
                     match = pkgname
