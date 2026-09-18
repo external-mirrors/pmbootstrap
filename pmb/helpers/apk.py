@@ -11,6 +11,7 @@ import pmb.helpers.repo
 import pmb.helpers.run
 import pmb.helpers.run_core
 import pmb.parse.version
+from pmb.core.apk_repo import ApkRepo
 from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
 from pmb.core.context import get_context
@@ -30,13 +31,11 @@ def update_repository_list(
     """
     # Read old entries or create folder structure
     path = root / "etc/apk/repositories"
-    lines_old: list[str] = []
+    # Read all old lines
+    lines_old: list[ApkRepo] = []
     if path.exists():
-        # Read all old lines
-        lines_old = []
         with path.open() as handle:
-            for line in handle:
-                lines_old.append(line[:-1])
+            lines_old.extend(ApkRepo(line[:-1]) for line in handle)
     else:
         pmb.helpers.run.root(["mkdir", "-p", path.parent])
 
@@ -51,13 +50,13 @@ def update_repository_list(
     logging.debug(f"({root.name}) update /etc/apk/repositories")
     if path.exists():
         pmb.helpers.run.root(["rm", path])
-    for line in lines_new:
-        pmb.helpers.run.root(["sh", "-c", f"echo {shlex.quote(line)} >> {path}"])
+    for line_new in lines_new:
+        pmb.helpers.run.root(["sh", "-c", f"echo {shlex.quote(str(line_new))} >> {path}"])
 
     # Verify that we properly wrote the data
     with path.open() as handle:
-        lines_old = handle.read().splitlines()
-        if lines_old != lines_new:
+        lines_written = handle.read().splitlines()
+        if lines_written != [str(l) for l in lines_new]:
             raise RuntimeError(f"Failed to update: {path}: old: {lines_old}, new: {lines_new}")
 
 
@@ -171,7 +170,7 @@ def _prepare_cmd(command: Sequence[PathString], chroot: Chroot | None) -> list[s
         user_repository=config.work / "packages", mirrors_exclude=True
     )
     for repo in local_repos:
-        command_.extend(["--repository", repo])
+        command_.extend(["--repository", str(repo)])
 
     if get_context().offline:
         command_.append("--no-network")

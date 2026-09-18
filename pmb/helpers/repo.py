@@ -16,6 +16,7 @@ from typing import Literal
 import pmb.config.pmaports
 import pmb.helpers.http
 import pmb.helpers.run
+from pmb.core.apk_repo import ApkRepo
 from pmb.core.apkindex import Apkindex
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
@@ -25,7 +26,7 @@ from pmb.helpers.exceptions import NonBugError
 from pmb.meta import Cache
 
 
-def apkrepo_hash(url: str, length: int = 8) -> str:
+def apkrepo_hash(url: ApkRepo, length: int = 8) -> str:
     r"""
     Generate the hash that APK adds to the APKINDEX and apk packages in its apk cache folder.
 
@@ -41,7 +42,7 @@ def apkrepo_hash(url: str, length: int = 8) -> str:
     apk_defines.h: APK_CACHE_CSUM_BYTES
     database.c: apk_repo_format_cache_index()
     """
-    binary = hashlib.sha1(url.encode("utf-8"), usedforsecurity=False).digest()
+    binary = hashlib.sha1(str(url).encode("utf-8"), usedforsecurity=False).digest()
     xd = "0123456789abcdefghijklmnopqrstuvwxyz"
     csum_bytes = int(length / 2)
 
@@ -58,7 +59,7 @@ def apkrepo_hash(url: str, length: int = 8) -> str:
 @Cache("user_repository", "mirrors_exclude")
 def get_repos_from_config(
     user_repository: Path | None = None, mirrors_exclude: list[str] | Literal[True] = []
-) -> list[str]:
+) -> list[ApkRepo]:
     """
     Get a list of repository URLs, as they are in /etc/apk/repositories.
 
@@ -68,11 +69,13 @@ def get_repos_from_config(
     :returns: list of mirror strings, like ["/mnt/pmbootstrap/packages",
                                             "http://...", ...]
     """
-    ret: list[str] = []
+    ret: list[ApkRepo] = []
 
     # Local user repository (for packages compiled with pmbootstrap)
     if user_repository:
-        ret.extend(str(user_repository / channel) for channel in pmb.config.pmaports.all_channels())
+        ret.extend(
+            ApkRepo(user_repository / channel) for channel in pmb.config.pmaports.all_channels()
+        )
 
     if mirrors_exclude is True:
         return ret
@@ -116,8 +119,8 @@ def get_repos_from_config(
 
             for mirrordir in mirrordirs:
                 url = os.path.join(mirror, mirrordir)
-                if url not in ret:
-                    ret.append(url)
+                if ApkRepo(url) not in ret:
+                    ret.append(ApkRepo(url))
 
     return ret
 
@@ -250,6 +253,8 @@ def alpine_apkindex(repo: str, arch: Arch) -> Apkindex:
 
     # Find it on disk
     channel_cfg = pmb.config.pmaports.read_config_channel()
-    repo_link = f"{get_context().config.mirrors['alpine']}{channel_cfg['mirrordir_alpine']}/{repo}"
+    repo_link = ApkRepo(
+        f"{get_context().config.mirrors['alpine']}{channel_cfg['mirrordir_alpine']}/{repo}"
+    )
     cache_folder = get_context().config.work / (f"cache_apk_{arch}")
     return Apkindex(cache_folder / apkrepo_hash(repo_link))
