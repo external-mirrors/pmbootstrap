@@ -187,13 +187,13 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
     for url in get_repos_from_config(None):
         for architecture in architectures:
             # APKINDEX file name from the URL
-            url_full = f"{url}/{architecture}/APKINDEX.tar.gz"
+            remote_index = f"{url}/{architecture}/APKINDEX.tar.gz"
             cache_apk_outside = get_context().config.work / f"cache_apk_{architecture}"
-            apkindex = cache_apk_outside / f"{apkindex_hash(url)}"
+            apkindex = Apkindex(cache_apk_outside, apkindex_hash(url))
 
             # Find update reason, possibly skip non-existing or known 404 files
             reason = None
-            if not os.path.exists(apkindex):
+            if not apkindex.exists():
                 if existing_only:
                     continue
                 reason = "file does not exist yet"
@@ -205,8 +205,8 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
                 continue
 
             # Update outdated and outdated_arches
-            logging.debug("APKINDEX outdated (" + reason + "): " + url_full)
-            outdated[url_full] = apkindex
+            logging.debug("APKINDEX outdated (%s): %s", reason, remote_index)
+            outdated[remote_index] = apkindex
             if architecture not in outdated_arches:
                 outdated_arches.append(architecture)
 
@@ -223,9 +223,9 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
 
     # Download and move to right location
     missing_ignored = False
-    for i, (url, target) in enumerate(outdated.items()):
+    for i, (remote_index, target) in enumerate(outdated.items()):
         pmb.helpers.cli.progress_print(i / len(outdated))
-        temp = pmb.helpers.http.download(url, "APKINDEX", False, logging.DEBUG, True, True)
+        temp = pmb.helpers.http.download(remote_index, "APKINDEX", False, logging.DEBUG, True, True)
         if not temp:
             if (
                 os.environ.get("PMB_APK_FORCE_MISSING_REPOSITORIES") == "1"
