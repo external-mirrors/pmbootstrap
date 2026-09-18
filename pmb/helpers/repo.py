@@ -25,7 +25,7 @@ from pmb.helpers.exceptions import NonBugError
 from pmb.meta import Cache
 
 
-def apkindex_hash(url: str, length: int = 8) -> Path:
+def apkrepo_hash(url: str, length: int = 8) -> str:
     r"""
     Generate the hash that APK adds to the APKINDEX and apk packages in its apk cache folder.
 
@@ -50,7 +50,7 @@ def apkindex_hash(url: str, length: int = 8) -> Path:
         ret += xd[(binary[i] >> 4) & 0xF]
         ret += xd[binary[i] & 0xF]
 
-    return Path(f"APKINDEX.{ret}.tar.gz")
+    return f"APKINDEX.{ret}.tar.gz"
 
 
 # FIXME: make config.mirrors a normal dict
@@ -149,7 +149,7 @@ def apkindex_files(
     ret.extend(
         Apkindex(file)
         for url in get_repos_from_config(None, exclude_mirrors)
-        if (file := get_context().config.work / f"cache_apk_{arch}" / apkindex_hash(url)).exists()
+        if (file := get_context().config.work / f"cache_apk_{arch}" / apkrepo_hash(url)).exists()
     )
 
     return ret
@@ -189,7 +189,7 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
             # APKINDEX file name from the URL
             remote_index = f"{url}/{architecture}/APKINDEX.tar.gz"
             cache_apk_outside = get_context().config.work / f"cache_apk_{architecture}"
-            apkindex = Apkindex(cache_apk_outside, apkindex_hash(url))
+            apkindex = Apkindex(cache_apk_outside, apkrepo_hash(url))
 
             # Find update reason, possibly skip non-existing or known 404 files
             reason = None
@@ -269,4 +269,4 @@ def alpine_apkindex(repo: str, arch: Arch) -> Apkindex:
     channel_cfg = pmb.config.pmaports.read_config_channel()
     repo_link = f"{get_context().config.mirrors['alpine']}{channel_cfg['mirrordir_alpine']}/{repo}"
     cache_folder = get_context().config.work / (f"cache_apk_{arch}")
-    return Apkindex(cache_folder / apkindex_hash(repo_link))
+    return Apkindex(cache_folder / apkrepo_hash(repo_link))
