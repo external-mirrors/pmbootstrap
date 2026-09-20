@@ -57,7 +57,7 @@ def apkrepo_hash(url: ApkRepo, length: int = 8) -> str:
 # FIXME: make config.mirrors a normal dict
 # mypy: disable-error-code="literal-required"
 @Cache("user_repository", "mirrors_exclude")
-def get_repos_from_config(
+def _get_repos_from_config(
     user_repository: Path | None = None, mirrors_exclude: list[str] | Literal[True] = []
 ) -> list[ApkRepo]:
     """
@@ -136,7 +136,7 @@ def apkindex_files(
     # Resolve the APKINDEX.$HASH.tar.gz files
     ret.extend(
         Apkindex(file)
-        for url in get_repos_from_config(None, exclude_mirrors)
+        for url in _get_repos_from_config(None, exclude_mirrors)
         if (file := get_context().config.work / f"cache_apk_{arch}" / apkrepo_hash(url)).exists()
     )
 
@@ -168,7 +168,7 @@ def update(arch: Arch, force: bool = False, existing_only: bool = False) -> bool
     # Find outdated APKINDEX files. Formats:
     # outdated: {URL: apkindex, ... }
     outdated = {}
-    for url in get_repos_from_config(None):
+    for url in ApkRepo.get_from_config():
         # APKINDEX file name from the URL
         remote_index = f"{url}/{arch}/APKINDEX.tar.gz"
         cache_apk_outside = get_context().config.work / f"cache_apk_{arch}"

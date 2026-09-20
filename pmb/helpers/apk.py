@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pmb.config.pmaports
 import pmb.helpers.cli
-import pmb.helpers.repo
 import pmb.helpers.run
 import pmb.helpers.run_core
 import pmb.parse.version
@@ -29,10 +28,11 @@ def update_repository_list(
     """
     repos_old = ApkRepo.from_repositories_file(root)
 
-    user_repo_dir = Path("/mnt/pmbootstrap/packages") if user_repository else None
-
     # Up to date: Save cache, return
-    repos_new = pmb.helpers.repo.get_repos_from_config(user_repository=user_repo_dir)
+    repos_new: list[ApkRepo] = []
+    if user_repository:
+        repos_new = ApkRepo.get_local(Path("/mnt/pmbootstrap/packages"))
+    repos_new.extend(ApkRepo.get_from_config())
     if repos_old == repos_new:
         return
 
@@ -151,10 +151,7 @@ def _prepare_cmd(command: Sequence[PathString], chroot: Chroot | None) -> list[s
         else:
             command_.extend(["--cache-dir", str(cache_dir)])
 
-    local_repos = pmb.helpers.repo.get_repos_from_config(
-        user_repository=config.work / "packages", mirrors_exclude=True
-    )
-    for repo in local_repos:
+    for repo in ApkRepo.get_local(config.work / "packages"):
         command_.extend(["--repository", str(repo)])
 
     if get_context().offline:

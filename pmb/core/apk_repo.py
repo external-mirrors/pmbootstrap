@@ -2,10 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
+import os.path
 import shlex
 from pathlib import Path
 
+import pmb.config.pmaports
 import pmb.helpers.run
+from pmb.core.context import get_context
+from pmb.core.pkgrepo import pkgrepo_names
 from pmb.helpers import logging
 
 
@@ -32,6 +36,43 @@ class ApkRepo:
             with path.open() as handle:
                 repos.extend(cls(line[:-1]) for line in handle)
         return repos
+
+    @classmethod
+    def get_local(cls, root: Path) -> list[ApkRepo]:
+        return [cls(root / channel) for channel in pmb.config.pmaports.all_channels()]
+
+    @classmethod
+    def get_from_config(cls) -> list[ApkRepo]:
+        ret: list[ApkRepo] = []
+        config = get_context().config
+
+        # Get mirrordirs from channels.cfg (postmarketOS mirrordir is the same as
+        # the pmaports branch of the channel, no need to make it more complicated)
+        channel_cfg = pmb.config.pmaports.read_config_channel()
+        release_pmos = channel_cfg["branch_pmaports"]
+        release_alpine = channel_cfg["mirrordir_alpine"]
+
+        # ["pmaports", "systemd", "alpine"]
+        for repo in [*pkgrepo_names(), "alpine"]:
+            # Allow adding a custom mirror in front of the real mirror. This is used
+            # in bpo to build with a WIP repository in addition to the final
+            # repository.
+            for suffix in ["_custom", ""]:
+                mirror = config.mirrors[f"{repo}{suffix}"]
+
+                # If repo is disabled (e.g: during bootstrap), skip it
+                if mirror.lower() == "none":
+                    continue
+
+                if repo == "alpine":
+                    alpine_repos = [f"{release_alpine}/main", f"{release_alpine}/community"]
+                    if release_alpine == "edge":
+                        alpine_repos.append(f"{release_alpine}/testing")
+                    ret.extend(cls(os.path.join(mirror, r)) for r in alpine_repos)
+                else:
+                    ret.append(cls(os.path.join(mirror, release_pmos)))
+
+        return ret
 
     @staticmethod
     def write_repositories_file(root: Path, repos: list[ApkRepo]) -> None:
