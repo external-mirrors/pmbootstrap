@@ -88,7 +88,7 @@ def get_repos_from_config(
     release_pmos = channel_cfg["branch_pmaports"]
     release_alpine = channel_cfg["mirrordir_alpine"]
 
-    # ["pmaports", "systemd", "alpine", "plasma-nightly"]
+    # ["pmaports", "systemd", "alpine"]
     for repo in [*pkgrepo_names(), "alpine"]:
         if repo in mirrors_exclude:
             continue
