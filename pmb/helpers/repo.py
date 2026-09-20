@@ -85,10 +85,6 @@ def get_repos_from_config(
     mirrordir_pmos = channel_cfg["branch_pmaports"]
     mirrordir_alpine = channel_cfg["mirrordir_alpine"]
 
-    # Don't add the systemd mirror if systemd is disabled
-    if not pmb.config.is_systemd_selected(config):
-        mirrors_exclude.append("systemd")
-
     # ["pmaports", "systemd", "alpine", "plasma-nightly"]
     for repo in [*pkgrepo_names(), "alpine"]:
         if repo in mirrors_exclude:
