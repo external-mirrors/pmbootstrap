@@ -21,6 +21,7 @@ import pmb.install.blockdevice
 import pmb.install.recovery
 import pmb.install.ui
 from pmb.core import Chroot, ChrootType, Config
+from pmb.core.apk_repo import ApkRepo
 from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.helpers import logging
@@ -198,9 +199,9 @@ def configure_apk(install_local_pkgs: bool) -> None:
         pmb.helpers.run.root(["cp", f, rootfs / "var/cache/apk/"])
 
     # Disable pmbootstrap repository
-    pmb.chroot.root(
-        ["sed", "-i", r"/\/mnt\/pmbootstrap\/packages/d", "/mnt/install/etc/apk/repositories"]
-    )
+    apk_repos = ApkRepo.from_repositories_file(rootfs)
+    apk_repos = [r for r in apk_repos if not str(r).startswith("/mnt/pmbootstrap/packages")]
+    ApkRepo.write_repositories_file(rootfs, apk_repos)
 
 
 def set_user(config: Config) -> None:

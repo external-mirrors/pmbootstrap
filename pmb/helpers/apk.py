@@ -1,7 +1,6 @@
 # Copyright 2023 Johannes Marbach, Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
-import shlex
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -15,7 +14,6 @@ from pmb.core.apk_repo import ApkRepo
 from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
 from pmb.core.context import get_context
-from pmb.helpers import logging
 from pmb.types import PathString, RunOutputTypePopen
 
 
@@ -29,35 +27,22 @@ def update_repository_list(
 
     :param root: the root directory to operate on
     """
-    # Read old entries or create folder structure
-    path = root / "etc/apk/repositories"
-    # Read all old lines
-    lines_old: list[ApkRepo] = []
-    if path.exists():
-        with path.open() as handle:
-            lines_old.extend(ApkRepo(line[:-1]) for line in handle)
+    repos_old = ApkRepo.from_repositories_file(root)
 
     user_repo_dir = Path("/mnt/pmbootstrap/packages") if user_repository else None
 
     # Up to date: Save cache, return
-    lines_new = pmb.helpers.repo.get_repos_from_config(user_repository=user_repo_dir)
-    if lines_old == lines_new:
+    repos_new = pmb.helpers.repo.get_repos_from_config(user_repository=user_repo_dir)
+    if repos_old == repos_new:
         return
 
-    # Update the file
-    logging.debug(f"({root.name}) update /etc/apk/repositories")
-    if path.exists():
-        pmb.helpers.run.root(["rm", path])
-    else:
-        pmb.helpers.run.root(["mkdir", "-p", path.parent])
-    for line_new in lines_new:
-        pmb.helpers.run.root(["sh", "-c", f"echo {shlex.quote(str(line_new))} >> {path}"])
-
-    # Verify that we properly wrote the data
-    with path.open() as handle:
-        lines_written = handle.read().splitlines()
-        if lines_written != [str(l) for l in lines_new]:
-            raise RuntimeError(f"Failed to update: {path}: old: {lines_old}, new: {lines_new}")
+    # Write and verify that we properly wrote the data
+    ApkRepo.write_repositories_file(root, repos_new)
+    repos_written = ApkRepo.from_repositories_file(root)
+    if repos_written != repos_new:
+        raise RuntimeError(
+            f"Failed to update repositories under {root}: old: {repos_old}, new: {repos_new}"
+        )
 
 
 def _prepare_fifo() -> Path:
