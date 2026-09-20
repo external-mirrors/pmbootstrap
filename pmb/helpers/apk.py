@@ -36,8 +36,6 @@ def update_repository_list(
     if path.exists():
         with path.open() as handle:
             lines_old.extend(ApkRepo(line[:-1]) for line in handle)
-    else:
-        pmb.helpers.run.root(["mkdir", "-p", path.parent])
 
     user_repo_dir = Path("/mnt/pmbootstrap/packages") if user_repository else None
 
@@ -50,6 +48,8 @@ def update_repository_list(
     logging.debug(f"({root.name}) update /etc/apk/repositories")
     if path.exists():
         pmb.helpers.run.root(["rm", path])
+    else:
+        pmb.helpers.run.root(["mkdir", "-p", path.parent])
     for line_new in lines_new:
         pmb.helpers.run.root(["sh", "-c", f"echo {shlex.quote(str(line_new))} >> {path}"])
 
