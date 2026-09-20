@@ -114,8 +114,7 @@ def get_repos_from_config(
 
             for mirrordir in mirrordirs:
                 url = os.path.join(mirror, mirrordir)
-                if ApkRepo(url) not in ret:
-                    ret.append(ApkRepo(url))
+                ret.append(ApkRepo(url))
 
     return ret
 

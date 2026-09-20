@@ -51,7 +51,8 @@ def pkgrepo_names(with_extra_repos: WithExtraRepos = WithExtraRepos.DEFAULT) -> 
     may be named differently. So we hardcode the name here.
     """
     names = [aports.name for aports in pkgrepo_paths(with_extra_repos)]
-    names[-1] = "pmaports"
+    names[0] = "pmaports" if names[0] != "pmaports" else names[0]
+    names.reverse()
     return names
 
 
