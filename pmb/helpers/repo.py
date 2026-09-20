@@ -99,13 +99,8 @@ def get_repos_from_config(
         for suffix in ["_custom", ""]:
             mirror = config.mirrors[f"{repo}{suffix}"]
 
-            # During bootstrap / bpo testing we run without a pmOS binary repo
+            # If repo is disabled (e.g: during bootstrap), skip it
             if mirror.lower() == "none":
-                if suffix != "_custom":
-                    logging.warn_once(
-                        f"NOTE: Skipping mirrors.{repo} for /etc/apk/repositories (is configured"
-                        ' as "none")'
-                    )
                 continue
 
             mirrordirs = []
