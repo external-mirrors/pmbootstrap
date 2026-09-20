@@ -85,8 +85,8 @@ def get_repos_from_config(
     # Get mirrordirs from channels.cfg (postmarketOS mirrordir is the same as
     # the pmaports branch of the channel, no need to make it more complicated)
     channel_cfg = pmb.config.pmaports.read_config_channel()
-    mirrordir_pmos = channel_cfg["branch_pmaports"]
-    mirrordir_alpine = channel_cfg["mirrordir_alpine"]
+    release_pmos = channel_cfg["branch_pmaports"]
+    release_alpine = channel_cfg["mirrordir_alpine"]
 
     # ["pmaports", "systemd", "alpine", "plasma-nightly"]
     for repo in [*pkgrepo_names(), "alpine"]:
@@ -103,18 +103,13 @@ def get_repos_from_config(
             if mirror.lower() == "none":
                 continue
 
-            mirrordirs = []
             if repo == "alpine":
-                # FIXME: This is a bit of a mess
-                mirrordirs = [f"{mirrordir_alpine}/main", f"{mirrordir_alpine}/community"]
-                if mirrordir_alpine == "edge":
-                    mirrordirs.append(f"{mirrordir_alpine}/testing")
+                alpine_repos = [f"{release_alpine}/main", f"{release_alpine}/community"]
+                if release_alpine == "edge":
+                    alpine_repos.append(f"{release_alpine}/testing")
+                ret.extend(ApkRepo(os.path.join(mirror, r)) for r in alpine_repos)
             else:
-                mirrordirs = [mirrordir_pmos]
-
-            for mirrordir in mirrordirs:
-                url = os.path.join(mirror, mirrordir)
-                ret.append(ApkRepo(url))
+                ret.append(ApkRepo(os.path.join(mirror, release_pmos)))
 
     return ret
 
