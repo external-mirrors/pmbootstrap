@@ -242,7 +242,7 @@ def alpine_apkindex(repo: str, arch: Arch) -> Apkindex:
     :returns: full path to the APKINDEX file
     """
     # Repo sanity check
-    if repo not in ["main", "community", "testing", "non-free"]:
+    if repo not in ["main", "community", "testing"]:
         raise RuntimeError(f"Invalid Alpine repository: {repo}")
 
     # Download the file
