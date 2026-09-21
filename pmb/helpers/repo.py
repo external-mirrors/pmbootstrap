@@ -8,7 +8,6 @@ See also:
 - pmb/helpers/package.py (work with both)
 """
 
-import hashlib
 import os
 from pathlib import Path
 from typing import Literal
@@ -24,34 +23,6 @@ from pmb.core.pkgrepo import pkgrepo_names
 from pmb.helpers import logging
 from pmb.helpers.exceptions import NonBugError
 from pmb.meta import Cache
-
-
-def apkrepo_hash(url: ApkRepo, length: int = 8) -> str:
-    r"""
-    Generate the hash that APK adds to the APKINDEX and apk packages in its apk cache folder.
-
-    It is the "12345678" part in this example:
-    "APKINDEX.12345678.tar.gz".
-
-    :param length: The length of the hash in the output file.
-
-    See also: official implementation in apk-tools:
-    <https://git.alpinelinux.org/cgit/apk-tools/>
-
-    blob.c: apk_blob_push_hexdump(), "const char \\*xd"
-    apk_defines.h: APK_CACHE_CSUM_BYTES
-    database.c: apk_repo_format_cache_index()
-    """
-    binary = hashlib.sha1(str(url).encode("utf-8"), usedforsecurity=False).digest()
-    xd = "0123456789abcdefghijklmnopqrstuvwxyz"
-    csum_bytes = int(length / 2)
-
-    ret = ""
-    for i in range(csum_bytes):
-        ret += xd[(binary[i] >> 4) & 0xF]
-        ret += xd[binary[i] & 0xF]
-
-    return f"APKINDEX.{ret}.tar.gz"
 
 
 # FIXME: make config.mirrors a normal dict
@@ -136,8 +107,8 @@ def apkindex_files(
     # Resolve the APKINDEX.$HASH.tar.gz files
     ret.extend(
         Apkindex(file)
-        for url in _get_repos_from_config(None, exclude_mirrors)
-        if (file := get_context().config.work / f"cache_apk_{arch}" / apkrepo_hash(url)).exists()
+        for repo in _get_repos_from_config(None, exclude_mirrors)
+        if (file := get_context().config.work / f"cache_apk_{arch}" / repo.hash()).exists()
     )
 
     return ret
@@ -168,11 +139,11 @@ def update(arch: Arch, force: bool = False, existing_only: bool = False) -> bool
     # Find outdated APKINDEX files. Formats:
     # outdated: {URL: apkindex, ... }
     outdated = {}
-    for url in ApkRepo.get_from_config():
+    for repo in ApkRepo.get_from_config():
         # APKINDEX file name from the URL
-        remote_index = f"{url}/{arch}/APKINDEX.tar.gz"
+        remote_index = f"{repo}/{arch}/APKINDEX.tar.gz"
         cache_apk_outside = get_context().config.work / f"cache_apk_{arch}"
-        apkindex = Apkindex(cache_apk_outside, apkrepo_hash(url))
+        apkindex = Apkindex(cache_apk_outside, repo.hash())
 
         # Find update reason, possibly skip non-existing or known 404 files
         reason = None
@@ -246,4 +217,4 @@ def alpine_apkindex(repo: str, arch: Arch) -> Apkindex:
         f"{get_context().config.mirrors['alpine']}{channel_cfg['mirrordir_alpine']}/{repo}"
     )
     cache_folder = get_context().config.work / (f"cache_apk_{arch}")
-    return Apkindex(cache_folder / apkrepo_hash(repo_link))
+    return Apkindex(cache_folder / repo_link.hash())
