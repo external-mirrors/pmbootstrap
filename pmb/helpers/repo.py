@@ -100,16 +100,11 @@ def apkindex_files(
     # Local user repository (for packages compiled with pmbootstrap)
     if user_repository:
         ret.extend(
-            Apkindex(get_context().config.work / "packages" / channel / arch / "APKINDEX.tar.gz")
-            for channel in pmb.config.pmaports.all_channels()
+            repo.get_index(arch)
+            for repo in ApkRepo.get_local(get_context().config.work / "packages")
         )
 
-    # Resolve the APKINDEX.$HASH.tar.gz files
-    ret.extend(
-        Apkindex(file)
-        for repo in _get_repos_from_config(None, exclude_mirrors)
-        if (file := get_context().config.work / f"cache_apk_{arch}" / repo.hash()).exists()
-    )
+    ret.extend(repo.get_index(arch) for repo in _get_repos_from_config(None, exclude_mirrors))
 
     return ret
 

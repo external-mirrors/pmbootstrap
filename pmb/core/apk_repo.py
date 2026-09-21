@@ -6,9 +6,12 @@ import hashlib
 import os.path
 import shlex
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pmb.config.pmaports
 import pmb.helpers.run
+from pmb.core.apkindex import Apkindex
+from pmb.core.arch import Arch
 from pmb.core.context import get_context
 from pmb.core.pkgrepo import pkgrepo_names
 from pmb.helpers import logging
@@ -19,6 +22,9 @@ class ApkRepo:
 
     def __init__(self, url: str | Path) -> None:
         self._url = str(url)
+        self._remote = True
+        if urlsplit(self._url).scheme == "":
+            self._remote = False
 
     def __str__(self) -> str:
         return self._url
@@ -112,3 +118,11 @@ class ApkRepo:
             pmb.helpers.run.root(["mkdir", "-p", path.parent])
         for line in repos:
             pmb.helpers.run.root(["sh", "-c", f"echo {shlex.quote(str(line))} >> {path}"])
+
+    def get_index(self, arch: Arch) -> Apkindex:
+        path: Path
+        if self._remote is True:
+            path = get_context().config.work / f"cache_apk_{arch}" / self.hash()
+        else:
+            path = self._url / arch / "APKINDEX.tar.gz"
+        return Apkindex(path)
