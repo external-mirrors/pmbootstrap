@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
+import hashlib
 import os.path
 import shlex
 from pathlib import Path
@@ -21,6 +22,33 @@ class ApkRepo:
 
     def __str__(self) -> str:
         return self._url
+
+    def hash(self, length: int = 8) -> str:
+        r"""
+        Generate the hash that APK adds to the APKINDEX and apk packages in its apk cache folder.
+
+        It is the "12345678" part in this example:
+        "APKINDEX.12345678.tar.gz".
+
+        :param length: The length of the hash in the output file.
+
+        See also: official implementation in apk-tools:
+        <https://git.alpinelinux.org/cgit/apk-tools/>
+
+        blob.c: apk_blob_push_hexdump(), "const char \\*xd"
+        apk_defines.h: APK_CACHE_CSUM_BYTES
+        database.c: apk_repo_format_cache_index()
+        """
+        binary = hashlib.sha1(self._url.encode("utf-8"), usedforsecurity=False).digest()
+        xd = "0123456789abcdefghijklmnopqrstuvwxyz"
+        csum_bytes = int(length / 2)
+
+        ret = ""
+        for i in range(csum_bytes):
+            ret += xd[(binary[i] >> 4) & 0xF]
+            ret += xd[binary[i] & 0xF]
+
+        return f"APKINDEX.{ret}.tar.gz"
 
     @classmethod
     def from_repositories_file(cls, root: Path) -> list[ApkRepo]:
