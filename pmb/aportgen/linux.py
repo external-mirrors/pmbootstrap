@@ -19,10 +19,14 @@ def generate_apkbuild(
 
     makedepends = [
         "bison",
+        "elfutils-dev",
         "findutils",
         "flex",
+        "linux-headers",
         "openssl-dev",
+        "pahole",
         "perl",
+        "python3",
     ]
 
     patches_str = ("\n" + " " * 12).join(patches)
