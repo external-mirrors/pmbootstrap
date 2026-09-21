@@ -156,12 +156,11 @@ def apkindex_files(
 
 
 @Cache("arch", force=False)
-def update(arch: Arch | None = None, force: bool = False, existing_only: bool = False) -> bool:
+def update(arch: Arch, force: bool = False, existing_only: bool = False) -> bool:
     """
     Download the APKINDEX files for all URLs depending on the architectures.
 
-    :param arch: * one Alpine architecture name ("x86_64", "armhf", ...)
-                 * None for all architectures
+    :param arch: one Alpine architecture name ("x86_64", "armhf", ...)
     :param force: even update when the APKINDEX file is fairly recent
     :param existing_only: only update the APKINDEX files that already exist,
                           this is used by "pmbootstrap update"
@@ -175,51 +174,39 @@ def update(arch: Arch | None = None, force: bool = False, existing_only: bool = 
 
     # Architectures and retention time
     supported_binary = Arch.supported_binary()
-    architectures = [arch] if arch else supported_binary
     retention_hours = pmb.config.apkindex_retention_time
     retention_seconds = retention_hours * 3600
 
     # Find outdated APKINDEX files. Formats:
     # outdated: {URL: apkindex, ... }
-    # outdated_arches: ["armhf", "x86_64", ... ]
     outdated = {}
-    outdated_arches: list[Arch] = []
     for url in get_repos_from_config(None):
-        for architecture in architectures:
-            # APKINDEX file name from the URL
-            remote_index = f"{url}/{architecture}/APKINDEX.tar.gz"
-            cache_apk_outside = get_context().config.work / f"cache_apk_{architecture}"
-            apkindex = Apkindex(cache_apk_outside, apkrepo_hash(url))
+        # APKINDEX file name from the URL
+        remote_index = f"{url}/{arch}/APKINDEX.tar.gz"
+        cache_apk_outside = get_context().config.work / f"cache_apk_{arch}"
+        apkindex = Apkindex(cache_apk_outside, apkrepo_hash(url))
 
-            # Find update reason, possibly skip non-existing or known 404 files
-            reason = None
-            if not apkindex.exists():
-                if existing_only:
-                    continue
-                reason = "file does not exist yet"
-            elif force:
-                reason = "forced update"
-            elif pmb.helpers.file.is_older_than(apkindex, retention_seconds):
-                reason = "older than " + str(retention_hours) + "h"
-            if not reason:
+        # Find update reason, possibly skip non-existing or known 404 files
+        reason = None
+        if not apkindex.exists():
+            if existing_only:
                 continue
+            reason = "file does not exist yet"
+        elif force:
+            reason = "forced update"
+        elif pmb.helpers.file.is_older_than(apkindex, retention_seconds):
+            reason = "older than " + str(retention_hours) + "h"
+        if not reason:
+            continue
 
-            # Update outdated and outdated_arches
-            logging.debug("APKINDEX outdated (%s): %s", reason, remote_index)
-            outdated[remote_index] = apkindex
-            if architecture not in outdated_arches:
-                outdated_arches.append(architecture)
+        # Update outdated and outdated_arches
+        logging.debug("APKINDEX outdated (%s): %s", reason, remote_index)
+        outdated[remote_index] = apkindex
 
     # Bail out or show log message
     if not len(outdated):
         return False
-    logging.info(
-        "Update package index for "
-        + ", ".join([str(a) for a in outdated_arches])
-        + " ("
-        + str(len(outdated))
-        + " file(s))"
-    )
+    logging.info(f"Update package index for {arch} ({len(outdated)} file(s))")
 
     # Download and move to right location
     missing_ignored = False
