@@ -101,7 +101,7 @@ def rewrite(
             lines_new += line.rstrip() + "\n"
 
     # Copy/modify lines, skip Contributor
-    path = get_context().config.cache / "aportgen/APKBUILD"
+    path = get_context().config.work / "aportgen/APKBUILD"
     with open(path, "r+", encoding="utf-8") as handle:
         skip_in_func = False
         have_maintainer = False
