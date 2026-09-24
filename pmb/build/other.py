@@ -182,8 +182,7 @@ def configure_abuild(chroot: Chroot) -> None:
     jobs = get_context().config.jobs
 
     # Use the global distfiles cache
-    pmb.chroot.root(["sh", "-c", "echo SRCDEST=/cache/distfiles >> /etc/abuild.conf"], chroot)
-    pmb.chroot.root(["sh", "-c", f"echo JOBS={jobs} >> /etc/abuild.conf"], chroot)
+    pmb.chroot.root(["sh", "-c", f"echo -n \"##PMBOOTSTRAP##\nSRCDEST=/cache/distfiles\nJOBS={jobs}\n\" >> /etc/abuild.conf"], chroot)
 
 
 def configure_ccache(chroot: Chroot = Chroot.native(), verify: bool = False) -> None:
