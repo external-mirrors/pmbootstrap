@@ -99,9 +99,7 @@ def shutdown(only_install_related: bool = False, only_build_related: bool = Fals
                 pmb.helpers.mount.umount_all(chroot.path)
         return
 
-    # Umount /work and /cache
-    for path in (get_context().config.work, get_context().config.cache):
-        pmb.helpers.mount.umount_all(path)
+    pmb.helpers.mount.umount_all(chroot.path)
 
     # Clean up the rest
     for arch in Arch.supported():
