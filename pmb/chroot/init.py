@@ -60,7 +60,6 @@ def init_keys(chroot: Chroot) -> None:
             # Copy as root, so the resulting files in chroots are owned by root
             pmb.helpers.run.root(["cp", key, target])
 
-    # FIXME: should ideally be a symlink
     keys_target = chroot / "etc/apk/keys"
     if not keys_target.exists():
         pmb.helpers.run.root(["mkdir", "-p", chroot / "etc/apk"])
