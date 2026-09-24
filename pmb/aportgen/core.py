@@ -272,7 +272,7 @@ def generate_checksums(tempdir: Path, apkbuild_path: Path) -> None:
     :param tempdir: Temporary directory as provided by prepare_tempdir().
     :param apkbuild_path: APKBUILD to generate new checksums for.
     """
-    aportgen = get_context().config.cache / "aportgen"
+    aportgen = get_context().config.work / "aportgen"
 
     pmb.build.init_abuild_minimal()
     pmb.chroot.root(["chown", "-R", "pmos:pmos", tempdir])
