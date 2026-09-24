@@ -175,6 +175,10 @@ def index_repo(arch: Arch | None = None) -> None:
 
 def configure_abuild(chroot: Chroot) -> None:
     """Set the correct JOBS count in ``abuild.conf``."""
+    # Skip if we already did this
+    if "##PMBOOTSTRAP##" in (chroot / "etc/abuild.conf").read_text():
+        return
+
     jobs = get_context().config.jobs
 
     # Use the global distfiles cache
