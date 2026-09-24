@@ -258,7 +258,7 @@ def prepare_tempdir() -> Path:
     chroot = Chroot.native()
     pmb.chroot.init(chroot)
     tempdir = Path("/tmp/aportgen")
-    aportgen = get_context().config.cache / "aportgen"
+    aportgen = get_context().config.work / "aportgen"
     pmb.chroot.root(["rm", "-rf", tempdir], chroot)
     pmb.helpers.run.user(["mkdir", "-p", aportgen, chroot / tempdir])
 
