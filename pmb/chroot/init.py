@@ -44,7 +44,6 @@ def mark_in_chroot(chroot: Chroot = Chroot.native()) -> None:
         pmb.helpers.run.root(["touch", in_chroot_file])
 
 
-@Cache("chroot")
 def init_keys(chroot: Chroot) -> None:
     """
     All Alpine and postmarketOS repository keys are shipped with pmbootstrap.
