@@ -319,7 +319,7 @@ def generate_apkbuild(
         """
 
     # Write the file
-    work = get_context().config.cache
+    work = get_context().config.work
     pmb.helpers.run.user(["mkdir", "-p", work / "aportgen"])
     path = work / "aportgen/APKBUILD"
     with open(path, "w", encoding="utf-8") as handle:
