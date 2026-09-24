@@ -192,7 +192,7 @@ def remove_work_cache(chroot: Chroot) -> None:
     but we don't assume that the host's rm has the -d flag (busybox does
     not).
     """
-    for d in ["work", "cache"]:
+    for d in ["work/packages", "cache"]:
         mnt_dir = chroot / d
         if mnt_dir.exists():
             pmb.helpers.run.root(["rmdir", mnt_dir])
