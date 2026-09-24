@@ -91,7 +91,7 @@ def setup_cache_path(chroot: Chroot) -> None:
     # Set up the apk cache to point to the working cache
     cache_target = chroot / "etc/apk/cache"
     if not cache_target.is_symlink():
-        pmb.helpers.run.root(["ln", "-sf", f"/cache/apk_{chroot.arch}", chroot / "etc/apk/keys"])
+        pmb.helpers.run.root(["ln", "-sf", f"/cache/apk_{chroot.arch}", cache_target])
 
 
 @Cache("chroot")
