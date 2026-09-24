@@ -258,7 +258,7 @@ def generate_modules_initfs() -> None:
     """
 
     # Write to file
-    work = get_context().config.cache
+    work = get_context().config.work
     pmb.helpers.run.user(["mkdir", "-p", work / "aportgen"])
     path = work / "aportgen/modules-initfs"
     with open(path, "w", encoding="utf-8") as handle:
