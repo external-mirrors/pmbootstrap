@@ -38,7 +38,7 @@ def update_repository_list(
             for line in handle:
                 lines_old.append(line[:-1])
     else:
-        path.parent.mkdir(exist_ok=True, parents=True)
+        pmb.helpers.run.root(["mkdir", "-p", path.parent])
 
     user_repo_dir = Path("/work/packages") if user_repository else None
 
