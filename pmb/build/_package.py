@@ -150,6 +150,7 @@ def finish(
             "Zapping buildroots (running in strict mode by default, use --lax to skip zap)"
         )
         pmb.chroot.zap_buildroots()
+        pmb.chroot.init(chroot)
 
     logging.info(f"@YELLOW@=>@END@ @BLUE@{channel}/{apkbuild['pkgname']}@END@: Done!")
 
