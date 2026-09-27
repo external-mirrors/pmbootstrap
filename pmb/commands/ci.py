@@ -24,7 +24,7 @@ def ci(scripts: str, all: bool, fast: bool) -> None:
     if not scripts_available:
         logging.error(
             "ERROR: no supported CI scripts found in current git"
-            " repository, see https://postmarketos.org/pmb-ci"
+            " repository, see https://nura.eco/pmb-ci"
         )
         sys.exit(1)
 

@@ -625,5 +625,5 @@ newapkbuild_arguments_switches_other = [
 #
 # CI
 #
-# Valid options for 'pmbootstrap ci', see https://postmarketos.org/pmb-ci
+# Valid options for 'pmbootstrap ci', see https://nura.eco/pmb-ci
 ci_valid_options = ["native", "slow", "with-dot-git"]

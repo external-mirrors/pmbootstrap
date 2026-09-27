@@ -1,6 +1,6 @@
 #!/bin/sh -e
 # Description: lint all python scripts
-# https://postmarketos.org/pmb-ci
+# https://nura.eco/pmb-ci
 
 if [ "$(id -u)" = 0 ]; then
 	set -x

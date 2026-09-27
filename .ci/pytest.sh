@@ -1,7 +1,7 @@
 #!/bin/sh -e
 # Description: run pmbootstrap python testsuite
 # Options: native slow
-# https://postmarketos.org/pmb-ci
+# https://nura.eco/pmb-ci
 
 if [ "$(id -u)" = 0 ]; then
 	set -x

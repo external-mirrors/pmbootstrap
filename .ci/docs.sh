@@ -1,7 +1,7 @@
 #!/bin/sh -e
 # Description: create documentation with sphinx
 # Options: native
-# https://postmarketos.org/pmb-ci
+# https://nura.eco/pmb-ci
 
 # Install required packages in CI
 if [ "$(id -u)" = 0 ]; then

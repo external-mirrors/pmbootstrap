@@ -24,7 +24,7 @@ def get_ci_scripts(topdir: Path) -> dict[str, CiScriptDescriptor]:
     """
     Find 'pmbootstrap ci'-compatible scripts inside a git repository, and
     parse their metadata (description, options). The reference is at:
-    https://postmarketos.org/pmb-ci
+    https://nura.eco/pmb-ci
 
     :param topdir: top directory of the git repository, get it with: pmb.helpers.git.get_topdir()
 
@@ -40,7 +40,9 @@ def get_ci_scripts(topdir: Path) -> dict[str, CiScriptDescriptor]:
 
         with open(script) as handle:
             for line in handle:
-                if line.startswith("# https://postmarketos.org/pmb-ci"):
+                if line.startswith(
+                    ("# https://nura.eco/pmb-ci", "# https://postmarketos.org/pmb-ci")
+                ):
                     is_pmb_ci_script = True
                 elif line.startswith("# Description: "):
                     description = line.split(": ", 1)[1].rstrip()

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright 2023 Oliver Smith
 # Description: find typos
-# https://postmarketos.org/pmb-ci
+# https://nura.eco/pmb-ci
 
 if [ "$(id -u)" = 0 ]; then
 	set -x
