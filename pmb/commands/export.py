@@ -1,5 +1,6 @@
 # Copyright 2026 Stefan Hansson, Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+import fnmatch
 import os
 from pathlib import Path
 
@@ -135,6 +136,7 @@ def symlinks(target: Path) -> None:
         f"{device}-root.img": "Root partition image (used in split installation)",
         f"pmos-{device}.zip": "Android recovery flashable zip",
         "lk2nd.img": "Secondary Android bootloader",
+        "*.itb": "uBoot FIT image",
     }
 
     # Generate a list of patterns
@@ -156,6 +158,7 @@ def symlinks(target: Path) -> None:
 
     files += list(path_boot.glob("initramfs*"))
     files += list(path_boot.glob("vmlinuz*"))
+    files += list(path_boot.glob("*.itb"))
 
     # Iterate through all files
     for file in files:
@@ -167,6 +170,10 @@ def symlinks(target: Path) -> None:
             msg = " * " + basename
             if basename in info:
                 msg += " (" + info[basename] + ")"
+            else:
+                for info_item in info:
+                    if fnmatch.fnmatch(basename, info_item):
+                        msg += " (" + info[info_item] + ")"
             logging.info(msg)
 
             pmb.helpers.file.symlink(file, link)
