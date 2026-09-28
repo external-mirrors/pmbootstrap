@@ -76,7 +76,7 @@ def serialize(
     cfg["providers"] = {}
     cfg["mirrors"] = {}
 
-    pwd = Path(os.getcwd())
+    basedir = config.work.parent() if get_context().local else config.work
 
     # .keys() flat maps dictionaries like config.mirrors with
     # dotted notation
