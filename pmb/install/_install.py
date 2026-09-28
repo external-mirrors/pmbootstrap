@@ -5,7 +5,6 @@ import os
 import re
 import shlex
 import sys
-from collections.abc import Sequence
 from pathlib import Path
 
 import pmb.build
@@ -1191,7 +1190,7 @@ def get_selected_providers(packages: list[str]) -> list[str]:
     return ret
 
 
-def get_recommends(packages: list[str]) -> Sequence[str]:
+def get_recommends(packages: set[str], not_depends: set[str] | None = None) -> set[str]:
     """
     Look through the specified packages and collect additional packages
     specified under _pmb_recommends in them. This is recursive, so it will dive
@@ -1206,7 +1205,10 @@ def get_recommends(packages: list[str]) -> Sequence[str]:
     """
     global get_recommends_visited
 
-    ret: list[str] = []
+    ret: set[str] = set()
+
+    if not_depends is None:
+        not_depends = set()
 
     for package in packages:
         if package in get_recommends_visited:
@@ -1221,6 +1223,11 @@ def get_recommends(packages: list[str]) -> Sequence[str]:
         apkbuild = pmb.helpers.pmaports.get(package, must_exist=False)
         if not apkbuild:
             continue
+        if apkbuild["pkgname"] in not_depends:
+            # Don't use a package in pmaports that provides what we need in
+            # pmb_recommends if it is listed as depends="!$pkgname" (#2811)
+            logging.debug(f"{package}: _pmb_recommends: ignoring {apkbuild['pkgname']}")
+            continue
         if package in apkbuild["subpackages"]:
             # Just focus on the subpackage
             apkbuild = apkbuild["subpackages"][package]
@@ -1229,17 +1236,23 @@ def get_recommends(packages: list[str]) -> Sequence[str]:
             # subpackages. See pmb.parse._apkbuild._parse_subpackage().
             if not apkbuild:
                 continue
-        recommends = apkbuild["_pmb_recommends"]
+        depends = set(apkbuild["depends"])
+        if depends:
+            for d in depends:
+                if d.startswith("!"):
+                    logging.debug(f"{package}: found !{d} in depends")
+                    not_depends |= {d[1:]}
+        recommends = set(apkbuild["_pmb_recommends"])
         if recommends:
             logging.debug(f"{package}: install _pmb_recommends: {', '.join(recommends)}")
-            ret += recommends
+            ret |= recommends
             # Call recursively in case recommends have pmb_recommends of their
             # own.
-            ret += get_recommends(recommends)
+            ret |= get_recommends(recommends, not_depends)
         # Also iterate through dependencies to collect any recommends they have
         depends = apkbuild["depends"]
         if depends:
-            ret += get_recommends(depends)
+            ret |= get_recommends(depends, not_depends)
 
     return ret
 
@@ -1268,7 +1281,7 @@ def create_device_rootfs(
     # pmaports can figure out the username (legacy reasons: pmaports#820)
     set_user(context.config)
 
-    # Fill install_packages
+    # Fill install_packages (FIXME: make install_packages a set)
     install_packages = [*pmb.config.install_device_packages, "device-" + device]
     if not install_base:
         install_packages = [p for p in install_packages if p != "postmarketos-base"]
@@ -1303,7 +1316,7 @@ def create_device_rootfs(
 
     # Install uninstallable "dependencies" by default
     if install_recommends:
-        install_packages += get_recommends(install_packages)
+        install_packages += list(get_recommends(set(install_packages)))
 
     # Install the base-systemd package first to make sure presets are available
     # when services are installed later
