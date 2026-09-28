@@ -104,7 +104,7 @@ def serialize(
             val = []
             for p in getattr(config, key):
                 if local:
-                    p = Path(p).relative_to(pwd)
+                    p = Path(p).relative_to(basedir)
                 val.append(os.fspath(p))
 
             cfg["pmbootstrap"][key] = ",".join(val)
