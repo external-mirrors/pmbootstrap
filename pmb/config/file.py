@@ -95,7 +95,7 @@ def serialize(
         elif type(getattr(Config, key)) is PosixPath:
             val = getattr(config, key)
             if local:
-                val = Path(val).relative_to(pwd)
+                val = Path(val).relative_to(basedir)
             cfg["pmbootstrap"][key] = str(val)
         elif isinstance(getattr(Config, key), list) and isinstance(
             getattr(Config, key)[0], PosixPath
