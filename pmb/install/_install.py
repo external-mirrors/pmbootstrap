@@ -1191,7 +1191,7 @@ def get_selected_providers(packages: list[str]) -> list[str]:
     return ret
 
 
-def get_recommends(packages: list[str], install_recommends: bool) -> Sequence[str]:
+def get_recommends(packages: list[str]) -> Sequence[str]:
     """
     Look through the specified packages and collect additional packages
     specified under _pmb_recommends in them. This is recursive, so it will dive
@@ -1200,9 +1200,6 @@ def get_recommends(packages: list[str], install_recommends: bool) -> Sequence[st
 
     Recursion is only done into packages found in pmaports.
 
-    If running with pmbootstrap install --no-recommends, this function returns
-    an empty list.
-
     :param packages: list of packages of which we want to get the recommends
     :param initial: used internally when the function calls itself
     :returns: list of pkgnames, e.g. ["chatty", "gnome-contacts"]
@@ -1210,8 +1207,6 @@ def get_recommends(packages: list[str], install_recommends: bool) -> Sequence[st
     global get_recommends_visited
 
     ret: list[str] = []
-    if not install_recommends:
-        return ret
 
     for package in packages:
         if package in get_recommends_visited:
@@ -1240,11 +1235,11 @@ def get_recommends(packages: list[str], install_recommends: bool) -> Sequence[st
             ret += recommends
             # Call recursively in case recommends have pmb_recommends of their
             # own.
-            ret += get_recommends(recommends, install_recommends)
+            ret += get_recommends(recommends)
         # Also iterate through dependencies to collect any recommends they have
         depends = apkbuild["depends"]
         if depends:
-            ret += get_recommends(depends, install_recommends)
+            ret += get_recommends(depends)
 
     return ret
 
@@ -1307,7 +1302,8 @@ def create_device_rootfs(
     pmb.helpers.repo.update(pmb.parse.deviceinfo().arch)
 
     # Install uninstallable "dependencies" by default
-    install_packages += get_recommends(install_packages, install_recommends)
+    if install_recommends:
+        install_packages += get_recommends(install_packages)
 
     # Install the base-systemd package first to make sure presets are available
     # when services are installed later
