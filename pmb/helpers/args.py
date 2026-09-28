@@ -67,10 +67,7 @@ def find_config(config: Path|None) -> tuple[Path, bool]:
     for i in range(len(cwd.parts)):
         local_conf = Path(*cwd.parts[:-i], "pmbootstrap.conf")
         # Check that we have write access to the path
-        if not os.access(local_conf, os.W_OK):
-            print(f"Found {local_conf} but it isn't writable! Falling back to global")
-            break
-        if local_conf.exists():
+        if local_conf.exists() and os.access(local_conf, os.W_OK):
             print(f"Using local config {local_conf}")
             config = local_conf
             local = True
