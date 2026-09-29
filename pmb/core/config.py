@@ -64,7 +64,7 @@ class Config:
     locale: str = "en_US.UTF-8"
     mirrors: ClassVar[Mirrors] = {
         "alpine_custom": "none",
-        "alpine": "http://dl-cdn.alpinelinux.org/alpine/",
+        "alpine": "http://cdn.alpinelinux.org/",
         "pmaports_custom": "none",
         "pmaports": "http://mirror.postmarketos.org/postmarketos/",
         "systemd_custom": "none",
