@@ -50,7 +50,7 @@ def config(name: str | None, value: str | None, reset: bool, configpath: Path, l
         # Serialize the entire config including default values for
         # the user. Even though the defaults aren't actually written
         # to disk.
-        cfg = pmb.config.serialize(config, skip_defaults=False)
+        cfg = pmb.config.serialize(config, skip_defaults=False, local=local)
         cfg.write(sys.stdout)
 
     # Don't write the "Done" message

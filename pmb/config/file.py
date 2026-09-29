@@ -5,6 +5,7 @@ import os
 from pathlib import Path, PosixPath
 
 from pmb.core import Config
+from pmb.core.context import get_context
 from pmb.helpers import logging
 
 
