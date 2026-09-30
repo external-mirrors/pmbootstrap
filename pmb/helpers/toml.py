@@ -1,18 +1,11 @@
 # Copyright 2024 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
+from tomllib import TOMLDecodeError, load
 from typing import Any
 
 from pmb.helpers.exceptions import NonBugError
 from pmb.meta import Cache
-
-try:
-    # Python >= 3.11
-    from tomllib import TOMLDecodeError, load  # novermin
-except ImportError:
-    # Python < 3.11
-    from tomli import TOMLDecodeError, load  # type:ignore[import-not-found,no-redef]
-
 
 TomlTable = dict[str, Any]
 
