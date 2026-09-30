@@ -14,7 +14,7 @@ from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
 
 
-class CrossCompile(enum.Enum):
+class CrossCompile(enum.StrEnum):
     # Cross compilation isn't needed for this package:
     # 1) Either because the arch we will build for is exactly the same as the
     #    native arch, or
@@ -28,9 +28,6 @@ class CrossCompile(enum.Enum):
     CROSS_NATIVE = "cross-native"
     # Cross compilation will use cross-native2
     CROSS_NATIVE2 = "cross-native2"
-
-    def __str__(self) -> str:
-        return self.value
 
     def enabled(self) -> bool:
         """Are we cross-compiling for this value of cross?"""

@@ -27,7 +27,7 @@ from pmb.types import Env, RunOutputTypeDefault
 class FragmentValidationFailedError(RuntimeError): ...
 
 
-class KConfigUI(enum.Enum):
+class KConfigUI(enum.StrEnum):
     MENUCONFIG = "menuconfig"
     XCONFIG = "xconfig"
     NCONFIG = "nconfig"
@@ -47,9 +47,6 @@ class KConfigUI(enum.Enum):
                 return ["ncurses-dev"]
             case KConfigUI.XCONFIG:
                 return ["qt5-qtbase-dev", "font-noto"]
-
-    def __str__(self) -> str:
-        return self.value
 
 
 def get_kconfig_name(apkbuild: Apkbuild, arch: Arch) -> str:

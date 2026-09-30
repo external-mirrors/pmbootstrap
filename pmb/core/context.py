@@ -4,19 +4,16 @@
 """Global runtime context"""
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Literal, overload
 
 from .config import Config
 
 
-class TimeoutReason(Enum):
+class TimeoutReason(StrEnum):
     CI_DETECTED = "running in CI based on autodetection (environment variable 'CI' set)"
     TIMEOUT_ARG = "timeout was explicitly set via the --timeout or -t argument"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 @dataclass(frozen=True)

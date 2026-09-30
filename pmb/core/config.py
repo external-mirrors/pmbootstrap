@@ -19,26 +19,20 @@ class Mirrors(TypedDict):
     systemd: str
 
 
-class ServiceManagerConfig(enum.Enum):
+class ServiceManagerConfig(enum.StrEnum):
     DEFAULT = "default"
     OPENRC = "openrc"
     SYSTEMD = "systemd"
-
-    def __str__(self) -> str:
-        return self.value
 
     @staticmethod
     def choices() -> list[str]:
         return [e.value for e in ServiceManagerConfig]
 
 
-class AutoZapConfig(enum.Enum):
+class AutoZapConfig(enum.StrEnum):
     NO = "no"
     YES = "yes"
     SILENTLY = "silently"
-
-    def __str__(self) -> str:
-        return self.value
 
     def enabled(self) -> bool:
         return self != AutoZapConfig.NO
