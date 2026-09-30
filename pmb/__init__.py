@@ -29,6 +29,7 @@ __version__ = "3.11.1"
 # Python version check
 # === CHECKLIST FOR UPGRADING THE REQUIRED PYTHON VERSION ===
 # * .ci/vermin.sh
+# * .gitlab-ci.yml (Pytest for minimum Python version)
 # * README.md
 # * docs/usage.rst
 # * pmb/__init__.py (you are here)
