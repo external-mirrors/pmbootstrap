@@ -146,8 +146,7 @@ pmbootstrap requires the following:
        Kernel version 5.8 - 6.0 might have issues with loop-devices
 
 
-  * Python 3.10+
-  * For python3 < 3.11: tomli
+  * Python 3.11+
   * OpenSSL
   * git
   * ps

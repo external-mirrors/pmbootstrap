@@ -38,8 +38,7 @@ pytest -vv ./test/test_keys.py
     you insist on having the `noexec` flag set, you can work around this issue
     by setting the `TMPDIR` environment variable to a directory with the
     executable flag set, e.g. `TMPDIR=$HOME/.tmp pmbootstrap chroot`.
-* Python 3.10+
-* For python3 < 3.11: tomli
+* Python 3.11+
 * OpenSSL
 * git 2.46+
 * kpartx (from multipath-tools)

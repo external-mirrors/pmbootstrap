@@ -64,10 +64,10 @@ pytest:
         path: coverage.xml
       junit: junit.xml
 
-# Ensure that tests pass on Python 3.10
-pytest-python3.10:
+# Ensure that tests pass on Python 3.11
+pytest-python3.11:
   extends: pytest
-  image: alpine:3.17
+  image: alpine:3.18
 
 ruff:
   stage: test
