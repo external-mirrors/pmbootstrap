@@ -52,7 +52,7 @@ def cp15_barriers_supported() -> bool:
     return sysctl_path.exists() and int(sysctl_path.read_text()) >= 1
 
 
-class Arch(enum.Enum):
+class Arch(enum.StrEnum):
     """
     Supported architectures according to the Alpine
     APKBUILD format.
@@ -79,9 +79,6 @@ class Arch(enum.Enum):
     ppc = "ppc"
     ppc64 = "ppc64"
     riscv32 = "riscv32"
-
-    def __str__(self) -> str:
-        return self.value
 
     @staticmethod
     def from_str(arch: str) -> Arch:

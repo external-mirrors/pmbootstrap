@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 import pmb.config
@@ -28,8 +28,7 @@ def find_path(codename: str, file: str = "") -> Path | None:
     return g
 
 
-# TODO: This could be simplified using StrEnum once we stop supporting Python 3.10.
-class DeviceCategory(Enum):
+class DeviceCategory(StrEnum):
     """Enum for representing a specific device category."""
 
     ARCHIVED = "archived"
@@ -104,9 +103,6 @@ class DeviceCategory(Enum):
                 return styles["BLUE"]
             case DeviceCategory.MAIN:
                 return styles["MAGENTA"]
-
-    def __str__(self) -> str:
-        return self.value
 
 
 @dataclass(frozen=True)
