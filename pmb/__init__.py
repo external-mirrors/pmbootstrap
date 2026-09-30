@@ -35,8 +35,8 @@ __version__ = "3.11.1"
 # * pyproject.toml
 # * when upgrading to python 3.11: pmb/helpers/toml.py and remove this line
 version = sys.version_info
-if version < (3, 10):
-    print("You need at least Python 3.10 to run pmbootstrap")
+if version < (3, 11):
+    print("You need at least Python 3.11 to run pmbootstrap")
     print("(You are running it with Python " + str(version.major) + "." + str(version.minor) + ")")
     sys.exit()
 

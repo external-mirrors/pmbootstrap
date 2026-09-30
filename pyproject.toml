@@ -11,7 +11,7 @@ authors = [
 description = "A sophisticated chroot / build / flash tool to develop and install postmarketOS'"
 readme = "README.md"
 license = {text = "GPL-3.0-or-later"}
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 [project.scripts]
 pmbootstrap = "pmb:main"
