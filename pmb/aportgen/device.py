@@ -75,7 +75,7 @@ def ask_for_flash_method() -> str:
                 while True:
                     logging.info('Does the device use the "isolated recovery" or boot.img?')
                     logging.info(
-                        "<https://wiki.postmarketos.org/wiki/Deviceinfo_flash_methods#Isorec_or_bootimg.3F>"
+                        "<https://wiki.nura.eco/wiki/Deviceinfo_flash_methods#Isorec_or_bootimg.3F>"
                     )
                     heimdall_type = pmb.helpers.cli.ask("Type", heimdall_types, heimdall_types[0])
                     if heimdall_type in heimdall_types:
@@ -183,7 +183,7 @@ def generate_deviceinfo(
     codename = "-".join(pkgname.split("-")[1:])
     # Note: New variables must be added to pmb/config/__init__.py as well
     content = f"""\
-        # Reference: <https://postmarketos.org/deviceinfo>
+        # Reference: <https://nura.eco/deviceinfo>
         # Please use double quotes only. You can source this file in shell
         # scripts.
 
@@ -296,13 +296,13 @@ def generate_apkbuild(
     depends.sort()
     depends_fmt = ("\n" + " " * 12).join(depends)
     content = f"""\
-        # Reference: <https://postmarketos.org/devicepkg>
+        # Reference: <https://nura.eco/devicepkg>
         maintainer=""
         pkgname={pkgname}
         pkgver=1
         pkgrel=0
         pkgdesc="{name}"
-        url="https://postmarketos.org"
+        url="https://nura.eco"
         arch="{arch}"
         license="MIT"
         depends="
