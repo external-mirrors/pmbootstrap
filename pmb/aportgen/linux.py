@@ -36,7 +36,7 @@ def generate_apkbuild(
 
     # Downstream kernel
     if device_category == pmb.helpers.devices.DeviceCategory.DOWNSTREAM:
-        reference_url = "https://postmarketos.org/vendorkernel"
+        reference_url = "https://nura.eco/vendorkernel"
 
         makedepends += [
             "bash",
@@ -81,7 +81,7 @@ def generate_apkbuild(
             has_qcdt = deviceinfo.bootimg_qcdt == "true"
         else:
             has_qcdt = pmb.helpers.cli.confirm(
-                "Does the device use QCDT (see <https://wiki.postmarketos.org/wiki/QCDT>)?",
+                "Does the device use QCDT (see <https://wiki.nura.eco/wiki/QCDT>)?",
                 default=False,
                 no_assumptions=True,
             )
