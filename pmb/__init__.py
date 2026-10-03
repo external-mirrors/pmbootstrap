@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # PYTHON_ARGCOMPLETE_OK
 import os
+import subprocess
 import sys
 import traceback
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from pmb.helpers.exceptions import BuildFailedError, NonBugError, PackagingError
 
@@ -39,6 +40,22 @@ if version < (3, 10):
     print("You need at least Python 3.10 to run pmbootstrap")
     print("(You are running it with Python " + str(version.major) + "." + str(version.minor) + ")")
     sys.exit()
+
+
+def construct_full_version() -> str:
+    """Construct a full version string appropriate for informing users
+    about the program's version.
+    """
+    if (Path(__file__).parent.parent / ".git").exists():
+        try:
+            git_rev = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
+        except subprocess.CalledProcessError:
+            return __version__
+        return f"{__version__} (from git, {git_rev})"
+    return __version__
+
+
+FULL_VERSION: Final[str] = construct_full_version()
 
 
 def print_log_hint() -> None:

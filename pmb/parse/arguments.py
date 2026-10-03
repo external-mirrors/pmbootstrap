@@ -779,7 +779,7 @@ def get_parser() -> argparse.ArgumentParser:
     arch_choices = Arch.supported()
 
     # Other
-    parser.add_argument("-V", "--version", action="version", version=pmb.__version__)
+    parser.add_argument("-V", "--version", action="version", version=pmb.FULL_VERSION)
     parser.add_argument(
         "-c",
         "--config",
