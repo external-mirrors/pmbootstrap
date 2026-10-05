@@ -513,7 +513,11 @@ def packages(
     logging.debug(f"Attempting to build: {', '.join(pkgnames)}")
 
     # Get existing binary package indexes
-    pmb.helpers.repo.update(arch)
+    if arch:
+        pmb.helpers.repo.update(arch)
+    else:
+        for arch_to_update in Arch.supported_binary():
+            pmb.helpers.repo.update(arch_to_update)
 
     # Process the packages we've been asked to build, queuing up any
     # dependencies that need building as well as the package itself
