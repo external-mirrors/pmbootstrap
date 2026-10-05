@@ -4,14 +4,14 @@
 import copy
 import inspect
 from collections.abc import Callable
-from typing import Any, Generic, TypeVar, overload
+from typing import Any, Generic, ParamSpec, TypeVar
 
-FuncArgs = TypeVar("FuncArgs")
+FuncArgs = ParamSpec("FuncArgs")
 FuncReturn = TypeVar("FuncReturn")
 
 
 class Wrapper(Generic[FuncArgs, FuncReturn]):
-    def __init__(self, cache: "Cache", func: Callable[[FuncArgs], FuncReturn]) -> None:
+    def __init__(self, cache: "Cache", func: Callable[FuncArgs, FuncReturn]) -> None:
         self.cache = cache
         self.func = func
         self.disabled = False
@@ -24,7 +24,7 @@ class Wrapper(Generic[FuncArgs, FuncReturn]):
     # actually end up here. We first check if we have a cached
     # result and if not then we do the actual function call and
     # cache it if applicable
-    def __call__(self, *args: Any, **kwargs: Any) -> FuncReturn:
+    def __call__(self, *args: FuncArgs.args, **kwargs: FuncArgs.kwargs) -> FuncReturn:
         if self.disabled:
             return self.func(*args, **kwargs)
 
@@ -122,13 +122,7 @@ class Cache:
 
         return key
 
-    @overload
-    def __call__(self, func: Callable[..., FuncReturn]) -> Wrapper[None, FuncReturn]: ...
-
-    @overload
-    def __call__(self, func: Callable[[FuncArgs], FuncReturn]) -> Wrapper[FuncArgs, FuncReturn]: ...
-
-    def __call__(self, func: Callable[[FuncArgs], FuncReturn]) -> Wrapper[FuncArgs, FuncReturn]:
+    def __call__(self, func: Callable[FuncArgs, FuncReturn]) -> Wrapper[FuncArgs, FuncReturn]:
         argnames = func.__code__.co_varnames
         for a in self.params:
             if a not in argnames:
