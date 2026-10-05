@@ -12,7 +12,7 @@ from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
 from pmb.core.pkgrepo import pkgrepo_name, pkgrepo_paths
 from pmb.helpers import logging
-from pmb.types import CrossCompile, Env, RunOutputTypeDefault
+from pmb.types import CrossCompile, Env, RunOutputTypeDefault, WithExtraRepos
 
 
 class BootstrapStage(enum.IntEnum):
@@ -129,7 +129,7 @@ def mount_pmaports(chroot: Chroot = Chroot.native()) -> dict[str, Path]:
     :returns: dictionary mapping pkgrepo name to dest path
     """
     dest_paths = {}
-    for repo in pkgrepo_paths(skip_extras=True):
+    for repo in pkgrepo_paths(with_extra_repos=WithExtraRepos.DISABLED):
         destination = Path("/mnt") / pkgrepo_name(repo)
         outside_destination = chroot / destination
         pmb.helpers.mount.bind(repo, outside_destination, umount=True)
