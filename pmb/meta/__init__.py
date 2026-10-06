@@ -65,7 +65,7 @@ class Cache:
     we never want to use the cached result when called with force=True.
     """
 
-    def __init__(self, *args: str, cache_deepcopy: bool = False, **kwargs: Any) -> None:
+    def __init__(self, *args: str, cache_deepcopy: bool = False, **kwargs: object) -> None:
         for a in args:
             if not isinstance(a, str):
                 raise ValueError(f"Cache key must be a string, not {type(a)}")
@@ -80,7 +80,9 @@ class Cache:
 
     # Build the cache key, or return None to not cache in the case where
     # we only cache when an argument has a specific value
-    def build_key(self, func: Callable, *args: Any, **kwargs: Any) -> str | None:
+    def build_key(
+        self, func: Callable[FuncArgs, FuncReturn], *args: FuncArgs.args, **kwargs: FuncArgs.kwargs
+    ) -> str | None:
         key = "~"
         # Easy case: cache irrelevant of arguments
         if not self.params and not self.kwargs:
@@ -88,7 +90,7 @@ class Cache:
 
         signature = inspect.signature(func)
 
-        passed_args: dict[str, str] = {}
+        passed_args: dict[str, object] = {}
         for i, (k, val) in enumerate(signature.parameters.items()):
             if k in self.params or k in self.kwargs:
                 if i < len(args):
