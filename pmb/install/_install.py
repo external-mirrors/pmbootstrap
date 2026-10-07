@@ -376,15 +376,8 @@ def setup_keymap(config: Config) -> None:
 
 def setup_locale(chroot: Chroot, locale: str) -> None:
     """Set locale-related settings such as $LANG and keyboard layout"""
-    # 10locale-pmos.sh gets sourced before 20locale.sh from
-    # alpine-baselayout by /etc/profile. Since they don't override the
-    # locale if it exists, it warranties we have preference
+    # set /etc/locale.conf which will be red by systemd-localed at boot-time
     pmb.chroot.root(["sh", "-c", f"echo LANG={shlex.quote(locale)} > /etc/locale.conf"], chroot)
-    # musl-locales doesn't read from /etc/locale.conf, only from environment variables
-    # TODO: once musl implements locales (hopefully with /etc/locale.conf support) the following should be removed
-    pmb.chroot.root(
-        ["sh", "-c", "echo source /etc/locale.conf > /etc/profile.d/10locale-pmos.sh"], chroot
-    )
     # add keyboard layout related to locale and layout switcher
     xkb_layout = get_xkb_layout(locale)
     xkb_vars = xkb_layout.get_profile_vars()
