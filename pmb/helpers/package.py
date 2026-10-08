@@ -47,13 +47,13 @@ def check_version_constraints(pkgname_with_op: str, version: str) -> bool:
             f"check_version_constraints: op:{op}, version:{version}, ver_req:{ver_req}, result:{result}"
         )
         if result in valid_results:
-            logging.debug(f"{pkgname_with_op}: matches package")
+            logging.verbose(f"{pkgname_with_op}: matches package")
             return True
         else:
-            logging.debug(f"{pkgname_with_op}: does not match package")
+            logging.verbose(f"{pkgname_with_op}: does not match package")
             return False
 
-    logging.debug(f"check_version_constraints: ignoring {pkgname_with_op}")
+    logging.verbose(f"check_version_constraints: ignoring {pkgname_with_op}")
     return True
 
 
