@@ -22,7 +22,14 @@ def flasher(
     deviceinfo = pmb.parse.deviceinfo()
     method = flash_method or deviceinfo.flash_method
 
-    if method == "none" and action in ["boot", "flash_kernel", "flash_rootfs", "flash_lk2nd"]:
+    if method == "none" and action in [
+        "boot",
+        "flash_kernel",
+        "flash_lk2nd",
+        "flash_rootfs",
+        "flash_vbmeta",
+        "flash_dtbo",
+    ]:
         logging.info("This device doesn't support any flash method.")
         return
 
