@@ -163,15 +163,12 @@ def list_devices(
 
 def sideload(
     deviceinfo: Deviceinfo,
-    method: str,
+    _method: str,
     cmdline: str | None = None,
     no_reboot: bool = False,
     partition: str | None = None,
     resume: bool = False,
 ) -> None:
-    # Install depends
-    pmb.flasher.install_depends(method)
-
     # Mount the buildroot
     chroot = Chroot.buildroot(deviceinfo.arch)
     mountpoint = "mnt" / PosixPath(str(chroot))
@@ -192,7 +189,7 @@ def sideload(
 
     pmb.flasher.run(
         deviceinfo,
-        method,
+        "adb",
         "sideload",
         cmdline=cmdline,
         no_reboot=no_reboot,

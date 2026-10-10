@@ -34,7 +34,7 @@ def run(
     cfg = pmb.config.flashers[method]
     if not isinstance(cfg["actions"], dict):
         raise TypeError(f"Flashers misconfigured! {method} key 'actions' should be a dictionary")
-    if action not in cfg["actions"]:
+    if action not in cfg["actions"] and action != "sideload":
         raise RuntimeError(
             f"action {action} is not configured for method {method}! You can"
             " use the '--method' option to specify a different flash method."
