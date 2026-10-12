@@ -384,7 +384,7 @@ def setup_locale(chroot: Chroot, locale: str) -> None:
     if xkb_vars:
         xkb_vars = xkb_vars.replace("\n", "\\n")
         pmb.chroot.root(
-            ["sed", "-i", "$a\\" + xkb_vars, "/etc/profile.d/10locale-pmos.sh"],
+            ["sh", "-c", f'printf "%b\\n" "{xkb_vars}" > /etc/profile.d/10locale-pmos.sh'],
             chroot,
         )
     if (chroot / "etc/X11").exists() and (kb_config := xkb_layout.get_keyboard_config()):
