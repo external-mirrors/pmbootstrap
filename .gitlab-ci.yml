@@ -198,6 +198,8 @@ install amd64:
     - .ci/integration_tests/build_images qemu-amd64 console
   # ARM64 on AMD64
     - .ci/integration_tests/build_images postmarketos-trailblazer console
+  # Native AMD64 with non-default locale.
+    - .ci/integration_tests/build_images_non_default_locale qemu-amd64 console
 
 # Test that building images works on Python 3.10
 install amd64 python3.10:

@@ -51,6 +51,13 @@ build_images() {
 	pmbootstrap install --zap --password 147147 --fde --no-image
 }
 
+# Test that we can build images with a non-default locale.
+build_images_non_default_locale() {
+	pmbootstrap config locale ja_JP.UTF-8
+
+	build_images "$1" "$2"
+}
+
 force_build() {
 	arch="$1"
 	shift
