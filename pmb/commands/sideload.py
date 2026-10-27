@@ -169,7 +169,7 @@ def sideload(
     :param port: target device ssh port
     :param arch: target device architecture
     :param copy_key: copy the abuild key too
-    :param strict: don't automatically include relevant subpackages or check network connectivity
+    :param strict: don't automatically include relevant subpackages
     :param pkgnames: list of pkgnames to be built
     :param allow_untrusted: whether to add --allow-untrusted to the apk add invocation
     """
