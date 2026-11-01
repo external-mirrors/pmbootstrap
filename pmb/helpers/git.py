@@ -198,7 +198,7 @@ OUTDATED_GIT_REMOTES_SSH: Final[list[str]] = ["git@gitlab.com:postmarketos/pmapo
 
 
 def migrate_upstream_remote() -> None:
-    """Migrate pmaports git remote URL from gitlab.com to gitlab.postmarketos.org."""
+    """Migrate pmaports git remote URL from an old one to a new one."""
     repo = pkgrepo_default_path()
     repo_name = repo.parts[-1]
     lines = list_remotes(repo)
