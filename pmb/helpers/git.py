@@ -195,8 +195,14 @@ def set_remote_url(repo: Path, remote_name: str, remote_url: str, remote_type: R
 
 
 # Intentionally lower case for case-insensitive comparison
-OUTDATED_GIT_REMOTES_HTTP: Final[list[str]] = ["https://gitlab.com/postmarketos/pmaports.git"]
-OUTDATED_GIT_REMOTES_SSH: Final[list[str]] = ["git@gitlab.com:postmarketos/pmaports.git"]
+OUTDATED_GIT_REMOTES_HTTP: Final[list[str]] = [
+    "https://gitlab.com/postmarketos/pmaports.git",
+    "https://gitlab.postmarketos.org/postmarketos/pmaports.git",
+]
+OUTDATED_GIT_REMOTES_SSH: Final[list[str]] = [
+    "git@gitlab.com:postmarketos/pmaports.git",
+    "git@gitlab.postmarketos.org:postmarketos/pmaports.git",
+]
 
 
 def migrate_upstream_remote() -> None:

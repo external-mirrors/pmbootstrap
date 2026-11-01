@@ -59,7 +59,7 @@ pmaports_min_version = "7"
 # Version of the work folder (as asked during 'pmbootstrap init'). Increase
 # this number, whenever migration is required and provide the migration code,
 # see migrate_work_folder()).
-work_version = 8
+work_version = 9
 
 # Programs that pmbootstrap expects to be available from the host system. Keep
 # in sync with README.md, and try to keep the list as small as possible. The
@@ -580,8 +580,8 @@ git_repos = {
         "git@gitlab.alpinelinux.org:alpine/aports.git",
     ],
     "pmaports": [
-        "https://gitlab.postmarketos.org/postmarketOS/pmaports.git",
-        "git@gitlab.postmarketos.org:postmarketOS/pmaports.git",
+        "https://gitlab.nura.eco/nura/pmaports.git",
+        "git@gitlab.nura.eco:nura/pmaports.git",
     ],
 }
 

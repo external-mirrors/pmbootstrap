@@ -127,10 +127,13 @@ def migrate_work_folder() -> None:
             migrate_success(context.config.work, 7)
             current = 7
 
-    if current == 7:
+    # Unified migration since 7 to 8 and 8 to 9 both amount to updating the git remote URL.
+    if current == 7 or current == 8:
+        old_remote = "gitlab.com" if current == 7 else "gitlab.postmarketos.org"
+
         # Ask for confirmation
         logging.info("Changelog:")
-        logging.info("* Moved from gitlab.com to gitlab.postmarketOS.org")
+        logging.info(f"* Moved from {old_remote} to gitlab.nura.eco")
         logging.info("Migration will do the following:")
         logging.info("* Update your pmaports remote URL")
         if not pmb.helpers.cli.confirm():
@@ -143,13 +146,13 @@ def migrate_work_folder() -> None:
             logging.error(
                 "Couldn't find new upstream remote, migration failed."
                 " Please try updating the remote manually with:\n"
-                f" $ git -C '{pkgrepo_default_path()}' remote set-url origin 'https://gitlab.postmarketos.org/postmarketOS/pmaports.git'"
+                f" $ git -C '{pkgrepo_default_path()}' remote set-url origin '{pmb.config.git_repos['pmaports'][0]}'"
             )
             raise RuntimeError("Migration failed.") from exception
 
         # Update version file
-        migrate_success(context.config.work, 8)
-        current = 8
+        migrate_success(context.config.work, 9)
+        current = 9
 
     # Can't migrate, user must delete it
     if current != required:
