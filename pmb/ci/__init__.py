@@ -159,7 +159,7 @@ def copy_git_repo_to_chroot(topdir: Path, include_dot_git_dir: bool = False) -> 
     pmb.helpers.run.user(["tar", "-cf", tarball_path, "-T", f"{tarball_path}.files"], topdir)
 
     ci_dir = Path("/home/pmos/ci")
-    pmb.chroot.user(["rm", "-rf", ci_dir])
+    pmb.chroot.root(["rm", "-rf", ci_dir])
     pmb.chroot.user(["mkdir", ci_dir])
     pmb.chroot.user(["tar", "-xf", "/tmp/git.tar.gz"], working_dir=ci_dir)
 
@@ -217,6 +217,6 @@ def run_scripts(topdir: Path, scripts: dict[str, CiScriptDescriptor]) -> None:
             logging.info(f"Copy CI artifacts to ./ci-artifacts/{script_name}")
             path = Chroot.native().path / "home/pmos/ci" / script["artifacts"]
             target = topdir / "ci-artifacts" / script_name
-            pmb.helpers.run.user(["rm", "-rf", target])
+            pmb.helpers.run.root(["rm", "-rf", target])
             pmb.helpers.run.user(["mkdir", "-p", target])
             pmb.helpers.run.user(["cp", "-r", path, target])
