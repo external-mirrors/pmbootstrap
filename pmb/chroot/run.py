@@ -215,8 +215,8 @@ def userm(
 
     flat_cmd = pmb.helpers.run_core.flat_cmd(cmds, env=env)
     cmd = ["busybox", "su", "pmos", "-c", flat_cmd]
-    return pmb.chroot.root(
-        cmd, chroot, working_dir, output, output_return, check, {}, add_proxy_env_vars=False
+    return rootm(
+        [cmd], chroot, working_dir, output, output_return, check, {}, add_proxy_env_vars=False
     )
 
 
