@@ -40,7 +40,7 @@ def sanity_check(toml: TomlTable) -> None:
     for section in toml:
         if section == "aliases":
             continue
-        if not all(cat.startswith("category:") for cat in section.split()):
+        if not all(cat.startswith(("!category:", "category:")) for cat in section.split()):
             raise RuntimeError(f"{path}: unexpected section: {section}")
         for versions in toml[section]:
             for arches in toml[section][versions]:
@@ -72,25 +72,36 @@ def read_categories(categories: list[str]) -> dict[str, dict]:
     ret = {}
 
     for key in toml:
-        # Keys may contain multiple space-separated category:name entries, which all need
-        # to be satisfied for a section to be considered.
-        if key.startswith("category:"):
-            # This must be a kconfigcheck section
-            required_categories = [c.split(":", 1)[1] for c in key.split()]
-            all_requirements_met = True
+        # Keys may contain multiple space-separated category entries.
+        # These are all concatenated with a logical AND, and may be negated with a leading !.
+        # e.g. "category:a !category:b category:c" is equivalent to: a AND (NOT b) AND c
 
-            for required_category in required_categories:
-                if required_category in real_categories:
-                    # This category exists!
-                    real_categories[required_category] = True
-                else:
-                    # We still keep going through categories since we still want
-                    # to be able to error on nonexisting categories
-                    all_requirements_met = False
+        # This must be a kconfigcheck section
+        if "category:" not in key:
+            continue
 
-            if all_requirements_met:
-                logging.debug(f"kconfigcheck: section {key} has all requirements met")
-                ret[key] = toml[key]
+        all_requirements_met = True
+
+        for raw_constraint in key.split():
+            negated = raw_constraint.startswith("!")
+            category = raw_constraint.split(":", maxsplit=1)[1]
+
+            # Category is set by the device and exists in the config
+            if category in real_categories:
+                real_categories[category] = True
+
+            # Negative match: category is required for the section and not set by the device, or
+            # category is explicitly incompatible with the section and set by the device
+            if (category not in real_categories and not negated) or (
+                category in real_categories and negated
+            ):
+                # We still keep going through categories since we still want
+                # to be able to error on nonexisting categories
+                all_requirements_met = False
+
+        if all_requirements_met:
+            logging.debug(f"kconfigcheck: section {key} has all requirements met")
+            ret[key] = toml[key]
 
     # Make sure that all specified categories actually exist in the TOML
     for category, exists in real_categories.items():

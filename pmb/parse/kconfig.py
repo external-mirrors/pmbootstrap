@@ -396,7 +396,10 @@ def create_fragment_from_rules(apkbuild: Apkbuild, rules: dict[str, dict], arch:
     # Process each category
     for category_key, category_rules in rules.items():
         # Extract category name from "category:name" format
-        category_name = " + ".join(cat.split(":", 1)[1] for cat in category_key.split())
+        category_name = " + ".join(
+            ("!" if cat.startswith("!") else "") + cat.split(":", 1)[1]
+            for cat in category_key.split()
+        )
         options_added = False
 
         # Check if this rule applies to kernel version
