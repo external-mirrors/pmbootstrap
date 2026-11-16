@@ -24,7 +24,7 @@ def build(
         pmb.chroot.zap_buildroots()
 
     # Set src and force
-    src = os.path.realpath(os.path.expanduser(code_src[0])) if code_src else None
+    src = os.path.realpath(os.path.expanduser(code_src)) if code_src else None
     force = True if src else get_context().force
     if src and not os.path.exists(src):
         raise RuntimeError(f"Invalid path specified for --src: {src}")

@@ -931,7 +931,7 @@ def install_system_image(
 
     # Create /etc/fstab and /etc/crypttab
     logging.info("(native) create /etc/fstab")
-    create_fstab(layout, chroot, filesystem, full_disk_encryption)
+    # create_fstab(layout, chroot, filesystem, full_disk_encryption)
     if full_disk_encryption:
         logging.info("(native) create /etc/crypttab")
         create_crypttab(layout, chroot)

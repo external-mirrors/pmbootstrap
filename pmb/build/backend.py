@@ -9,6 +9,7 @@ import pmb.helpers.run
 from pmb.core import Context
 from pmb.core.arch import Arch
 from pmb.core.chroot import Chroot
+from pmb.core.context import get_context
 from pmb.core.pkgrepo import pkgrepo_name, pkgrepo_paths
 from pmb.helpers import logging
 from pmb.types import Apkbuild, CrossCompile, Env, RunOutputTypeDefault
@@ -25,15 +26,12 @@ class BootstrapStage(enum.IntEnum):
 
 
 def override_source(
-    apkbuild: Apkbuild, pkgver: str, src: str | None, chroot: Chroot = Chroot.native()
+    apkbuild: Apkbuild, pkgver: str, src: str, chroot: Chroot = Chroot.native()
 ) -> None:
     """
     Mount local source inside chroot and append new functions (prepare() etc.)
     to the APKBUILD to make it use the local source.
     """
-    if not src:
-        return
-
     # Mount source in chroot
     mount_path = "work/source-override/"
     mount_path_outside = chroot / mount_path
@@ -48,63 +46,54 @@ def override_source(
     # Add src path to pkgdesc, cut it off after max length
     pkgdesc = ("[" + src + "] " + apkbuild["pkgdesc"])[:127]
 
+    exclude = pmb.helpers.run.user_output(["git", "-C", src, "ls-files", "--others", "--ignored", "--exclude-standard"])
+    with (get_context().config.work / ".exclude-files").open("w") as f:
+        f.write(exclude)
+    pmb.helpers.run.root(["mv", get_context().config.work / ".exclude-files", chroot / "tmp/exclude-files"])
+
     pkgname = apkbuild["pkgname"]
 
     # Appended content
     append = (
-        """
+        f"""
              # ** Overrides below appended by pmbootstrap for --src **
 
-             pkgver=\""""
-        + pkgver
-        + """\"
-             pkgdesc=\""""
-        + pkgdesc
-        + """\"
-             _pmb_src_copy="/tmp/pmbootstrap-local-source-copy"
+             pkgver=\"{pkgver}\"
+             pkgdesc=\"{pkgdesc}\"
+             _pmb_src_copy=\"/tmp/pmbootstrap-local-source-copy\"
 
              # Empty $source avoids patching in prepare()
              _pmb_source_original="$source"
              source=""
              sha512sums=""
 
-             fetch() {
+             fetch() {{
                  # Update source copy
-                 msg "Copying source from host system: """
-        + src
-        + """\"
-                 local exclude_from=\""""
-        + mount_path
-        + """/.gitignore\"
+                 msg \"Copying source from host system: {src}\"
+                 local exclude_from=\"/tmp/exclude-files\"
                  local rsync_args=""
                  if [ -f "$exclude_from" ]; then
                      rsync_args="--exclude-from=\"$exclude_from\""
                  fi
-                 if ! [ \""""
-        + pkgname
-        + """\" = "$(cat /tmp/src-pkgname)" ]; then
+                 if ! [ \"{pkgname}\" = \"$(cat /tmp/src-pkgname)\" ]; then
                      rsync_args="--delete $rsync_args"
                  fi
                  rsync -a --exclude=".git/" $rsync_args --ignore-errors --force \\
-                     \""""
-        + mount_path
-        + """\" "$_pmb_src_copy" || true
+                     \"/{mount_path}\" \"$_pmb_src_copy\" || true
 
                  # Link local source files (e.g. kernel config)
                  mkdir "$srcdir"
                  local s
                  for s in $_pmb_source_original; do
-                     is_remote "$s" || ln -sf "$startdir/$s" "$srcdir/"
+                     is_remote "$s" || ln -sf "$startdir/$s" \"$srcdir/\"
                  done
 
-                 echo \""""
-        + pkgname
-        + """\" > /tmp/src-pkgname
-             }
+                 echo \"{pkgname}\" > /tmp/src-pkgname
+             }}
 
-             unpack() {
-                 ln -sv "$_pmb_src_copy" "$builddir"
-             }
+             unpack() {{
+                 ln -sv \"$_pmb_src_copy\" \"$builddir\"
+             }}
              """
     )
 
@@ -311,7 +300,8 @@ def run_abuild(
     if src and strict:
         logging.debug(f"({buildchroot}) Ensuring previous build artifacts are removed")
         pmb.chroot.root(["rm", "-rf", "/tmp/pmbootstrap-local-source-copy"], buildchroot)
-    override_source(apkbuild, pkgver, src, buildchroot)
+    if src:
+        override_source(apkbuild, pkgver, src, buildchroot)
     link_to_git_dir(buildchroot)
 
     try:

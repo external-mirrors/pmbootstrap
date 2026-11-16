@@ -1129,7 +1129,6 @@ def get_parser() -> argparse.ArgumentParser:
         " package with a local folder (the APKBUILD must"
         " expect the source to be in $builddir, so you might"
         " need to adjust it)",
-        nargs=1,
     )
     build.add_argument(
         "-i",

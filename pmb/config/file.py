@@ -77,7 +77,7 @@ def serialize(
     cfg["providers"] = {}
     cfg["mirrors"] = {}
 
-    basedir = config.work.parent() if get_context().local else config.work
+    basedir = config.work.parent if get_context().local else config.work
 
     # .keys() flat maps dictionaries like config.mirrors with
     # dotted notation
@@ -95,7 +95,7 @@ def serialize(
         # Convert paths to strings
         elif type(getattr(Config, key)) is PosixPath:
             val = getattr(config, key)
-            if local:
+            if local and key != "cache":
                 val = Path(val).relative_to(basedir)
             cfg["pmbootstrap"][key] = str(val)
         elif isinstance(getattr(Config, key), list) and isinstance(
