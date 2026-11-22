@@ -213,10 +213,11 @@ def run(command: Sequence[PathString], chroot: Chroot, with_progress: bool = Tru
                 "Encountered an 'apk add' command without --cache-dir! This is a bug."
             )
 
+    with_progress = False
     if with_progress:
         _apk_with_progress(command_)
     else:
-        pmb.helpers.run.root(command_)
+        pmb.helpers.run.root(command_, check=False)
 
 
 def cache_clean(arch: Arch) -> None:
