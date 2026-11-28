@@ -208,7 +208,7 @@ OUTDATED_GIT_REMOTES_SSH: Final[list[str]] = [
 def migrate_upstream_remote() -> None:
     """Migrate pmaports git remote URL from an old one to a new one."""
     repo = pkgrepo_default_path()
-    repo_name = repo.parts[-1]
+    repo_name: Final[str] = "pmaports"
     lines = list_remotes(repo)
 
     current_git_remote_http: Final[str] = pmb.config.git_repos[repo_name][0]
